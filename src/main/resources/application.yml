@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: Produtos API
+  datasource:
+    url: jdbc:h2:mem:financeapi
+    username: sa
+  jpa:
+    hibernate:
+      ddl-auto: update   # cria/atualiza tabelas automaticamente (somente para DEV/TESTE)
+    show-sql: true        # opcional: mostra queries no console
+    database-platform: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
