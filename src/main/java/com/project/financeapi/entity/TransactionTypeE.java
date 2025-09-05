@@ -1,6 +1,6 @@
 package com.project.financeapi.entity;
 
-public enum TransactionType {
+public enum TransactionTypeE {
     DEPOSIT,
     WITHDRAW,
     TRANSFER,

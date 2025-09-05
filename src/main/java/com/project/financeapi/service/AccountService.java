@@ -2,7 +2,7 @@ package com.project.financeapi.service;
 
 import com.project.financeapi.entity.AccountType;
 import com.project.financeapi.entity.Transaction;
-import com.project.financeapi.entity.TransactionType;
+import com.project.financeapi.entity.TransactionTypeE;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.AccountRepository;
@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
@@ -43,9 +42,9 @@ public class AccountService {
         to.deposit(amount);
 
 
-        transactionRepository.save(new Transaction(from, TransactionType.TRANSFER, amount.negate(), LocalDateTime.now(),
+        transactionRepository.save(new Transaction(from, TransactionTypeE.TRANSFER, amount.negate(), LocalDateTime.now(),
                 (description != null ? description + "\n" : "") + "Transferência para " + to.getName()));
-        transactionRepository.save(new Transaction(to, TransactionType.TRANSFER, amount,LocalDateTime.now(),
+        transactionRepository.save(new Transaction(to, TransactionTypeE.TRANSFER, amount,LocalDateTime.now(),
                 (description != null ? description + "\n" : "") + "Transferência recebida de " + from.getName()));
 
         accountRepository.save(from);

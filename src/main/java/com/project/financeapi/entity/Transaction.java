@@ -21,7 +21,7 @@ public class Transaction {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TransactionType type;
+    private TransactionTypeE type;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
@@ -37,11 +37,15 @@ public class Transaction {
     @JoinColumn(name = "account_id", nullable = false)
     private AccountBase account;
 
+    @Column(name = "movement_type")
+    private MovementType movementType;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reversed_transaction_id")
     private Transaction reversedTransaction;
 
-    public Transaction(AccountBase account, TransactionType type, BigDecimal amount, LocalDateTime createdAt, String description) {
+
+    public Transaction(AccountBase account, TransactionTypeE type, BigDecimal amount, LocalDateTime createdAt, String description) {
         this.type = type;
         this.amount = amount;
         this.description = (description != null && !description.isBlank()) ? description : null;

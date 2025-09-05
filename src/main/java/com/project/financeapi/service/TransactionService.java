@@ -1,7 +1,7 @@
 package com.project.financeapi.service;
 
 import com.project.financeapi.entity.Transaction;
-import com.project.financeapi.entity.TransactionType;
+import com.project.financeapi.entity.TransactionTypeE;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.AccountRepository;
@@ -87,7 +87,7 @@ public class TransactionService {
         // Reverter a conta relacionada (faz a compensação)
         Transaction reversalDest = new Transaction(
                 relatedAccount,
-                TransactionType.REVERSAL,
+                TransactionTypeE.REVERSAL,
                 original.getAmount(), // sem negate, porque já era negativo/positivo conforme origem
                 LocalDateTime.now(),
                 (reason != null ? reason + " " : "") + "Estorno da transferência"
@@ -107,7 +107,7 @@ public class TransactionService {
     private Transaction createReversal(Transaction original, AccountBase account, String reason) {
         Transaction reversal = new Transaction(
                 account,
-                TransactionType.REVERSAL,
+                TransactionTypeE.REVERSAL,
                 original.getAmount().negate(),
                 LocalDateTime.now(),
                 (reason != null ? reason + " " : "") + "Estorno da transação " + original.getId()
