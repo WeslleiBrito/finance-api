@@ -1,9 +1,9 @@
 package com.project.financeapi.repository;
 
-import com.project.financeapi.entity.Account;
+import com.project.financeapi.entity.base.AccountBase;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-
-public interface AccountRepository extends JpaRepository<Account, Long> {
-
+@Repository
+public interface AccountRepository extends JpaRepository<AccountBase, String> {
 }

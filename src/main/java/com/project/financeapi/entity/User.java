@@ -1,11 +1,13 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.entity.base.AccountBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -34,6 +36,6 @@ public class User {
     private Integer tokenVersion = 0;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Account> accounts;
+    private List<AccountBase> accounts = new ArrayList<>();
 
 }
