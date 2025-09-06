@@ -1,4 +1,4 @@
-package com.project.financeapi.entity;
+package com.project.financeapi.enums;
 
 public enum AccountType {
     PAYMENT,

@@ -1,7 +1,9 @@
 package com.project.financeapi.controller;
 
+import com.project.financeapi.dto.user.LoginRequestDTO;
+import com.project.financeapi.dto.user.SignupRequestDTO;
 import com.project.financeapi.entity.User;
-import com.project.financeapi.dto.TokenUser;
+import com.project.financeapi.dto.user.TokenUser;
 import com.project.financeapi.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -15,14 +17,14 @@ public class UserController {
     public UserController(UserService userService){ this.userService = userService; }
 
     @PostMapping("/signup")
-    public ResponseEntity<TokenUser> signup(@RequestBody @Valid User user){
-        TokenUser saved = userService.signup(user);
+    public ResponseEntity<TokenUser> signup(@Valid @RequestBody SignupRequestDTO dto){
+        TokenUser saved = userService.signup(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenUser> login(@RequestBody @Valid User user) {
-        TokenUser tokenUser = userService.login(user);
+    public ResponseEntity<TokenUser> login(@Valid @RequestBody LoginRequestDTO dto) {
+        TokenUser tokenUser = userService.login(dto);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(tokenUser);
     }
 

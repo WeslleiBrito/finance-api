@@ -1,7 +1,6 @@
 package com.project.financeapi.entity.base;
 
-import com.project.financeapi.entity.MovementType;
-import com.project.financeapi.entity.TransactionTypeE;
+import com.project.financeapi.enums.MovementType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,11 +8,11 @@ import lombok.Setter;
 @Setter
 public abstract class TransactionType {
 
-    private TransactionTypeE nameTransactionType;
+    private com.project.financeapi.enums.TransactionType nameTransactionType;
 
     private MovementType movementType;
 
-    public TransactionType(TransactionTypeE nameTransactionType, MovementType movementType) {
+    public TransactionType(com.project.financeapi.enums.TransactionType nameTransactionType, MovementType movementType) {
         this.nameTransactionType = nameTransactionType;
         this.movementType = movementType;
     }

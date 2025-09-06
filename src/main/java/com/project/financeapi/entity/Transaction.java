@@ -1,12 +1,17 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.enums.MovementType;
+import com.project.financeapi.enums.TransactionStatus;
+import com.project.financeapi.enums.TransactionType;
 import com.project.financeapi.entity.base.AccountBase;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -17,42 +22,81 @@ public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Setter(AccessLevel.PRIVATE)
     private String id;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TransactionTypeE type;
+    private TransactionType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "movement_type", nullable = false)
+    private MovementType movementType;
 
     @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal amount;
+    private BigDecimal amount = BigDecimal.ZERO;
 
-    @Column(length = 255)
-    private String description;
+    @Column
+    private String observations;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "issue_date", nullable = false)
+    private LocalDate issueDate = LocalDate.now();
+
+    @Column(name = "due_date", nullable = false)
+    private LocalDate dueDate = LocalDate.now();
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
     private AccountBase account;
 
-    @Column(name = "movement_type")
-    private MovementType movementType;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionStatus status = TransactionStatus.OPEN;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reversed_transaction_id")
-    private Transaction reversedTransaction;
+    public Transaction() {}
 
-
-    public Transaction(AccountBase account, TransactionTypeE type, BigDecimal amount, LocalDateTime createdAt, String description) {
-        this.type = type;
-        this.amount = amount;
-        this.description = (description != null && !description.isBlank()) ? description : null;
-        this.createdAt = createdAt;
+    public Transaction(
+            AccountBase account,
+            TransactionType type,
+            BigDecimal amount,
+            LocalDate issueDate,
+            LocalDate dueDate,
+            String observations
+    ) {
         this.account = account;
+        this.type = type;
+        this.amount = amount != null ? amount : BigDecimal.ZERO;
+        this.issueDate = issueDate != null ? issueDate : LocalDate.now();
+        this.dueDate = dueDate != null ? dueDate : LocalDate.now();
+        this.observations = (observations != null && !observations.isBlank()) ? observations : null;
+
+        this.movementType = MovementType.fromTransactionType(type);
     }
 
-    public Transaction() {
+
+    public boolean isFinalized() {
+        return this.status == TransactionStatus.FINALIZED;
+    }
+
+    public boolean isOpen() {
+        return this.status == TransactionStatus.OPEN;
+    }
+
+    public void cancel() {
+        if (this.isFinalized()) {
+            throw new IllegalStateException("Não é possível cancelar uma transação finalizada");
+        }
+        this.status = TransactionStatus.CANCELLED;
+    }
+
+    public void finalizeTransaction() {
+        if (this.status != TransactionStatus.OPEN) {
+            throw new IllegalStateException("Só é possível finalizar transações abertas");
+        }
+        this.status = TransactionStatus.FINALIZED;
     }
 }

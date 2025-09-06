@@ -1,6 +1,6 @@
 package com.project.financeapi.util;
 
-import com.project.financeapi.dto.JwtPayload;
+import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.exception.InvalidJwtException;
 import io.jsonwebtoken.*;

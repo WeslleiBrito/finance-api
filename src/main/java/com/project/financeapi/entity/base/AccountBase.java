@@ -1,19 +1,22 @@
 package com.project.financeapi.entity.base;
 
-import com.project.financeapi.entity.AccountType;
+import com.project.financeapi.enums.AccountStatus;
+import com.project.financeapi.enums.AccountType;
+import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
 import jakarta.persistence.*;
-import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Getter
-@MappedSuperclass
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 public abstract class AccountBase {
 
     @Id
@@ -29,24 +32,33 @@ public abstract class AccountBase {
     @Column(nullable = false)
     private AccountType type;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal balance = BigDecimal.ZERO;
-
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime creationDate;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-    private User owner;
+    private final User accountHolder;
+
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccountStatus status = AccountStatus.ACTIVATED;
 
 
-    public void deposit(BigDecimal value) {
-        this.balance = this.balance.add(value);
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Transaction> transactions = new ArrayList<Transaction>();
+
+    public AccountBase(AccountType type, User accountHolder) {
+        this.type = type;
+        this.accountHolder = accountHolder;
     }
 
-    public void withdraw(BigDecimal value) {
-        this.balance = this.balance.subtract(value);
+    public BigDecimal getBalance() {
+        return this.transactions.stream()
+                .filter(Transaction::isFinalized)
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
 }
