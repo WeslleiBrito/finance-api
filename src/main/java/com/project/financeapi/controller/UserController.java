@@ -29,9 +29,9 @@ public class UserController {
     }
 
     @PatchMapping("/update-password")
-    public ResponseEntity<TokenUser> updatePassword(@RequestHeader("X-Auth-Token") String authToken,
+    public ResponseEntity<TokenUser> updatePassword(@RequestHeader("X-Auth-Token") String token,
                                                     @RequestBody String newPassword){
-        TokenUser tokenUser = userService.updatePassword(authToken, newPassword);
+        TokenUser tokenUser = userService.updatePassword(token, newPassword);
         return ResponseEntity.status(HttpStatus.OK).body(tokenUser);
     }
 }

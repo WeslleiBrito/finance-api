@@ -1,7 +1,7 @@
 package com.project.financeapi.entity;
 
 import com.project.financeapi.enums.MovementType;
-import com.project.financeapi.enums.TransactionStatus;
+import com.project.financeapi.enums.PaymentStatus;
 import com.project.financeapi.enums.TransactionType;
 import com.project.financeapi.entity.base.AccountBase;
 import jakarta.persistence.*;
@@ -50,16 +50,24 @@ public class Transaction {
     private LocalDate dueDate = LocalDate.now();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
     private AccountBase account;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "installment_id", nullable = false)
+    private Installment installment;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TransactionStatus status = TransactionStatus.OPEN;
+    private PaymentStatus status = PaymentStatus.OPEN;
 
-    public Transaction() {}
 
     public Transaction(
+            User createdBy,
             AccountBase account,
             TransactionType type,
             BigDecimal amount,
@@ -75,28 +83,29 @@ public class Transaction {
         this.observations = (observations != null && !observations.isBlank()) ? observations : null;
 
         this.movementType = MovementType.fromTransactionType(type);
+        this.createdBy = createdBy;
     }
 
 
     public boolean isFinalized() {
-        return this.status == TransactionStatus.FINALIZED;
+        return this.status == PaymentStatus.FINALIZED;
     }
 
     public boolean isOpen() {
-        return this.status == TransactionStatus.OPEN;
+        return this.status == PaymentStatus.OPEN;
     }
 
     public void cancel() {
         if (this.isFinalized()) {
             throw new IllegalStateException("Não é possível cancelar uma transação finalizada");
         }
-        this.status = TransactionStatus.CANCELLED;
+        this.status = PaymentStatus.CANCELLED;
     }
 
     public void finalizeTransaction() {
-        if (this.status != TransactionStatus.OPEN) {
+        if (this.status != PaymentStatus.OPEN) {
             throw new IllegalStateException("Só é possível finalizar transações abertas");
         }
-        this.status = TransactionStatus.FINALIZED;
+        this.status = PaymentStatus.FINALIZED;
     }
 }

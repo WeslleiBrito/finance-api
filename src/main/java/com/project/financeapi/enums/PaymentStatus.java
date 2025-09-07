@@ -1,7 +1,8 @@
 package com.project.financeapi.enums;
 
-public enum TransactionStatus {
+public enum PaymentStatus {
     OPEN,
     FINALIZED,
-    CANCELLED
+    CANCELLED,
+    PARTIALLY_PAID
 }

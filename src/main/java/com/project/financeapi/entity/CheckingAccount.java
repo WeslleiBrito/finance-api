@@ -2,8 +2,7 @@ package com.project.financeapi.entity;
 
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.enums.AccountType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,6 +13,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class CheckingAccount extends AccountBase {
+    @Column(name ="overdraft_limit")
     private BigDecimal overdraftLimit = BigDecimal.ZERO; // limite do cheque especial
 
     public CheckingAccount(User accountHolder) {

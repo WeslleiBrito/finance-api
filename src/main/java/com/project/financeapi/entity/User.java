@@ -36,10 +36,10 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "token_version")
+    @Column(name = "token_version", nullable = false)
     private Integer tokenVersion = 0;
 
-    @Column(name = "user_status")
+    @Column(name = "user_status", nullable = false)
     private UserStatus userStatus = UserStatus.ACTIVATED;
 
     @Setter(AccessLevel.PRIVATE)
@@ -51,5 +51,8 @@ public class User {
         this.name = name;
         this.email = email;
         this.password = password;
+    }
+
+    public User() {
     }
 }

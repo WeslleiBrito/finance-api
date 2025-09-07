@@ -12,8 +12,5 @@ public record CreateAccountDTO(
         String name,
 
         @NotNull(message = "O tipo de conta é obrigatório")
-        AccountType type,
-
-        @NotNull(message = "O usuário dono da conta é obrigatório")
-        String userId
+        AccountType type
 ) {}

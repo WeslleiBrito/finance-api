@@ -34,8 +34,9 @@ public class UserService {
 
         User user = new User(dto.name(), dto.email(), dto.password());
 
-        String token = JwtUtil.generateToken(user);
-        userRepository.save(user);
+        User userRepo = userRepository.save(user);
+
+        String token = JwtUtil.generateToken(userRepo);
 
         return new TokenUser(token);
     }
