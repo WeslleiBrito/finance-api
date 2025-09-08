@@ -46,14 +46,9 @@ public class UserService {
         User userExists = userRepository.findByEmail(dto.email())
                 .orElseThrow(() -> new InvalidEmailOrPasswordException("Email ou senha incorreta."));
 
-        System.out.println("Senha recebida: " + dto.password());
-        System.out.println("Hash do banco: " + userExists.getPassword());
-        System.out.println("Teste no Login >>>> " + passwordEncoder.matches(dto.password(), userExists.getPassword()));
-
         if(!passwordEncoder.matches(dto.password(), userExists.getPassword())){
             throw new InvalidEmailOrPasswordException("Email ou senha incorreta.");
         }
-
 
         if(!userExists.getUserStatus().equals(UserStatus.ACTIVATED)){
             throw new AccessBlockedException("O usuário não tem permissão para acessar o APP.");
@@ -75,11 +70,8 @@ public class UserService {
         if(!user.getTokenVersion().equals(payload.tokenVersion())) {
             throw new InvalidJwtException(HttpStatus.FORBIDDEN, "É necessário refazer o login.");
         }
-        String passwordEncrypted = passwordEncoder.encode(dto.password());
 
-        System.out.println("\n======================================================================\n");
-        System.out.println("Senha recebia no update: " + dto.password());
-        System.out.println("Hash criado >>> " + passwordEncrypted);
+        String passwordEncrypted = passwordEncoder.encode(dto.password());
         user.setPassword(passwordEncrypted);
         user.setTokenVersion(user.getTokenVersion() + 1);
 
