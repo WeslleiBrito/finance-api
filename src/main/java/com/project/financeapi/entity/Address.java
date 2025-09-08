@@ -1,5 +1,6 @@
 package com.project.financeapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.project.financeapi.entity.base.PersonBase;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -29,17 +30,19 @@ public class Address {
     @Column(nullable = false, length = 100)
     private String city;
 
-    @Column(nullable = false, length = 2)
+    @Column(nullable = false, length = 20)
     private String state;
 
     @Column(nullable = false, length = 10)
     private String zipCode;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
     @Setter(AccessLevel.NONE)
     private User createdBy;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", nullable = false)
     @Setter(AccessLevel.NONE)

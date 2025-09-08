@@ -1,7 +1,7 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.account.CreateAccountDTO;
-import com.project.financeapi.dto.account.UpdateAccountDTO;
+import com.project.financeapi.dto.account.CreateAccountRequestDTO;
+import com.project.financeapi.dto.account.UpdateAccountRequestDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.enums.AccountType;
@@ -37,7 +37,7 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountBase createAccount(String token, CreateAccountDTO dto) {
+    public AccountBase create(String token, CreateAccountRequestDTO dto) {
 
         JwtPayload payload = JwtUtil.extractPayload(token);
 
@@ -47,11 +47,11 @@ public class AccountService {
         AccountBase account = null;
 
         switch (dto.type()) {
-            case CHECKING -> account = new CheckingAccount(user);
-            case SAVINGS -> account = new SavingsAccount(user);
-            case PAYMENT -> account = new PaymentAccount(user);
-            case WALLET -> account = new WalletAccount(user);
-            case INVESTMENT -> account = new InvestmentAccount(user);
+            case CHECKING -> account = new CheckingAccount(user, dto.initialValue());
+            case SAVINGS -> account = new SavingsAccount(user, dto.initialValue());
+            case PAYMENT -> account = new PaymentAccount(user, dto.initialValue());
+            case WALLET -> account = new WalletAccount(user, dto.initialValue());
+            case INVESTMENT -> account = new InvestmentAccount(user, dto.initialValue());
         }
 
         account.setName(dto.name());
@@ -61,7 +61,7 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountBase updateAccount(String token, String accountId, UpdateAccountDTO dto) {
+    public AccountBase update(String token, String accountId, UpdateAccountRequestDTO dto) {
 
         JwtPayload userToken = JwtUtil.extractPayload(token);
 
@@ -88,38 +88,42 @@ public class AccountService {
         return accountRepository.save(account);
     }
 
-    @Transactional
-    public void transfer(
-            String token,
-            AccountBase from,
-            AccountBase to,
-            BigDecimal amount,
-            LocalDate issueDate,
-            LocalDate dueDate,
-            String observations
-    )
-    {
-
-        JwtPayload payload = JwtUtil.extractPayload(token);
-
-        User createdBy = userRepository.findById(payload.id()).orElseThrow(
-                () -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado")
-        );
-
-        boolean isChecking = from.getType().equals(AccountType.CHECKING);
-
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "O valor da transferência deve ser positivo.");
-        }
-
-        if (!isChecking && from.getBalance().compareTo(amount) < 0) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Saldo insuficiente na conta de origem.");
-        }
-
-        transactionRepository.save(new Transaction(createdBy, from, TransactionType.TRANSFER_OUT, amount.negate(), issueDate, dueDate,
-                (observations != null ? observations + "\n" : "") + "Transferência para " + to.getName()));
-        transactionRepository.save(new Transaction(createdBy, to, TransactionType.TRANSFER_IN, amount, issueDate, dueDate,
-                (observations != null ? observations + "\n" : "") + "Transferência recebida de " + from.getName()));
-    }
+//    @Transactional
+//    public void transfer(
+//            String token,
+//            AccountBase from,
+//            AccountBase to,
+//            BigDecimal amount,
+//            LocalDate issueDate,
+//            LocalDate dueDate,
+//            LocalDate paymentDate,
+//            String observations
+//    )
+//    {
+//
+//        JwtPayload payload = JwtUtil.extractPayload(token);
+//
+//        User createdBy = userRepository.findById(payload.id()).orElseThrow(
+//                () -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado")
+//        );
+//
+//        boolean isChecking = from.getType().equals(AccountType.CHECKING);
+//
+//        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+//            throw new BusinessException(HttpStatus.BAD_REQUEST, "O valor da transferência deve ser positivo.");
+//        }
+//
+//        if (!isChecking && from.getBalance().compareTo(amount) < 0) {
+//            throw new BusinessException(HttpStatus.BAD_REQUEST, "Saldo insuficiente na conta de origem.");
+//        }
+//
+//        transactionRepository.save(new Transaction(createdBy, from, TransactionType.TRANSFER_OUT,
+//                amount.negate(), paymentDate,
+//                issueDate, dueDate, (observations != null ? observations + "\n" : "") +
+//                "Transferência para " + to.getName()));
+//        transactionRepository.save(new Transaction(createdBy, to, TransactionType.TRANSFER_IN, amount,
+//                issueDate, dueDate, paymentDate,
+//                (observations != null ? observations + "\n" : "") + "Transferência recebida de " + from.getName()));
+//    }
 
 }

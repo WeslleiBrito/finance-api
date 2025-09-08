@@ -17,7 +17,10 @@ public class InvestmentAccount extends AccountBase {
 
     private BigDecimal riskLevel;
 
-    public InvestmentAccount(User accountHolder) {
-        super(AccountType.INVESTMENT, accountHolder);
+    public InvestmentAccount(User accountHolder, BigDecimal initialValue) {
+        super(AccountType.INVESTMENT, accountHolder, initialValue);
+    }
+
+    public InvestmentAccount() {
     }
 }

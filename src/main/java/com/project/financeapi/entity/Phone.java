@@ -1,5 +1,6 @@
 package com.project.financeapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enums.PhoneType;
 import jakarta.persistence.*;
@@ -24,11 +25,13 @@ public class Phone {
     @Enumerated(EnumType.STRING)
     private PhoneType type; // CELULAR, FIXO, WHATSAPP, COMERCIAL etc.
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
     @Setter(AccessLevel.NONE)
     private User createdBy;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", nullable = false)
     private PersonBase person;

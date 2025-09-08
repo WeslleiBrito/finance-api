@@ -1,7 +1,6 @@
 package com.project.financeapi.service;
 
 import com.project.financeapi.dto.address.AddressDTO;
-import com.project.financeapi.dto.address.AddressesListDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.Address;
 import com.project.financeapi.entity.User;
@@ -15,6 +14,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -32,7 +32,7 @@ public class AddressService {
 
 
     @Transactional
-    public void create(String token, String personId, List<AddressDTO> addressesList) {
+    public List<Address> create(String token, String personId, List<AddressDTO> addressesList) {
 
         JwtPayload payload = JwtUtil.extractPayload(token);
 
@@ -41,6 +41,8 @@ public class AddressService {
 
         PersonBase person = personRepository.findById(personId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "A pessoa informada não existe."));
+
+        List<Address> addresses = new ArrayList<Address>();
 
         for(AddressDTO address : addressesList){
 
@@ -56,8 +58,11 @@ public class AddressService {
             );
 
             addressRepository.save(newAddress);
+
+            addresses.add(newAddress);
         }
 
+        return addresses;
     }
 
 }

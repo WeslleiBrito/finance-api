@@ -1,10 +1,9 @@
 package com.project.financeapi.service;
 
+import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.person.PersonCreateRequestDTO;
-import com.project.financeapi.dto.phone.PhoneDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.LegalEntity;
-import com.project.financeapi.entity.Phone;
 import com.project.financeapi.entity.PhysicalPerson;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.PersonBase;
@@ -96,20 +95,33 @@ public class PersonService {
             legalEntity.setPersonType(dto.personType());
             legalEntity.setTradeName(dto.tradeName());
 
+            if(dto.tradeName() != null){
+                legalEntity.setTradeName(dto.tradeName());
+            }else{
+                legalEntity.setTradeName(dto.name());
+            }
+
+            System.out.println(legalEntity);
             person = personRepository.save(legalEntity);
         }
 
         if(dto.addressesList() != null){
-            addressService.create(token, person.getId(), dto.addressesList());
+            person.setAddresses(addressService.create(token, person.getId(), dto.addressesList()));
         }
 
         if(dto.emailList() != null){
-            emailService.create(token, person.getId(), dto.emailList());
+            person.setEmails(emailService.create(token, person.getId(), dto.emailList()));
         }
 
         if(dto.phoneList() != null){
-            phoneService.create(token, person.getId(), dto.phoneList());
+            person.setPhones(phoneService.create(token, person.getId(), dto.phoneList()));
+
         }
+
+        PersonBase personFinal = personRepository.findById(person.getId()).orElseThrow(
+                () -> new BusinessException(HttpStatus.NOT_FOUND, "A pessoa informada não existe.")
+        );
+
 
         return personRepository.findById(person.getId()).orElseThrow(
                 () -> new BusinessException(HttpStatus.NOT_FOUND, "A pessoa informada não existe.")

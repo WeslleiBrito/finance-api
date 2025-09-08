@@ -1,5 +1,6 @@
 package com.project.financeapi.entity.base;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.project.financeapi.entity.Address;
 import com.project.financeapi.entity.Email;
 import com.project.financeapi.entity.Phone;
@@ -42,6 +43,7 @@ public abstract class PersonBase {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Phone> phones = new ArrayList<>();
 

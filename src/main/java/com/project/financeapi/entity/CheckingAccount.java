@@ -16,7 +16,10 @@ public class CheckingAccount extends AccountBase {
     @Column(name ="overdraft_limit")
     private BigDecimal overdraftLimit = BigDecimal.ZERO; // limite do cheque especial
 
-    public CheckingAccount(User accountHolder) {
-        super(AccountType.CHECKING, accountHolder);
+    public CheckingAccount(User accountHolder, BigDecimal initialValue) {
+        super(AccountType.CHECKING, accountHolder, initialValue);
+    }
+
+    public CheckingAccount() {
     }
 }

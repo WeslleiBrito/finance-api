@@ -15,6 +15,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -34,7 +35,7 @@ public class PhoneService {
     }
 
     @Transactional
-    public void create(String token, String personId, List<PhoneDTO> phoneList){
+    public List<Phone> create(String token, String personId, List<PhoneDTO> phoneList){
 
         JwtPayload payload = JwtUtil.extractPayload(token);
 
@@ -44,12 +45,15 @@ public class PhoneService {
         PersonBase person = personRepository.findById(personId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "A pessoa informada não existe."));
 
+        List<Phone> phones = new ArrayList<Phone>();
 
         for (PhoneDTO phone : phoneList) {
 
             Phone newPhone = new Phone(user, person, phone.number(), phone.type());
 
-            phoneRepository.save(newPhone);
+            phones.add(phoneRepository.save(newPhone));
         }
+
+        return phones;
     }
 }

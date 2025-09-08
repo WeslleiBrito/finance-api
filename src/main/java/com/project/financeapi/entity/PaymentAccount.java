@@ -7,6 +7,8 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "payment_account")
 @Getter
@@ -14,7 +16,10 @@ import lombok.Setter;
 public class PaymentAccount extends AccountBase {
     private String provider;
 
-    public PaymentAccount(User accountHolder) {
-        super(AccountType.PAYMENT, accountHolder);
+    public PaymentAccount(User accountHolder, BigDecimal initialValue) {
+        super(AccountType.PAYMENT, accountHolder, initialValue);
+    }
+
+    public PaymentAccount() {
     }
 }

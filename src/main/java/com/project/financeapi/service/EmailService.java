@@ -15,6 +15,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -30,7 +31,7 @@ public class EmailService {
     }
 
     @Transactional
-    public void create(String token, String personId, List<EmailDTO> listEmail){
+    public List<Email> create(String token, String personId, List<EmailDTO> listEmail){
 
         JwtPayload payload = JwtUtil.extractPayload(token);
 
@@ -40,13 +41,18 @@ public class EmailService {
         PersonBase person = personRepository.findById(personId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "A pessoa informada não existe."));
 
+        List<Email> emails = new ArrayList<Email>();
 
         for (EmailDTO email : listEmail) {
 
             Email newEmail = new Email(email.email(), user, person);
 
             emailRepository.save(newEmail);
+
+            emails.add(newEmail);
         }
+
+        return emails;
     }
 
 }

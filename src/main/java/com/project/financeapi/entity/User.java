@@ -1,5 +1,7 @@
 package com.project.financeapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.enums.UserStatus;
 import jakarta.persistence.*;
@@ -13,7 +15,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-@Getter @Setter @ToString
+@Getter @Setter
 public class User {
 
     @Id
@@ -29,19 +31,23 @@ public class User {
     @Email(message = "O email informado é inválido")
     @Column(name="email", unique = true, nullable = false)
     @Setter(AccessLevel.PRIVATE)
+    @JsonIgnore
     private String email;
 
     @NotBlank(message = "A senha é obrigatória")
     @Size(min = 4, message = "A senha deve ter pelo menos 4 caracteres")
     @Column(name = "password", nullable = false)
+    @JsonIgnore
     private String password;
 
     @Column(name = "token_version", nullable = false)
+    @JsonIgnore
     private Integer tokenVersion = 0;
 
     @Column(name = "user_status", nullable = false)
     private UserStatus userStatus = UserStatus.ACTIVATED;
 
+    @JsonBackReference
     @Setter(AccessLevel.PRIVATE)
     @OneToMany(mappedBy = "accountHolder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AccountBase> accounts = new ArrayList<>();
@@ -54,5 +60,17 @@ public class User {
     }
 
     public User() {
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                ", tokenVersion=" + tokenVersion +
+                ", userStatus=" + userStatus +
+                ", accounts=" + accounts +
+                '}';
     }
 }

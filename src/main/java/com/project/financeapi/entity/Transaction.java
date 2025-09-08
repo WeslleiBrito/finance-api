@@ -36,12 +36,14 @@ public class Transaction {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount = BigDecimal.ZERO;
 
-    @Column
+    @Column(name = "observations")
     private String observations;
 
-    @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(nullable = false, updatable = false)
+    private LocalDate paymentDate;
 
     @Column(name = "issue_date", nullable = false)
     private LocalDate issueDate = LocalDate.now();
@@ -65,6 +67,8 @@ public class Transaction {
     @Column(nullable = false)
     private PaymentStatus status = PaymentStatus.OPEN;
 
+    public Transaction() {
+    }
 
     public Transaction(
             User createdBy,
@@ -73,6 +77,7 @@ public class Transaction {
             BigDecimal amount,
             LocalDate issueDate,
             LocalDate dueDate,
+            LocalDate paymentDate,
             String observations
     ) {
         this.account = account;
@@ -80,6 +85,7 @@ public class Transaction {
         this.amount = amount != null ? amount : BigDecimal.ZERO;
         this.issueDate = issueDate != null ? issueDate : LocalDate.now();
         this.dueDate = dueDate != null ? dueDate : LocalDate.now();
+        this.paymentDate = paymentDate != null ? paymentDate : LocalDate.now();
         this.observations = (observations != null && !observations.isBlank()) ? observations : null;
 
         this.movementType = MovementType.fromTransactionType(type);

@@ -16,7 +16,10 @@ import java.math.BigDecimal;
 public class SavingsAccount extends AccountBase {
     private BigDecimal interestRate = BigDecimal.valueOf(0.005);
 
-    public SavingsAccount(User accountHolder) {
-        super(AccountType.SAVINGS, accountHolder);
+    public SavingsAccount(User accountHolder, BigDecimal initialValue) {
+        super(AccountType.SAVINGS, accountHolder, initialValue);
+    }
+
+    public SavingsAccount() {
     }
 }

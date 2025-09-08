@@ -1,5 +1,7 @@
 package com.project.financeapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -23,32 +25,48 @@ public class Installment {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
-    @Column(nullable = false)
-    private LocalDate dueDate;
+    @Column(nullable = false, name = "due_date")
+    private LocalDate dueDate  = LocalDate.now();
+
+    @Column(name = "movement_type", nullable = false)
+    private MovementType movementType;
+
+    @Column(nullable = false, name = "created_at")
+    private LocalDate createdAt  = LocalDate.now();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentStatus status = PaymentStatus.OPEN;
 
+    @Column(name = "parcel_number", nullable = false)
+    private Integer parcelNumber;
+
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
 
     // Transações que foram feitas para quitar essa parcela
+    @JsonBackReference
     @OneToMany(mappedBy = "installment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
 
     public Installment() {}
 
-    public Installment(BigDecimal amount, LocalDate dueDate, Document document) {
+    public Installment(BigDecimal amount, LocalDate dueDate, MovementType movementType, Integer parcelNumber, User createdBy, Document document) {
         this.amount = amount;
-        this.dueDate = dueDate != null ? dueDate : LocalDate.now();
+        this.dueDate = (dueDate != null) ? dueDate : LocalDate.now();
+        this.movementType = movementType;
+        this.parcelNumber = parcelNumber;
+        this.createdBy = createdBy;
         this.document = document;
     }
+
 
     /**
      * Helper para manter consistência bidirecional
@@ -98,11 +116,4 @@ public class Installment {
         }
     }
 
-    public Installment(BigDecimal amount, LocalDate dueDate, PaymentStatus status, User createdBy, Document document) {
-        this.createdBy = createdBy;
-        this.amount = amount;
-        this.dueDate = dueDate;
-        this.status = status;
-        this.document = document;
-    }
 }

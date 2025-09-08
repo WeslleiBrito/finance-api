@@ -32,7 +32,7 @@ public class UserService {
             throw new EmailAlreadyExistsException(HttpStatus.CONFLICT, dto.email());
         }
 
-        User user = new User(dto.name(), dto.email(), dto.password());
+        User user = new User(dto.name(), dto.email(), passwordEncoder.encode(dto.password()));
 
         User userRepo = userRepository.save(user);
 
