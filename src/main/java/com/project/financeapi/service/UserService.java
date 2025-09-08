@@ -2,6 +2,7 @@ package com.project.financeapi.service;
 
 import com.project.financeapi.dto.user.LoginRequestDTO;
 import com.project.financeapi.dto.user.SignupRequestDTO;
+import com.project.financeapi.dto.user.UpdatePasswordRequestDTO;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.enums.UserStatus;
 import com.project.financeapi.exception.*;
@@ -11,7 +12,6 @@ import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.util.JwtUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 
@@ -21,9 +21,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
+        this.passwordEncoder = passwordEncoder;
     }
 
     public TokenUser signup(SignupRequestDTO dto){
@@ -46,9 +46,14 @@ public class UserService {
         User userExists = userRepository.findByEmail(dto.email())
                 .orElseThrow(() -> new InvalidEmailOrPasswordException("Email ou senha incorreta."));
 
+        System.out.println("Senha recebida: " + dto.password());
+        System.out.println("Hash do banco: " + userExists.getPassword());
+        System.out.println("Teste no Login >>>> " + passwordEncoder.matches(dto.password(), userExists.getPassword()));
+
         if(!passwordEncoder.matches(dto.password(), userExists.getPassword())){
             throw new InvalidEmailOrPasswordException("Email ou senha incorreta.");
         }
+
 
         if(!userExists.getUserStatus().equals(UserStatus.ACTIVATED)){
             throw new AccessBlockedException("O usuário não tem permissão para acessar o APP.");
@@ -59,22 +64,23 @@ public class UserService {
         return new TokenUser(token);
     }
 
-    public TokenUser updatePassword(String tokenUser, String newPassword){
-        System.out.println(tokenUser);
-        if(newPassword.length() < 4){
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "A senha deve ter pelo menos 4 caracteres");
-        }
+    public TokenUser updatePassword(String tokenUser, UpdatePasswordRequestDTO dto){
 
         JwtPayload payload = JwtUtil.extractPayload(tokenUser);
 
         User user = userRepository.findByEmail(payload.email())
                 .orElseThrow(() -> new InvalidEmailOrPasswordException("Email ou senha incorreta."));
 
+
         if(!user.getTokenVersion().equals(payload.tokenVersion())) {
             throw new InvalidJwtException(HttpStatus.FORBIDDEN, "É necessário refazer o login.");
         }
+        String passwordEncrypted = passwordEncoder.encode(dto.password());
 
-        user.setPassword(passwordEncoder.encode(newPassword));
+        System.out.println("\n======================================================================\n");
+        System.out.println("Senha recebia no update: " + dto.password());
+        System.out.println("Hash criado >>> " + passwordEncrypted);
+        user.setPassword(passwordEncrypted);
         user.setTokenVersion(user.getTokenVersion() + 1);
 
         String token = JwtUtil.generateToken(user);

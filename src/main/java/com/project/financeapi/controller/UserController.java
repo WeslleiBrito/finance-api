@@ -2,6 +2,7 @@ package com.project.financeapi.controller;
 
 import com.project.financeapi.dto.user.LoginRequestDTO;
 import com.project.financeapi.dto.user.SignupRequestDTO;
+import com.project.financeapi.dto.user.UpdatePasswordRequestDTO;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.dto.user.TokenUser;
 import com.project.financeapi.service.UserService;
@@ -30,8 +31,8 @@ public class UserController {
 
     @PatchMapping("/update-password")
     public ResponseEntity<TokenUser> updatePassword(@RequestHeader("X-Auth-Token") String token,
-                                                    @RequestBody String newPassword){
-        TokenUser tokenUser = userService.updatePassword(token, newPassword);
+                                                    @Valid @RequestBody UpdatePasswordRequestDTO dto){
+        TokenUser tokenUser = userService.updatePassword(token, dto);
         return ResponseEntity.status(HttpStatus.OK).body(tokenUser);
     }
 }
