@@ -9,10 +9,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+
 
 @Entity
 @Table(name = "users")
@@ -22,7 +21,8 @@ public class User {
     @Id
     @Column(name = "id", length = 36)
     @Setter(AccessLevel.PRIVATE)
-    private String id = UUID.randomUUID().toString();
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @NotBlank(message = "O nome é obrigatório")
     @Column(name = "nome", nullable = false)

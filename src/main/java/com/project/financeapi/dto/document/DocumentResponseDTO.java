@@ -1,6 +1,7 @@
 package com.project.financeapi.dto.document;
 
 import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
+import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.enums.MovementType;
 
 import java.math.BigDecimal;
@@ -16,5 +17,6 @@ public record DocumentResponseDTO(
     Integer quantityInstallments,
     BigDecimal totalPaid,
     BigDecimal remainingBalance,
+    ResponseUserDTO createdBy,
     List<InstallmentResponseDTO> installments
 ) {}

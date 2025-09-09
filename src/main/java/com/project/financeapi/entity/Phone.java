@@ -8,7 +8,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.UUID;
 
 @Entity
 @Table (name = "phones")
@@ -20,7 +19,8 @@ public class Phone {
     @Id
     @Setter(AccessLevel.NONE)
     @Column(length = 36)
-    private String id = UUID.randomUUID().toString();
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(nullable = false, length = 20)
     private String number;

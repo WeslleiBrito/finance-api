@@ -14,7 +14,7 @@ import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+
 
 
 @Getter
@@ -29,7 +29,8 @@ public abstract class PersonBase {
     @Setter(AccessLevel.NONE)
     @ToString.Include
     @Column(length = 36)
-    private String id = UUID.randomUUID().toString();
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(nullable = false, length = 150)
     @ToString.Include

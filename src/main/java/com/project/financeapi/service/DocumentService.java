@@ -5,6 +5,7 @@ import com.project.financeapi.dto.Installment.InstallmentDTO;
 import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
 import com.project.financeapi.dto.document.CreateDocumentRequestDTO;
 import com.project.financeapi.dto.document.DocumentResponseDTO;
+import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.Document;
 import com.project.financeapi.entity.Installment;
@@ -124,6 +125,11 @@ public class DocumentService {
                 document.getQuantityInstallments(),
                 document.getTotalPaid(),
                 document.getRemainingBalance(),
+                new ResponseUserDTO(
+                        document.getCreatedBy().getId(),
+                        document.getCreatedBy().getName(),
+                        document.getCreatedBy().getUserStatus()
+                ),
                 installmentDTOs
         );
     }
