@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+
 
 
 @Getter
@@ -24,7 +24,8 @@ public abstract class AccountBase {
 
     @Id
     @Column(length = 36)
-    private String id = UUID.randomUUID().toString();
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Setter
     @Column(nullable = false, length = 100)

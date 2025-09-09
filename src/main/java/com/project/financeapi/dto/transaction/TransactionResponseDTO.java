@@ -1,5 +1,6 @@
 package com.project.financeapi.dto.transaction;
 
+import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.enums.MovementType;
 
 
@@ -17,6 +18,7 @@ public record TransactionResponseDTO(
         LocalDate issueDate,
         LocalDate dueDate,
         LocalDate paymentDate,
+        ResponseUserDTO createdBy,
         String observations,
         LocalDateTime createdAt
 ) {}

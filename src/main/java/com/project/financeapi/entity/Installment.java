@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "installments")
@@ -21,7 +20,8 @@ public class Installment {
 
     @Id
     @Column(length = 36)
-    private String id = UUID.randomUUID().toString();
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
@@ -50,7 +50,7 @@ public class Installment {
 
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "document_id", nullable = false)
+    @JoinColumn(name = "documentId", nullable = false)
     private Document document;
 
     // Transações que foram feitas para quitar essa parcela

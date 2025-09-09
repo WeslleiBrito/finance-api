@@ -3,6 +3,7 @@ package com.project.financeapi.service;
 import com.project.financeapi.dto.transaction.TransactionDTO;
 import com.project.financeapi.dto.transaction.TransactionRequestDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
+import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.Document;
 import com.project.financeapi.entity.Installment;
@@ -137,6 +138,11 @@ public class TransactionService {
                     item.getIssueDate(),
                     item.getDueDate(),
                     item.getPaymentDate(),
+                    new ResponseUserDTO(
+                            item.getCreatedBy().getId(),
+                            item.getCreatedBy().getName(),
+                            item.getCreatedBy().getUserStatus()
+                    ),
                     item.getObservations() != null ? item.getObservations() : "",
                     item.getCreatedAt()
             );
