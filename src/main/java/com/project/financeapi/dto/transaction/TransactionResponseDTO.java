@@ -1,8 +1,7 @@
 package com.project.financeapi.dto.transaction;
 
 import com.project.financeapi.enums.MovementType;
-import com.project.financeapi.enums.PaymentStatus;
-import com.project.financeapi.enums.TransactionType;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

@@ -2,7 +2,9 @@ package com.project.financeapi.service;
 
 import com.project.financeapi.dto.Installment.CreateInstallmentDTO;
 import com.project.financeapi.dto.Installment.InstallmentDTO;
+import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
 import com.project.financeapi.dto.document.CreateDocumentRequestDTO;
+import com.project.financeapi.dto.document.DocumentResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.Document;
 import com.project.financeapi.entity.Installment;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class DocumentService {
@@ -91,4 +94,38 @@ public class DocumentService {
 
 
     }
+
+    public List<DocumentResponseDTO> findAll(String token) {
+
+        JwtPayload payload = JwtUtil.extractPayload(token);
+
+        User user = userRepository.findById(payload.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
+
+
+        List<Document> documents = documentRepository.findByCreatedBy(user);
+
+        return documents.stream()
+                .map(this::toDocumentResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    public DocumentResponseDTO toDocumentResponseDTO(Document document) {
+        List<InstallmentResponseDTO> installmentDTOs = document.getInstallments().stream()
+                .map(installmentService::toInstallmentResponseDTO) // chama o método do InstallmentService
+                .collect(Collectors.toList());
+
+        return new DocumentResponseDTO(
+                document.getId(),
+                document.getDescription(),
+                document.getTotalAmount(),
+                document.getMovementType(),
+                document.getIssueDate(),
+                document.getQuantityInstallments(),
+                document.getTotalPaid(),
+                document.getRemainingBalance(),
+                installmentDTOs
+        );
+    }
+
 }

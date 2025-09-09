@@ -2,6 +2,10 @@ package com.project.financeapi.service;
 
 import com.project.financeapi.dto.Installment.CreateInstallmentDTO;
 import com.project.financeapi.dto.Installment.InstallmentDTO;
+import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
+import com.project.financeapi.dto.document.DocumentResponseDTO;
+import com.project.financeapi.dto.transaction.TransactionResponseDTO;
+import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.Document;
 import com.project.financeapi.entity.Installment;
@@ -66,5 +70,42 @@ public class InstallmentService {
         }
 
         return List.of(installmentsList);
+    }
+
+    public InstallmentResponseDTO toInstallmentResponseDTO(Installment installment) {
+
+        // converter as transações da parcela
+        List<TransactionResponseDTO> transactionDTOs = installment.getTransactions().stream()
+                .map(transaction -> new TransactionResponseDTO(
+                        transaction.getId(),
+                        transaction.getInstallment().getId(),
+                        transaction.getInstallment().getDocument().getId(),
+                        transaction.getAccount().getId(),
+                        transaction.getMovementType(),
+                        transaction.getAmount(),
+                        transaction.getInstallment().getDocument().getIssueDate(),
+                        transaction.getInstallment().getDueDate(),
+                        transaction.getPaymentDate(),
+                        transaction.getObservations(),
+                        transaction.getCreatedAt()
+                ))
+                .toList();
+
+        return new InstallmentResponseDTO(
+                installment.getId(),
+                installment.getAmount(),
+                installment.getCreatedAt(),
+                installment.getDueDate(),
+                installment.getMovementType(),
+                installment.getStatus(),
+                installment.getParcelNumber(),
+                new ResponseUserDTO(
+                        installment.getCreatedBy().getId(),
+                        installment.getCreatedBy().getName(),
+                        installment.getCreatedBy().getUserStatus()
+                ),
+                installment.getDocument().getId(),
+                transactionDTOs
+        );
     }
 }
