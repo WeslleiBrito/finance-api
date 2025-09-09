@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 
 public class InvalidEmailOrPasswordException extends BusinessException {
 
-    public InvalidEmailOrPasswordException(HttpStatus httpStatus, String message) {
-        super(httpStatus, message);
+    public InvalidEmailOrPasswordException( String message) {
+        super(HttpStatus.NOT_FOUND, message);
     }
 }

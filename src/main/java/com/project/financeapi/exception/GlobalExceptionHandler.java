@@ -1,6 +1,6 @@
 package com.project.financeapi.exception;
 
-import com.project.financeapi.dto.ApiErrorResponse;
+import com.project.financeapi.dto.exception.ApiErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

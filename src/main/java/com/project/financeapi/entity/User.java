@@ -1,21 +1,28 @@
 package com.project.financeapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.project.financeapi.entity.base.AccountBase;
+import com.project.financeapi.enums.UserStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder @ToString
+@Getter @Setter
 public class User {
 
     @Id
-    @Column(name = "id")
-    private String id;
+    @Column(name = "id", length = 36)
+    @Setter(AccessLevel.PRIVATE)
+    private String id = UUID.randomUUID().toString();
 
     @NotBlank(message = "O nome é obrigatório")
     @Column(name = "nome", nullable = false)
@@ -23,17 +30,48 @@ public class User {
 
     @Email(message = "O email informado é inválido")
     @Column(name="email", unique = true, nullable = false)
+    @Setter(AccessLevel.PRIVATE)
+    @JsonIgnore
     private String email;
 
     @NotBlank(message = "A senha é obrigatória")
     @Size(min = 4, message = "A senha deve ter pelo menos 4 caracteres")
     @Column(name = "password", nullable = false)
-    private String password; // store hashed
+    @JsonIgnore
+    private String password;
 
-    @Column(name = "token_version")
+    @Column(name = "token_version", nullable = false)
+    @JsonIgnore
     private Integer tokenVersion = 0;
 
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Account> accounts;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_status", nullable = false)
+    private UserStatus userStatus = UserStatus.ACTIVATED;
 
+    @JsonBackReference
+    @Setter(AccessLevel.PRIVATE)
+    @OneToMany(mappedBy = "accountHolder", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AccountBase> accounts = new ArrayList<>();
+
+
+    public User(String name, String email, String password) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+    }
+
+    public User() {
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                ", tokenVersion=" + tokenVersion +
+                ", userStatus=" + userStatus +
+                ", accounts=" + accounts +
+                '}';
+    }
 }

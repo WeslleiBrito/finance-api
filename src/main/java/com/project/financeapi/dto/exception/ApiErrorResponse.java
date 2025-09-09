@@ -1,4 +1,4 @@
-package com.project.financeapi.dto;
+package com.project.financeapi.dto.exception;
 
 import java.time.LocalDateTime;
 import java.util.Map;
