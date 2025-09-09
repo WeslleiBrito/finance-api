@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "documents")
@@ -20,9 +21,8 @@ import java.util.List;
 public class Document {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
-
+    @Column(length = 36)
+    private String id = UUID.randomUUID().toString();
 
     @Column(nullable = false, length = 20)
     private String description;
@@ -30,6 +30,7 @@ public class Document {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "movement_type", nullable = false)
     private MovementType movementType;
 

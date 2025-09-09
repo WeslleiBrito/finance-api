@@ -13,6 +13,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -21,9 +22,9 @@ import java.time.LocalDateTime;
 public class Transaction {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 36)
     @Setter(AccessLevel.PRIVATE)
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

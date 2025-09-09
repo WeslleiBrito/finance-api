@@ -12,6 +12,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -19,10 +20,9 @@ import java.util.List;
 public class User {
 
     @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", length = 36)
     @Setter(AccessLevel.PRIVATE)
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
     @NotBlank(message = "O nome é obrigatório")
     @Column(name = "nome", nullable = false)
@@ -44,6 +44,7 @@ public class User {
     @JsonIgnore
     private Integer tokenVersion = 0;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "user_status", nullable = false)
     private UserStatus userStatus = UserStatus.ACTIVATED;
 

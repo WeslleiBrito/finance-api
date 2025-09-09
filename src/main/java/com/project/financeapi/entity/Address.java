@@ -7,16 +7,20 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "addresses")
 @Getter
 @Setter
 public class Address {
 
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.NONE)
-    private String id;
+    @Column(length = 36)
+    private String id = UUID.randomUUID().toString();
+
 
     @Column(nullable = false, length = 150)
     private String street;

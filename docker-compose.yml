@@ -1,37 +1,21 @@
 
 services:
-  app:
-    build: .
-    container_name: finance-api
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env
-    depends_on:
-      - db
-    restart: unless-stopped
-    networks:
-      - finance-net
-
   db:
     image: postgres:15
     container_name: finance-db
     environment:
-      POSTGRES_USER: finance_user
-      POSTGRES_PASSWORD: finance_pass
-      POSTGRES_DB: finance_db
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    networks:
-      - finance-net
+      POSTGRES_DB: financeapi
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
     ports:
       - "5432:5432"
 
-volumes:
-  postgres_data:
-    driver: local
-
-networks:
-  finance-net:
-    driver: bridge
+  app:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/financeapi
+      DB_USER: admin
+      DB_PASS: admin
+      DB_DRIVER: org.postgresql.Driver
+    depends_on:
+      - db

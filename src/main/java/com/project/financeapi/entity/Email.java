@@ -8,17 +8,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Entity
-@Table(name = "emailList")
+@Table(name = "emails")
 @NoArgsConstructor
 @Getter
 @Setter
 public class  Email {
 
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.PRIVATE)
-    private String id;
+    @Column(length = 36)
+    private String id = UUID.randomUUID().toString();
+
 
     @Column(nullable = false, length = 150, unique = true)
     private String address;
