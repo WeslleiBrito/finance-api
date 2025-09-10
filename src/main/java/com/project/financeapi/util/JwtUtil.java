@@ -7,17 +7,31 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import io.github.cdimascio.dotenv.Dotenv;
 
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
-    private static final Dotenv dotenv = Dotenv.load();
-    private static final String secret = dotenv.get("JWT_SECRET");
-    private static final long expiration = Long.parseLong(dotenv.get("JWT_EXPIRATION"));
-    private static final Key key = Keys.hmacShaKeyFor(secret.getBytes());
+
+    private static final String SECRET = System.getenv("JWT_SECRET");
+    private static final String EXPIRATION_ENV = System.getenv("JWT_EXPIRATION");
+
+    private static final long EXPIRATION;
+    private static final Key KEY;
+
+    static {
+        if (SECRET == null || SECRET.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET não definido no ambiente!");
+        }
+
+        if (EXPIRATION_ENV == null || EXPIRATION_ENV.isBlank()) {
+            throw new IllegalStateException("JWT_EXPIRATION não definido no ambiente!");
+        }
+
+        EXPIRATION = Long.parseLong(EXPIRATION_ENV);
+        KEY = Keys.hmacShaKeyFor(SECRET.getBytes());
+    }
 
     public static String generateToken(User user) {
         return Jwts.builder()
@@ -25,30 +39,28 @@ public class JwtUtil {
                 .claim("id", user.getId())
                 .claim("tokenVersion", user.getTokenVersion())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .signWith(KEY, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public static Claims validateToken(String token) {
         try {
-
             return Jwts.parserBuilder()
-                    .setSigningKey(key)
+                    .setSigningKey(KEY)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
 
-        }catch (ExpiredJwtException e) {
+        } catch (ExpiredJwtException e) {
             throw new InvalidJwtException(HttpStatus.UNAUTHORIZED, "O token expirou, faça um novo login.");
-        }catch (MalformedJwtException e) {
+        } catch (MalformedJwtException e) {
             throw new InvalidJwtException(HttpStatus.BAD_REQUEST, "O token está mal formatado.");
-        }catch (SignatureException  e) {
+        } catch (SignatureException e) {
             throw new InvalidJwtException(HttpStatus.FORBIDDEN, "A assinatura do token é inválida.");
-        }catch (IllegalArgumentException  e) {
+        } catch (IllegalArgumentException e) {
             throw new InvalidJwtException(HttpStatus.BAD_REQUEST, "O token não pode ser vazio.");
         }
-
     }
 
     public static JwtPayload extractPayload(String token) {

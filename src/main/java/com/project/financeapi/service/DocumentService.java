@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -111,6 +112,22 @@ public class DocumentService {
                 .collect(Collectors.toList());
     }
 
+    public DocumentResponseDTO findById(String token, String id) {
+
+        JwtPayload payload = JwtUtil.extractPayload(token);
+
+        User user = userRepository.findById(payload.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
+
+        Document document = documentRepository.findByIdAndCreatedBy(id, user).orElseThrow(() -> new RuntimeException(
+                "O documento informado não exite."
+        ));
+
+        return toDocumentResponseDTO(
+                document
+        );
+
+    }
     public DocumentResponseDTO toDocumentResponseDTO(Document document) {
         List<InstallmentResponseDTO> installmentDTOs = document.getInstallments().stream()
                 .map(installmentService::toInstallmentResponseDTO) // chama o método do InstallmentService
@@ -133,5 +150,7 @@ public class DocumentService {
                 installmentDTOs
         );
     }
+
+
 
 }
