@@ -19,7 +19,7 @@ public record InstallmentResponseDTO(
         Integer parcelNumber,
         ResponseUserDTO createdBy,
         String documentId,
-        List<TransactionResponseDTO> transactionResponse
+        List<TransactionResponseDTO> transactions
 
 ) {
 }

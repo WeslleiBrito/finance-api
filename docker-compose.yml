@@ -9,13 +9,30 @@ services:
       POSTGRES_PASSWORD: admin
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - finance_network
 
   app:
     build: .
+    container_name: finance-app
     environment:
-      DB_URL: jdbc:postgresql://db:5432/financeapi
-      DB_USER: admin
-      DB_PASS: admin
-      DB_DRIVER: org.postgresql.Driver
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/financeapi
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      JWT_SECRET: aHOgqS8hoTtca6mF58hGsNRDnSacFc29KWZ4upVKE7Ukzv33ig
+      JWT_EXPIRATION: 86400000
+    ports:
+      - "8080:8080"
     depends_on:
       - db
+    networks:
+      - finance_network
+
+volumes:
+  postgres_data:
+
+networks:
+  finance_network:

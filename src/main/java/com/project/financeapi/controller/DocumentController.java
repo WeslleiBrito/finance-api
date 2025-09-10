@@ -35,6 +35,16 @@ public class DocumentController {
             @RequestHeader("X-Auth-Token") String token) {
         List<DocumentResponseDTO> documents = documentService.findAll(token);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(documents);
+        return ResponseEntity.status(HttpStatus.OK).body(documents);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<DocumentResponseDTO> findById(
+            @RequestHeader("X-Auth-Token") String token,
+            @PathVariable String id) {
+
+        DocumentResponseDTO document = documentService.findById(token, id);
+
+        return ResponseEntity.status(HttpStatus.OK).body(document);
     }
 }
