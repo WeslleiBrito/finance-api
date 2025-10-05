@@ -28,18 +28,25 @@ public class InstallmentService {
     private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
     private final InstallmentRepository installmentRepository;
+    private final JwtUtil jwtUtil;
 
-    public InstallmentService(UserRepository userRepository, DocumentRepository documentRepository,
-                              InstallmentRepository installmentRepository) {
+    public InstallmentService(
+            UserRepository userRepository,
+            DocumentRepository documentRepository,
+            InstallmentRepository installmentRepository,
+            JwtUtil jwtUtil
+        )
+    {
         this.userRepository = userRepository;
         this.documentRepository = documentRepository;
         this.installmentRepository = installmentRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     @Transactional
     public List<Installment> create(String token, CreateInstallmentDTO dto){
 
-        JwtPayload payload = JwtUtil.extractPayload(token);
+        JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));

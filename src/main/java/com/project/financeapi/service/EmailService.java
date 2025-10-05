@@ -23,17 +23,25 @@ public class EmailService {
     private final EmailRepository emailRepository;
     private final PersonRepository personRepository;
     private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
 
-    public EmailService(PersonRepository personRepository, EmailRepository emailRepository, UserRepository userRepository) {
+    public EmailService(
+            PersonRepository personRepository,
+            EmailRepository emailRepository,
+            UserRepository userRepository,
+            JwtUtil jwtUtil
+        )
+    {
         this.personRepository = personRepository;
         this.emailRepository = emailRepository;
         this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     @Transactional
     public List<Email> create(String token, String personId, List<EmailDTO> listEmail){
 
-        JwtPayload payload = JwtUtil.extractPayload(token);
+        JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));

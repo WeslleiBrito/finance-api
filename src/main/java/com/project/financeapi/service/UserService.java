@@ -20,10 +20,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     public TokenUser signup(SignupRequestDTO dto){
@@ -36,7 +38,7 @@ public class UserService {
 
         User userRepo = userRepository.save(user);
 
-        String token = JwtUtil.generateToken(userRepo);
+        String token = jwtUtil.generateToken(userRepo);
 
         return new TokenUser(token);
     }
@@ -54,14 +56,14 @@ public class UserService {
             throw new AccessBlockedException("O usuário não tem permissão para acessar o APP.");
         }
 
-        String token = JwtUtil.generateToken(userExists);
+        String token = jwtUtil.generateToken(userExists);
 
         return new TokenUser(token);
     }
 
     public TokenUser updatePassword(String tokenUser, UpdatePasswordRequestDTO dto){
 
-        JwtPayload payload = JwtUtil.extractPayload(tokenUser);
+        JwtPayload payload = jwtUtil.extractPayload(tokenUser);
 
         User user = userRepository.findByEmail(payload.email())
                 .orElseThrow(() -> new InvalidEmailOrPasswordException("Email ou senha incorreta."));
@@ -75,7 +77,7 @@ public class UserService {
         user.setPassword(passwordEncrypted);
         user.setTokenVersion(user.getTokenVersion() + 1);
 
-        String token = JwtUtil.generateToken(user);
+        String token = jwtUtil.generateToken(user);
 
         userRepository.save(user);
 

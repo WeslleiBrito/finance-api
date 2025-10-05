@@ -23,18 +23,25 @@ public class AddressService {
     private final PersonRepository personRepository;
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
+    private final JwtUtil jwtUtil;
 
-    public AddressService(PersonRepository personRepository, UserRepository userRepository, AddressRepository addressRepository) {
+    public AddressService(
+            PersonRepository personRepository,
+            UserRepository userRepository,
+            AddressRepository addressRepository,
+            JwtUtil jwtUtil
+    ) {
         this.personRepository = personRepository;
         this.userRepository = userRepository;
         this.addressRepository = addressRepository;
+        this.jwtUtil = jwtUtil;
     }
 
 
     @Transactional
     public List<Address> create(String token, String personId, List<AddressDTO> addressesList) {
 
-        JwtPayload payload = JwtUtil.extractPayload(token);
+        JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));

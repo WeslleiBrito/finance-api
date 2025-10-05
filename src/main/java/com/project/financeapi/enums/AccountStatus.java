@@ -1,6 +1,6 @@
 package com.project.financeapi.enums;
 
 public enum AccountStatus {
-    ACTIVATED,
+    ACTIVE,
     INACTIVATED
 }

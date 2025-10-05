@@ -35,20 +35,27 @@ public class TransactionService {
     private final UserRepository userRepository;
     private final InstallmentRepository installmentRepository;
     private final DocumentRepository documentRepository;
+    private final JwtUtil jwtUtil;
 
-    public TransactionService(TransactionRepository transactionRepository, AccountRepository accountRepository,
-                              UserRepository userRepository, InstallmentRepository installmentRepository,
-                              DocumentRepository documentRepository) {
+    public TransactionService(
+            TransactionRepository transactionRepository,
+            AccountRepository accountRepository,
+            UserRepository userRepository,
+            InstallmentRepository installmentRepository,
+            DocumentRepository documentRepository,
+            JwtUtil jwtUtil
+    ) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.installmentRepository = installmentRepository;
         this.documentRepository = documentRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     @Transactional
     public List<TransactionResponseDTO> create(String token, TransactionRequestDTO dto) {
-        JwtPayload payload = JwtUtil.extractPayload(token);
+        JwtPayload payload = jwtUtil.extractPayload(token);
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
 

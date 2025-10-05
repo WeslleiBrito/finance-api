@@ -1,6 +1,5 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.person.PersonCreateRequestDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.LegalEntity;
@@ -25,21 +24,29 @@ public class PersonService {
     private final AddressService addressService;
     private final PhoneService phoneService;
     private final EmailService emailService;
+    private final JwtUtil jwtUtil;
 
 
-    public PersonService(PersonRepository personRepository, UserRepository userRepository,
-                         AddressService addressService, PhoneService phoneService, EmailService emailService) {
+    public PersonService(
+            PersonRepository personRepository,
+            UserRepository userRepository,
+            AddressService addressService,
+            PhoneService phoneService,
+            EmailService emailService,
+            JwtUtil jwtUtil
+    ) {
         this.personRepository = personRepository;
         this.userRepository = userRepository;
         this.addressService = addressService;
         this.phoneService = phoneService;
         this.emailService = emailService;
+        this.jwtUtil = jwtUtil;
     }
 
     @Transactional
     public PersonBase create(String token, PersonCreateRequestDTO dto){
 
-        JwtPayload payload = JwtUtil.extractPayload(token);
+        JwtPayload payload = jwtUtil.extractPayload(token);
 
         System.out.println(payload);
 

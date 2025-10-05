@@ -5,6 +5,7 @@ import com.project.financeapi.entity.User;
 import com.project.financeapi.exception.InvalidJwtException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -14,40 +15,36 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private static final String SECRET = System.getenv("JWT_SECRET");
-    private static final String EXPIRATION_ENV = System.getenv("JWT_EXPIRATION");
+    private final Key key;
+    private final long expiration;
 
-    private static final long EXPIRATION;
-    private static final Key KEY;
-
-    static {
-        if (SECRET == null || SECRET.isBlank()) {
-            throw new IllegalStateException("JWT_SECRET não definido no ambiente!");
+    public JwtUtil(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration:86400000}") long expiration
+    ) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET não foi definido no ambiente!");
         }
 
-        if (EXPIRATION_ENV == null || EXPIRATION_ENV.isBlank()) {
-            throw new IllegalStateException("JWT_EXPIRATION não definido no ambiente!");
-        }
-
-        EXPIRATION = Long.parseLong(EXPIRATION_ENV);
-        KEY = Keys.hmacShaKeyFor(SECRET.getBytes());
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.expiration = expiration;
     }
 
-    public static String generateToken(User user) {
+    public String generateToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("id", user.getId())
                 .claim("tokenVersion", user.getTokenVersion())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
-                .signWith(KEY, SignatureAlgorithm.HS256)
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public static Claims validateToken(String token) {
+    public Claims validateToken(String token) {
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(KEY)
+                    .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
@@ -63,7 +60,7 @@ public class JwtUtil {
         }
     }
 
-    public static JwtPayload extractPayload(String token) {
+    public JwtPayload extractPayload(String token) {
         Claims claims = validateToken(token);
         String email = claims.getSubject();
         String id = claims.get("id", String.class);

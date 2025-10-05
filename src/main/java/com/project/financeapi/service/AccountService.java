@@ -1,9 +1,13 @@
 package com.project.financeapi.service;
 
 import com.project.financeapi.dto.account.CreateAccountRequestDTO;
+import com.project.financeapi.dto.account.ResponseAccountDTO;
+import com.project.financeapi.dto.account.ResponseDeactivateAccountDTO;
 import com.project.financeapi.dto.account.UpdateAccountRequestDTO;
+import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
+import com.project.financeapi.enums.AccountStatus;
 import com.project.financeapi.enums.AccountType;
 import com.project.financeapi.enums.TransactionType;
 import com.project.financeapi.entity.base.AccountBase;
@@ -18,6 +22,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -26,20 +32,23 @@ public class AccountService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
 
     public AccountService(TransactionRepository transactionRepository,
                           AccountRepository accountRepository,
-                          UserRepository userRepository
+                          UserRepository userRepository,
+                          JwtUtil jwtUtil
     ) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     @Transactional
     public AccountBase create(String token, CreateAccountRequestDTO dto) {
 
-        JwtPayload payload = JwtUtil.extractPayload(token);
+        JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
@@ -61,11 +70,14 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountBase update(String token, String accountId, UpdateAccountRequestDTO dto) {
+    public AccountBase update(String token, String id, UpdateAccountRequestDTO dto) {
 
-        JwtPayload userToken = JwtUtil.extractPayload(token);
+        JwtPayload userToken = jwtUtil.extractPayload(token);
 
-        AccountBase account = accountRepository.findById(accountId)
+        userRepository.findById(userToken.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+
+        AccountBase account = accountRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada"));
 
 
@@ -88,42 +100,53 @@ public class AccountService {
         return accountRepository.save(account);
     }
 
-//    @Transactional
-//    public void transfer(
-//            String token,
-//            AccountBase from,
-//            AccountBase to,
-//            BigDecimal amount,
-//            LocalDate issueDate,
-//            LocalDate dueDate,
-//            LocalDate paymentDate,
-//            String observations
-//    )
-//    {
-//
-//        JwtPayload payload = JwtUtil.extractPayload(token);
-//
-//        User createdBy = userRepository.findById(payload.id()).orElseThrow(
-//                () -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado")
-//        );
-//
-//        boolean isChecking = from.getType().equals(AccountType.CHECKING);
-//
-//        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-//            throw new BusinessException(HttpStatus.BAD_REQUEST, "O valor da transferência deve ser positivo.");
-//        }
-//
-//        if (!isChecking && from.getBalance().compareTo(amount) < 0) {
-//            throw new BusinessException(HttpStatus.BAD_REQUEST, "Saldo insuficiente na conta de origem.");
-//        }
-//
-//        transactionRepository.save(new Transaction(createdBy, from, TransactionType.TRANSFER_OUT,
-//                amount.negate(), paymentDate,
-//                issueDate, dueDate, (observations != null ? observations + "\n" : "") +
-//                "Transferência para " + to.getName()));
-//        transactionRepository.save(new Transaction(createdBy, to, TransactionType.TRANSFER_IN, amount,
-//                issueDate, dueDate, paymentDate,
-//                (observations != null ? observations + "\n" : "") + "Transferência recebida de " + from.getName()));
-//    }
+    public List<ResponseAccountDTO> findAll(String token) {
+
+        JwtPayload userToken = jwtUtil.extractPayload(token);
+
+        User user = userRepository.findById(userToken.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+
+        List<AccountBase> accounts = accountRepository.findByAccountHolder(user);
+
+        return accounts.stream().filter(accountBase -> accountBase.getStatus() == AccountStatus.ACTIVE)
+                .map(account -> new ResponseAccountDTO(
+                account.getId(),
+                account.getName(),
+                account.getType(),
+                account.getBalance(),
+                account.getStatus(),
+                new ResponseUserDTO(
+                        account.getAccountHolder().getId(),
+                        account.getAccountHolder().getName(),
+                        account.getAccountHolder().getUserStatus()
+                )
+        )).collect(Collectors.toList());
+
+    }
+
+    public ResponseDeactivateAccountDTO deactivateAccount(String token, String id) {
+
+        JwtPayload userToken = jwtUtil.extractPayload(token);
+
+        User user = userRepository.findById(userToken.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+
+        AccountBase account = accountRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
+
+        if (!account.getAccountHolder().equals(user)) {
+            throw new RuntimeException("Você não tem permissão para inativar esta conta.");
+        }
+
+        account.setStatus(AccountStatus.INACTIVATED);
+
+        accountRepository.save(account);
+
+        return new ResponseDeactivateAccountDTO(
+                account.getId(),
+                "A conta " + account.getName() + " foi desativada com sucesso."
+        );
+    }
 
 }

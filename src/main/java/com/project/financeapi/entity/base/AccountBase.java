@@ -39,7 +39,7 @@ public abstract class AccountBase {
     @Setter
     @Enumerated(EnumType.STRING)
     @Column(name = "account_status", nullable = false)
-    private AccountStatus status = AccountStatus.ACTIVATED;
+    private AccountStatus status = AccountStatus.ACTIVE;
 
     @Column(name = "initial_value", nullable = false)
     private BigDecimal initialValue;

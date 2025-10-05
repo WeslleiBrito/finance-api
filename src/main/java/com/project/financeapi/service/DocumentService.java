@@ -31,22 +31,25 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final InstallmentService installmentService;
     private final AccountRepository accountRepository;
+    private final JwtUtil jwtUtil;
 
     public DocumentService(UserRepository userRepository, PersonRepository personRepository,
                            DocumentRepository documentRepository, InstallmentService installmentService,
-                           AccountRepository accountRepository
+                           AccountRepository accountRepository,
+                           JwtUtil jwtUtil
     ) {
         this.userRepository = userRepository;
         this.personRepository = personRepository;
         this.documentRepository = documentRepository;
         this.installmentService = installmentService;
         this.accountRepository = accountRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     @Transactional
     public Document create(String token, CreateDocumentRequestDTO dto){
 
-        JwtPayload payload = JwtUtil.extractPayload(token);
+        JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
@@ -99,7 +102,7 @@ public class DocumentService {
 
     public List<DocumentResponseDTO> findAll(String token) {
 
-        JwtPayload payload = JwtUtil.extractPayload(token);
+        JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
@@ -114,7 +117,7 @@ public class DocumentService {
 
     public DocumentResponseDTO findById(String token, String id) {
 
-        JwtPayload payload = JwtUtil.extractPayload(token);
+        JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));

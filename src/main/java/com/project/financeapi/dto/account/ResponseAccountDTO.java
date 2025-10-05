@@ -1,25 +1,19 @@
 package com.project.financeapi.dto.account;
 
 import com.project.financeapi.dto.user.ResponseUserDTO;
-import com.project.financeapi.entity.Address;
-import com.project.financeapi.entity.Email;
-import com.project.financeapi.entity.Phone;
+import com.project.financeapi.enums.AccountStatus;
+import com.project.financeapi.enums.AccountType;
 
-import java.util.List;
+import java.math.BigDecimal;
+
 
 public record ResponseAccountDTO (
   String id,
   String name,
-  String personType,
-  String tradeName,
-  String cnpj,
-  String nickname,
-  String cpf,
-  ResponseUserDTO createdBy,
-  List<Phone> phones,
-  List<Email> emails,
-  List<Address> addresses
-
+  AccountType type,
+  BigDecimal balance,
+  AccountStatus status,
+  ResponseUserDTO accountHolder
 ) {
 
 }

@@ -25,19 +25,24 @@ public class PhoneService {
     private final PersonRepository personRepository;
     private final UserRepository userRepository;
     private final PhoneRepository phoneRepository;
+    private final JwtUtil jwtUtil;
 
-    public PhoneService(PersonRepository personRepository,
-                        UserRepository userRepository,
-                        PhoneRepository phoneRepository) {
+    public PhoneService(
+            PersonRepository personRepository,
+            UserRepository userRepository,
+            PhoneRepository phoneRepository,
+            JwtUtil jwtUtil
+    ) {
         this.personRepository = personRepository;
         this.userRepository = userRepository;
         this.phoneRepository = phoneRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     @Transactional
     public List<Phone> create(String token, String personId, List<PhoneDTO> phoneList){
 
-        JwtPayload payload = JwtUtil.extractPayload(token);
+        JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
