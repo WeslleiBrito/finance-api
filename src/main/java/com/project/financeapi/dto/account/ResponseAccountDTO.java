@@ -12,8 +12,7 @@ public record ResponseAccountDTO (
   String name,
   AccountType type,
   BigDecimal balance,
-  AccountStatus status,
-  ResponseUserDTO accountHolder
+  AccountStatus status
 ) {
 
 }

@@ -4,12 +4,9 @@ import com.project.financeapi.dto.account.CreateAccountRequestDTO;
 import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.account.ResponseDeactivateAccountDTO;
 import com.project.financeapi.dto.account.UpdateAccountRequestDTO;
-import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.enums.AccountStatus;
-import com.project.financeapi.enums.AccountType;
-import com.project.financeapi.enums.TransactionType;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.AccountRepository;
@@ -19,9 +16,6 @@ import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -115,14 +109,32 @@ public class AccountService {
                 account.getName(),
                 account.getType(),
                 account.getBalance(),
-                account.getStatus(),
-                new ResponseUserDTO(
-                        account.getAccountHolder().getId(),
-                        account.getAccountHolder().getName(),
-                        account.getAccountHolder().getUserStatus()
-                )
+                account.getStatus()
         )).collect(Collectors.toList());
 
+    }
+
+    public ResponseAccountDTO findById(String token, String id) {
+
+        JwtPayload userToken = jwtUtil.extractPayload(token);
+
+        User user = userRepository.findById(userToken.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+
+        AccountBase account = accountRepository.findByAccountHolderAndId(user, id)
+                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
+
+        if (!account.getAccountHolder().equals(user)) {
+            throw new RuntimeException("Verifique o id informado, conta não localizada.");
+        }
+
+        return new ResponseAccountDTO(
+                account.getId(),
+                account.getName(),
+                account.getType(),
+                account.getBalance(),
+                account.getStatus()
+        );
     }
 
     public ResponseDeactivateAccountDTO deactivateAccount(String token, String id) {

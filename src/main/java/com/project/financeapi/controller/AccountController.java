@@ -60,4 +60,14 @@ public class AccountController {
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(account);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseAccountDTO> getById(
+            @PathVariable String id,
+            @RequestHeader("X-Auth-Token") String token
+    ){
+        ResponseAccountDTO account = accountService.findById(token, id);
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(account);
+    }
 }
