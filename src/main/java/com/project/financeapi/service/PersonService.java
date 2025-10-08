@@ -1,6 +1,16 @@
 package com.project.financeapi.service;
 
+import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
+import com.project.financeapi.dto.account.ResponseAccountDTO;
+import com.project.financeapi.dto.address.ResponseAddressDTO;
+import com.project.financeapi.dto.document.DocumentResponseDTO;
+import com.project.financeapi.dto.email.ResponseEmailDTO;
 import com.project.financeapi.dto.person.PersonCreateRequestDTO;
+import com.project.financeapi.dto.person.ResponseFinancialPersonDTO;
+import com.project.financeapi.dto.person.ResponsePersonDTO;
+import com.project.financeapi.dto.phone.ResponsePhoneDTO;
+import com.project.financeapi.dto.transaction.TransactionResponseDTO;
+import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.LegalEntity;
 import com.project.financeapi.entity.PhysicalPerson;
@@ -16,6 +26,9 @@ import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PersonService {
@@ -47,8 +60,6 @@ public class PersonService {
     public PersonBase create(String token, PersonCreateRequestDTO dto){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
-
-        System.out.println(payload);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
@@ -133,5 +144,104 @@ public class PersonService {
         return personRepository.findById(person.getId()).orElseThrow(
                 () -> new BusinessException(HttpStatus.NOT_FOUND, "A pessoa informada não existe.")
         );
+    }
+
+    public List<ResponsePersonDTO> findAll(String token){
+
+        JwtPayload payload = jwtUtil.extractPayload(token);
+
+        User user = userRepository.findById(payload.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+
+
+        List<ResponsePersonDTO> persons = personRepository.findByCreatedBy(user)
+                .stream()
+                .map(person -> new ResponsePersonDTO(
+                        person.getId(),
+                        person.getName(),
+                        person.getPersonType(),
+                        person instanceof PhysicalPerson ? ((PhysicalPerson) person).getCpf() : null,
+                        person instanceof LegalEntity ? ((LegalEntity) person).getCnpj() : null,
+                        person.getPhones().stream().map(phone -> new ResponsePhoneDTO(
+                                phone.getId(),
+                                phone.getNumber(),
+                                phone.getType()
+                        )).collect(Collectors.toList()),
+                        person.getEmails().stream().map(email -> new ResponseEmailDTO(
+                                email.getId(),
+                                email.getAddress()
+                        )).collect(Collectors.toList()),
+                        person.getAddresses().stream().map(address -> new ResponseAddressDTO(
+                                address.getId(),
+                                address.getStreet(),
+                                address.getNumber(),
+                                address.getNeighborhood(),
+                                address.getCity(),
+                                address.getState(),
+                                address.getZipCode(),
+                                address.getComplement()
+                        )).collect(Collectors.toList()),
+                        new ResponseFinancialPersonDTO(
+                                person.getInvoices().stream().map(document -> new DocumentResponseDTO(
+                                        document.getId(),
+                                        document.getIssueDate(),
+                                        document.getStatus(),
+                                        document.getQuantityInstallments(),
+                                        document.getTotalAmount(),
+                                        document.getTotalPaid(),
+                                        document.getRemainingBalance(),
+                                        new ResponseUserDTO(
+                                                document.getCreatedBy().getId(),
+                                                document.getCreatedBy().getName(),
+                                                document.getCreatedBy().getUserStatus()
+                                        ),
+                                        new ResponseAccountDTO(
+                                                document.getAccount().getId(),
+                                                document.getAccount().getName(),
+                                                document.getAccount().getType(),
+                                                document.getAccount().getBalance(),
+                                                document.getAccount().getStatus()
+                                        ),
+                                        document.getInstallments().stream()
+                                                .map(installment -> new InstallmentResponseDTO(
+                                                        installment.getId(),
+                                                        installment.getAmount(),
+                                                        installment.getCreatedAt(),
+                                                        installment.getDueDate(),
+                                                        installment.getMovementType(),
+                                                        installment.getStatus(),
+                                                        installment.getParcelNumber(),
+                                                        installment.getInvoice().getId(),
+                                                        new ResponseUserDTO(
+                                                                installment.getCreatedBy().getId(),
+                                                                installment.getCreatedBy().getName(),
+                                                                installment.getCreatedBy().getUserStatus()
+                                                        ),
+                                                        installment.getTransactions().stream().map(transaction -> new TransactionResponseDTO(
+                                                                transaction.getId(),
+                                                                transaction.getInstallment().getId(),
+                                                                transaction.getInstallment().getInvoice().getId(),
+                                                                transaction.getAccount().getId(),
+                                                                transaction.getMovementType(),
+                                                                transaction.getAmount(),
+                                                                transaction.getIssueDate(),
+                                                                transaction.getDueDate(),
+                                                                transaction.getPaymentDate(),
+                                                                new ResponseUserDTO(
+                                                                        transaction.getCreatedBy().getId(),
+                                                                        transaction.getCreatedBy().getName(),
+                                                                        transaction.getCreatedBy().getUserStatus()
+                                                                ),
+                                                                transaction.getObservations(),
+                                                                transaction.getCreatedAt()
+                                                        )).collect(Collectors.toList())
+
+                                                )).collect(Collectors.toList())
+                                )).collect(Collectors.toList())
+                        )
+
+                )).collect(Collectors.toList());
+
+        return persons;
     }
 }

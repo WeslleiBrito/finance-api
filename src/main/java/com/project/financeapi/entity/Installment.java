@@ -50,8 +50,8 @@ public class Installment {
 
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "documentId", nullable = false)
-    private Document document;
+    @JoinColumn(name = "invoice_id", nullable = false)
+    private Invoice invoice;
 
     // Transações que foram feitas para quitar essa parcela
     @JsonBackReference
@@ -60,13 +60,13 @@ public class Installment {
 
     public Installment() {}
 
-    public Installment(BigDecimal amount, LocalDate dueDate, MovementType movementType, Integer parcelNumber, User createdBy, Document document) {
+    public Installment(BigDecimal amount, LocalDate dueDate, MovementType movementType, Integer parcelNumber, User createdBy, Invoice invoice) {
         this.amount = amount;
         this.dueDate = (dueDate != null) ? dueDate : LocalDate.now();
         this.movementType = movementType;
         this.parcelNumber = parcelNumber;
         this.createdBy = createdBy;
-        this.document = document;
+        this.invoice = invoice;
     }
 
 

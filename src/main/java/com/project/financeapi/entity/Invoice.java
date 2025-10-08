@@ -1,5 +1,6 @@
 package com.project.financeapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PersonBase;
@@ -14,25 +15,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "documents")
+@Table(name = "invoice")
 @Getter
 @Setter
-public class Document {
+public class Invoice {
 
     @Id
     @Column(length = 36)
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(nullable = false, length = 20)
-    private String description;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "operation_type_id", nullable = false)
+    private OperationType operationType;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "movement_type", nullable = false)
-    private MovementType movementType;
 
     @Column(nullable = false)
     private LocalDate issueDate = LocalDate.now();
@@ -71,6 +69,7 @@ public class Document {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "person_id", nullable = false)
+    @JsonBackReference
     private PersonBase person; // pode ser cliente ou fornecedor
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -79,16 +78,14 @@ public class Document {
 
 
     // Parcelas deste documento
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Installment> installments = new ArrayList<>();
 
-    public Document() {}
+    public Invoice() {}
 
-    public Document(MovementType movementType, String description, BigDecimal totalAmount,
-                    User createdBy, PersonBase person, AccountBase account
+    public Invoice(BigDecimal totalAmount,
+                   User createdBy, PersonBase person, AccountBase account
     ) {
-        this.movementType = movementType;
-        this.description = description;
         this.totalAmount = totalAmount;
         this.createdBy = createdBy;
         this.person = person;
@@ -115,7 +112,7 @@ public class Document {
      * Adiciona uma parcela ao documento.
      */
     public void addInstallment(Installment installment) {
-        installment.setDocument(this);
+        installment.setInvoice(this);
         this.installments.add(installment);
     }
 

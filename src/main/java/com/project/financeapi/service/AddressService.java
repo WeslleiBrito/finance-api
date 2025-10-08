@@ -58,6 +58,7 @@ public class AddressService {
                     person,
                     address.street(),
                     address.number(),
+                    address.neighborhood(),
                     address.complement(),
                     address.city(),
                     address.state(),

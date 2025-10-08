@@ -5,7 +5,7 @@ import com.project.financeapi.dto.transaction.TransactionRequestDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
 import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.dto.util.JwtPayload;
-import com.project.financeapi.entity.Document;
+import com.project.financeapi.entity.Invoice;
 import com.project.financeapi.entity.Installment;
 import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
@@ -34,7 +34,7 @@ public class TransactionService {
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final InstallmentRepository installmentRepository;
-    private final DocumentRepository documentRepository;
+    private final InvoiceRepository invoiceRepository;
     private final JwtUtil jwtUtil;
 
     public TransactionService(
@@ -42,14 +42,14 @@ public class TransactionService {
             AccountRepository accountRepository,
             UserRepository userRepository,
             InstallmentRepository installmentRepository,
-            DocumentRepository documentRepository,
+            InvoiceRepository invoiceRepository,
             JwtUtil jwtUtil
     ) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.installmentRepository = installmentRepository;
-        this.documentRepository = documentRepository;
+        this.invoiceRepository = invoiceRepository;
         this.jwtUtil = jwtUtil;
     }
 
@@ -92,7 +92,7 @@ public class TransactionService {
                         "Valor informado (" + item.amount() + ") ultrapassa o saldo da parcela (" + remaining + "). Parcela: " + installment.getId());
             }
 
-            TransactionType type = (installment.getMovementType() == MovementType.CREDIT)
+            TransactionType type = (installment.getMovementType() == MovementType.INCOME)
                     ? TransactionType.DEPOSIT
                     : TransactionType.PAYMENT;
 
@@ -103,7 +103,7 @@ public class TransactionService {
                     account,
                     type,
                     item.amount(),
-                    installment.getDocument().getIssueDate(),
+                    installment.getInvoice().getIssueDate(),
                     installment.getDueDate(),
                     paymentDate,
                     item.observations()
@@ -121,11 +121,11 @@ public class TransactionService {
 
         List<Transaction> saved = transactionRepository.saveAll(toPersist);
         installmentRepository.saveAll(installmentsToUpdate);
-        documentRepository.saveAll(
+        invoiceRepository.saveAll(
                 installmentsToUpdate.stream()
-                        .map(Installment::getDocument)
+                        .map(Installment::getInvoice)
                         .distinct()
-                        .peek(Document::updateStatus)
+                        .peek(Invoice::updateStatus)
                         .toList()
         );
 
@@ -138,7 +138,7 @@ public class TransactionService {
             transactionResponse[index] = new TransactionResponseDTO(
                     item.getId(),
                     item.getInstallment().getId(),
-                    item.getInstallment().getDocument().getId(),
+                    item.getInstallment().getInvoice().getId(),
                     item.getAccount().getId(),
                     item.getMovementType(),
                     item.getAmount(),

@@ -2,8 +2,7 @@ package com.project.financeapi.controller;
 
 import com.project.financeapi.dto.document.CreateDocumentRequestDTO;
 import com.project.financeapi.dto.document.DocumentResponseDTO;
-import com.project.financeapi.entity.Document;
-import com.project.financeapi.service.DocumentService;
+import com.project.financeapi.service.InvoiceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,30 +11,30 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/document")
-public class DocumentController {
+@RequestMapping("/api/invoice")
+public class InvoiceController {
 
-    private final DocumentService documentService;
+    private final InvoiceService invoiceService;
 
-    public DocumentController(DocumentService documentService) {
-        this.documentService = documentService;
+    public InvoiceController(InvoiceService invoiceService) {
+        this.invoiceService = invoiceService;
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Document> create(
+    public ResponseEntity<DocumentResponseDTO> create(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CreateDocumentRequestDTO dto) {
-        Document document = documentService.create(token, dto);
+        DocumentResponseDTO invoice = invoiceService.create(token, dto);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(document);
+        return ResponseEntity.status(HttpStatus.CREATED).body(invoice);
     }
 
     @GetMapping()
     public ResponseEntity<List<DocumentResponseDTO>> findAll(
             @RequestHeader("X-Auth-Token") String token) {
-        List<DocumentResponseDTO> documents = documentService.findAll(token);
+        List<DocumentResponseDTO> invoice = invoiceService.findAll(token);
 
-        return ResponseEntity.status(HttpStatus.OK).body(documents);
+        return ResponseEntity.status(HttpStatus.OK).body(invoice);
     }
 
     @GetMapping("/{id}")
@@ -43,8 +42,8 @@ public class DocumentController {
             @RequestHeader("X-Auth-Token") String token,
             @PathVariable String id) {
 
-        DocumentResponseDTO document = documentService.findById(token, id);
+        DocumentResponseDTO invoice = invoiceService.findById(token, id);
 
-        return ResponseEntity.status(HttpStatus.OK).body(document);
+        return ResponseEntity.status(HttpStatus.OK).body(invoice);
     }
 }

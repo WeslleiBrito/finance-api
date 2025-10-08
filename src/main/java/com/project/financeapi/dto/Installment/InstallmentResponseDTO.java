@@ -17,8 +17,8 @@ public record InstallmentResponseDTO(
         MovementType movementType,
         PaymentStatus status,
         Integer parcelNumber,
-        ResponseUserDTO createdBy,
         String documentId,
+        ResponseUserDTO createdBy,
         List<TransactionResponseDTO> transactions
 
 ) {

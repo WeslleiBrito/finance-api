@@ -1,4 +1,10 @@
 package com.project.financeapi.dto.phone;
 
-public record ResponsePhoneDTO() {
+import com.project.financeapi.enums.PhoneType;
+
+public record ResponsePhoneDTO(
+        String id,
+        String number,
+        PhoneType phoneType
+) {
 }
