@@ -1,6 +1,6 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.ResponseDefault;
+import com.project.financeapi.dto.ResponseDefaultDTO;
 import com.project.financeapi.dto.operationGroup.OperationGroupCreateRequestDTO;
 import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.dto.operationGroup.UpdateRequestOperationGroup;
@@ -84,7 +84,7 @@ public class OperationGroupService {
     }
 
     @Transactional
-    public ResponseDefault update(String token, String id, UpdateRequestOperationGroup dto){
+    public ResponseDefaultDTO update(String token, String id, UpdateRequestOperationGroup dto){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
@@ -104,11 +104,11 @@ public class OperationGroupService {
 
         operationGroupRepository.save(operationGroup);
 
-        return new ResponseDefault("Grupo de operação editado com sucesso");
+        return new ResponseDefaultDTO("Grupo de operação editado com sucesso");
     }
 
     @Transactional
-    public ResponseDefault updateStatusOperationGroup(String token, String id, UpdateStatusRequestOperationGroupDTO dto){
+    public ResponseDefaultDTO updateStatusOperationGroup(String token, String id, UpdateStatusRequestOperationGroupDTO dto){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
@@ -129,7 +129,7 @@ public class OperationGroupService {
 
         operationGroupRepository.save(operationGroup);
 
-        return new ResponseDefault("O grupo de operação: " + "[" + operationGroup.getName() + "]" + " foi " +
+        return new ResponseDefaultDTO("O grupo de operação: " + "[" + operationGroup.getName() + "]" + " foi " +
                 (operationGroup.getOperationStatus() == OperationStatus.ACTIVE ? "ATIVADO" : "DESATIVADO")
                 + " com sucesso.");
 

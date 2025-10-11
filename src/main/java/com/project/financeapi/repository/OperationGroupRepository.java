@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface OperationGroupRepository extends JpaRepository<OperationGroup, String> {
     @Query("""
@@ -15,4 +16,7 @@ public interface OperationGroupRepository extends JpaRepository<OperationGroup, 
             ORDER BY g.name
     """)
     List<OperationGroup> findAllByUserOrDefault(@Param("user") User user);
+
+    Optional<OperationGroup> findByCreatedBy(User user);
+
 }

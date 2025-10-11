@@ -1,6 +1,6 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.ResponseDefault;
+import com.project.financeapi.dto.ResponseDefaultDTO;
 import com.project.financeapi.dto.operationGroup.OperationGroupCreateRequestDTO;
 import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.dto.operationGroup.UpdateRequestOperationGroup;
@@ -62,26 +62,26 @@ public class OperationGroupController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<ResponseDefault> update(
+    public ResponseEntity<ResponseDefaultDTO> update(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdateRequestOperationGroup dto,
             @PathVariable String id
     ){
 
-        ResponseDefault response = operationGroupService.update(token, id, dto);
+        ResponseDefaultDTO response = operationGroupService.update(token, id, dto);
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
 
     }
 
     @PutMapping("/update-status/{id}")
-    public ResponseEntity<ResponseDefault> updateStatusOperationGroup(
+    public ResponseEntity<ResponseDefaultDTO> updateStatusOperationGroup(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdateStatusRequestOperationGroupDTO dto,
             @PathVariable String id
     ){
 
-        ResponseDefault response = operationGroupService.updateStatusOperationGroup(token, id, dto);
+        ResponseDefaultDTO response = operationGroupService.updateStatusOperationGroup(token, id, dto);
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
 
