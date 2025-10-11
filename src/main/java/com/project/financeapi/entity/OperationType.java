@@ -33,7 +33,7 @@ public class OperationType {
     private User createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "group_id")
+    @JoinColumn(name = "operation_group_id")
     private OperationGroup group;
 
 }
