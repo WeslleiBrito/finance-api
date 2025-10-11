@@ -73,7 +73,7 @@ public abstract class AccountBase {
 
         return initialValue.add(transactions.stream()
                 .map(t -> {
-                    if(t.getMovementType() == MovementType.CREDIT){
+                    if(t.getMovementType() == MovementType.INCOME){
                         return t.getAmount();
                     }else{
                         return t.getAmount().negate();

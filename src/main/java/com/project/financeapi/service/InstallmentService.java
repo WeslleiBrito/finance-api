@@ -3,16 +3,14 @@ package com.project.financeapi.service;
 import com.project.financeapi.dto.Installment.CreateInstallmentDTO;
 import com.project.financeapi.dto.Installment.InstallmentDTO;
 import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
-import com.project.financeapi.dto.document.DocumentResponseDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
 import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.dto.util.JwtPayload;
-import com.project.financeapi.entity.Document;
+import com.project.financeapi.entity.Invoice;
 import com.project.financeapi.entity.Installment;
 import com.project.financeapi.entity.User;
-import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.exception.BusinessException;
-import com.project.financeapi.repository.DocumentRepository;
+import com.project.financeapi.repository.InvoiceRepository;
 import com.project.financeapi.repository.InstallmentRepository;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
@@ -26,19 +24,19 @@ import java.util.List;
 @Service
 public class InstallmentService {
     private final UserRepository userRepository;
-    private final DocumentRepository documentRepository;
+    private final InvoiceRepository invoiceRepository;
     private final InstallmentRepository installmentRepository;
     private final JwtUtil jwtUtil;
 
     public InstallmentService(
             UserRepository userRepository,
-            DocumentRepository documentRepository,
+            InvoiceRepository invoiceRepository,
             InstallmentRepository installmentRepository,
             JwtUtil jwtUtil
         )
     {
         this.userRepository = userRepository;
-        this.documentRepository = documentRepository;
+        this.invoiceRepository = invoiceRepository;
         this.installmentRepository = installmentRepository;
         this.jwtUtil = jwtUtil;
     }
@@ -51,7 +49,7 @@ public class InstallmentService {
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
-        Document document = documentRepository.findById(dto.documentId())
+        Invoice invoice = invoiceRepository.findById(dto.documentId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O documento informado não foi localizado."));
 
         Installment[] installmentsList = new Installment[dto.installments().size()];
@@ -66,7 +64,7 @@ public class InstallmentService {
                     dto.movementType(),
                     item.parcelNumber(),
                     user,
-                    document
+                    invoice
             );
 
             installmentRepository.save(installment);
@@ -86,11 +84,11 @@ public class InstallmentService {
                 .map(transaction -> new TransactionResponseDTO(
                         transaction.getId(),
                         transaction.getInstallment().getId(),
-                        transaction.getInstallment().getDocument().getId(),
+                        transaction.getInstallment().getInvoice().getId(),
                         transaction.getAccount().getId(),
                         transaction.getMovementType(),
                         transaction.getAmount(),
-                        transaction.getInstallment().getDocument().getIssueDate(),
+                        transaction.getInstallment().getInvoice().getIssueDate(),
                         transaction.getInstallment().getDueDate(),
                         transaction.getPaymentDate(),
                         new ResponseUserDTO(
@@ -111,12 +109,12 @@ public class InstallmentService {
                 installment.getMovementType(),
                 installment.getStatus(),
                 installment.getParcelNumber(),
+                installment.getInvoice().getId(),
                 new ResponseUserDTO(
                         installment.getCreatedBy().getId(),
                         installment.getCreatedBy().getName(),
                         installment.getCreatedBy().getUserStatus()
                 ),
-                installment.getDocument().getId(),
                 transactionDTOs
         );
     }

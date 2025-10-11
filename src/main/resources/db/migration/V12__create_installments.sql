@@ -7,11 +7,11 @@ CREATE TABLE installments (
     status VARCHAR(50) NOT NULL,
     parcel_number INTEGER NOT NULL,
     created_by VARCHAR(36) NOT NULL,
-    document_id VARCHAR(36) NOT NULL,
+    invoice_id VARCHAR(36) NOT NULL,
     CONSTRAINT fk_installment_created_by
         FOREIGN KEY (created_by)
         REFERENCES users(id),
-    CONSTRAINT fk_installment_document
-        FOREIGN KEY (document_id)
-        REFERENCES documents(id)
+    CONSTRAINT fk_installment_invoice
+        FOREIGN KEY (invoice_id)
+        REFERENCES invoice(id)
 );

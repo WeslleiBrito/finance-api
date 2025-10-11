@@ -1,10 +1,7 @@
 package com.project.financeapi.entity.base;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.project.financeapi.entity.Address;
-import com.project.financeapi.entity.Email;
-import com.project.financeapi.entity.Phone;
-import com.project.financeapi.entity.User;
+import com.project.financeapi.entity.*;
 import com.project.financeapi.enums.PersonType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -55,6 +52,9 @@ public abstract class PersonBase {
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
 
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Invoice> invoices = new ArrayList<>();
 
     public PersonBase(User createdBy, String name, PersonType personType, List<Phone> phones, List<Email> emails, List<Address> addresses) {
         this.createdBy = createdBy;
@@ -68,8 +68,28 @@ public abstract class PersonBase {
     public PersonBase() {
     }
 
+    public void addDocument(Invoice invoice) {
+        invoices.add(invoice);
+        invoice.setPerson(this);
+    }
+
     public void addPhone(Phone phone) {
         phones.add(phone);
         phone.setPerson(this);
+    }
+
+    public void addEmail(Email email) {
+        emails.add(email);
+        email.setAddress(email.getAddress());
+    }
+
+    public void addAddress(Address address){
+        addresses.add(address);
+        address.setStreet(address.getStreet());
+        address.setNumber(address.getNumber());
+        address.setNeighborhood(address.getNeighborhood());
+        address.setZipCode(address.getZipCode());
+        address.setCity(address.getCity());
+        address.setComplement(address.getComplement());
     }
 }

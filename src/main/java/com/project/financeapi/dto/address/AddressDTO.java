@@ -13,6 +13,11 @@ public record AddressDTO(
         @Size(max = 10, message = "O número não pode ter mais de 10 caracteres.")
         String number,
 
+        @NotBlank(message = "O bairro é obrigatório.")
+        @Size(min = 3, max = 20, message = "O nome do bairro não pode ter menos que 3 caracteres " +
+                "e mais que 20 caracteres.")
+        String neighborhood,
+
         @Size(max = 150, message = "O complemento não pode ter mais de 150 caracteres.")
         String complement,
 

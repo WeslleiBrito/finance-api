@@ -31,6 +31,9 @@ public class Address {
     @Column(length = 50)
     private String complement;
 
+    @Column(nullable = false, length = 20)
+    private String neighborhood;
+
     @Column(nullable = false, length = 100)
     private String city;
 
@@ -60,6 +63,7 @@ public class Address {
        PersonBase person,
        String street,
        String number,
+       String neighborhood,
        String complement,
        String city,
        String state,
@@ -68,6 +72,7 @@ public class Address {
     {
         this.street = street;
         this.number = number;
+        this.neighborhood = neighborhood;
         this.complement = complement;
         this.city = city;
         this.state = state;
