@@ -3,6 +3,7 @@ CREATE TABLE operation_group (
     name VARCHAR(80) NOT NULL UNIQUE,
     created_by VARCHAR(36),
     is_global BOOLEAN DEFAULT FALSE,
+    operation_group_status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
     CONSTRAINT uq_operation_group_user UNIQUE (created_by, name),
     CONSTRAINT fk_operation_group_user FOREIGN KEY (created_by) REFERENCES users(id)
 );

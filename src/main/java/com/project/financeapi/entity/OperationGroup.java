@@ -1,5 +1,6 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.enums.OperationStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -21,6 +22,13 @@ public class OperationGroup {
 
     @Column(nullable = false, unique = true, length = 80)
     private String name;
+
+    @Column(nullable = false, name="is_global")
+    private Boolean isGlobal = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "operation_group_status")
+    private OperationStatus operationStatus = OperationStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)

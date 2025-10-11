@@ -8,6 +8,7 @@ import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.enums.AccountStatus;
 import com.project.financeapi.entity.base.AccountBase;
+import com.project.financeapi.exception.AccessBlockedException;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.AccountRepository;
 import com.project.financeapi.repository.TransactionRepository;
@@ -23,17 +24,14 @@ import java.util.stream.Collectors;
 @Service
 public class AccountService {
 
-    private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
-    public AccountService(TransactionRepository transactionRepository,
-                          AccountRepository accountRepository,
+    public AccountService(AccountRepository accountRepository,
                           UserRepository userRepository,
                           JwtUtil jwtUtil
     ) {
-        this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
@@ -148,7 +146,7 @@ public class AccountService {
                 .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
 
         if (!account.getAccountHolder().equals(user)) {
-            throw new RuntimeException("Você não tem permissão para inativar esta conta.");
+            throw new AccessBlockedException("Você não tem permissão para inativar esta conta.");
         }
 
         account.setStatus(AccountStatus.INACTIVATED);
