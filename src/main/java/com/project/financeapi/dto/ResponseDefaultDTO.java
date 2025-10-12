@@ -1,6 +1,6 @@
 package com.project.financeapi.dto;
 
-public record ResponseDefault(
+public record ResponseDefaultDTO(
         String message
 ) {
 }

@@ -1,6 +1,6 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.ResponseDefault;
+import com.project.financeapi.dto.ResponseDefaultDTO;
 import com.project.financeapi.dto.address.AddressCreateRequestDTO;
 import com.project.financeapi.service.AddressService;
 import jakarta.validation.Valid;
@@ -18,14 +18,14 @@ public class AddressController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ResponseDefault> create(
+    public ResponseEntity<ResponseDefaultDTO> create(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody AddressCreateRequestDTO dto
     ){
      addressService.create(token, dto.idPerson(), dto.addressesList().addresses());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                new ResponseDefault(
+                new ResponseDefaultDTO(
                         (dto.addressesList().addresses().size() > 1) ?
                                 "Os endereços foram criados com sucesso" : "O endereço foi criado com sucesso")
         );

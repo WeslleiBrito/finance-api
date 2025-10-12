@@ -1,6 +1,6 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.ResponseDefault;
+import com.project.financeapi.dto.ResponseDefaultDTO;
 import com.project.financeapi.dto.phone.PhoneCreateRequestDTO;
 import com.project.financeapi.service.PhoneService;
 import jakarta.validation.Valid;
@@ -18,12 +18,12 @@ public class PhoneController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ResponseDefault> create(@RequestHeader("X-Auth-Token") String token,
-                                                  @Valid @RequestBody PhoneCreateRequestDTO dto) {
+    public ResponseEntity<ResponseDefaultDTO> create(@RequestHeader("X-Auth-Token") String token,
+                                                     @Valid @RequestBody PhoneCreateRequestDTO dto) {
         phoneService.create(token, dto.idPerson(), dto.phoneList().phones());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                new ResponseDefault(
+                new ResponseDefaultDTO(
                         (dto.phoneList().phones().size() > 1) ?
                                 "Os telefones/celulares foram criados com sucesso" :
                                 "O telefone/celular foi criado com sucesso"

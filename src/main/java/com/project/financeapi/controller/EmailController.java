@@ -1,6 +1,6 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.ResponseDefault;
+import com.project.financeapi.dto.ResponseDefaultDTO;
 import com.project.financeapi.dto.email.EmailCreateRequestDTO;
 import com.project.financeapi.service.EmailService;
 import jakarta.validation.Valid;
@@ -18,12 +18,12 @@ public class EmailController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ResponseDefault> create(@RequestHeader("X-Auth-Token") String token,
-                                                  @Valid @RequestBody EmailCreateRequestDTO dto) {
+    public ResponseEntity<ResponseDefaultDTO> create(@RequestHeader("X-Auth-Token") String token,
+                                                     @Valid @RequestBody EmailCreateRequestDTO dto) {
         emailService.create(token, dto.idPerson(), dto.emailList().emails());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                new ResponseDefault(
+                new ResponseDefaultDTO(
                         (dto.emailList().emails().size() > 1) ?
                                 "Os e-mails foram criados com sucesso" : "O e-mail foi criado com sucesso")
         );

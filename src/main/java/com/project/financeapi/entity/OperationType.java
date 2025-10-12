@@ -4,17 +4,20 @@ import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.enums.OperationStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.Setter;
 
 @Entity
 @Table(name = "operation_type")
+@Setter
+@Getter
 public class OperationType {
     @Id
     @Setter(AccessLevel.PRIVATE)
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 80)
     private String name;
 
     @Enumerated(EnumType.STRING)
@@ -33,7 +36,16 @@ public class OperationType {
     private User createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "group_id")
+    @JoinColumn(name = "operation_group_id")
     private OperationGroup group;
 
+    public OperationType(String name, MovementType movementType, User createdBy, OperationGroup group) {
+        this.name = name;
+        this.movementType = movementType;
+        this.createdBy = createdBy;
+        this.group = group;
+    }
+
+    public OperationType() {
+    }
 }
