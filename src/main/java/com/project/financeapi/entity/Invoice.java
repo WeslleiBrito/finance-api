@@ -29,6 +29,7 @@ public class Invoice {
     @JoinColumn(name = "operation_type_id", nullable = false)
     private OperationType operationType;
 
+
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
@@ -83,13 +84,18 @@ public class Invoice {
 
     public Invoice() {}
 
-    public Invoice(BigDecimal totalAmount,
-                   User createdBy, PersonBase person, AccountBase account
+    public Invoice(
+            BigDecimal totalAmount,
+            User createdBy,
+            PersonBase person,
+            AccountBase account,
+            OperationType operationType
     ) {
         this.totalAmount = totalAmount;
         this.createdBy = createdBy;
         this.person = person;
         this.account = account;
+        this.operationType = operationType;
     }
 
     /**

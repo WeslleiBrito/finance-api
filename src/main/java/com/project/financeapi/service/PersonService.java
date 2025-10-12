@@ -1,10 +1,12 @@
 package com.project.financeapi.service;
 
 import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
+import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
 import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.address.ResponseAddressDTO;
-import com.project.financeapi.dto.document.DocumentResponseDTO;
+import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
 import com.project.financeapi.dto.email.ResponseEmailDTO;
+import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.dto.person.PersonCreateRequestDTO;
 import com.project.financeapi.dto.person.ResponseFinancialPersonDTO;
 import com.project.financeapi.dto.person.ResponsePersonDTO;
@@ -154,7 +156,7 @@ public class PersonService {
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
 
 
-        List<ResponsePersonDTO> persons = personRepository.findByCreatedBy(user)
+        return personRepository.findByCreatedBy(user)
                 .stream()
                 .map(person -> new ResponsePersonDTO(
                         person.getId(),
@@ -166,11 +168,11 @@ public class PersonService {
                                 phone.getId(),
                                 phone.getNumber(),
                                 phone.getType()
-                        )).collect(Collectors.toList()),
+                        )).toList(),
                         person.getEmails().stream().map(email -> new ResponseEmailDTO(
                                 email.getId(),
                                 email.getAddress()
-                        )).collect(Collectors.toList()),
+                        )).toList(),
                         person.getAddresses().stream().map(address -> new ResponseAddressDTO(
                                 address.getId(),
                                 address.getStreet(),
@@ -180,29 +182,42 @@ public class PersonService {
                                 address.getState(),
                                 address.getZipCode(),
                                 address.getComplement()
-                        )).collect(Collectors.toList()),
+                        )).toList(),
                         new ResponseFinancialPersonDTO(
-                                person.getInvoices().stream().map(document -> new DocumentResponseDTO(
-                                        document.getId(),
-                                        document.getIssueDate(),
-                                        document.getStatus(),
-                                        document.getQuantityInstallments(),
-                                        document.getTotalAmount(),
-                                        document.getTotalPaid(),
-                                        document.getRemainingBalance(),
+                                person.getInvoices().stream().map(invoice -> new InvoiceResponseDTO(
+                                        invoice.getId(),
+                                        new OperationTypeResponseDTO(
+                                                invoice.getOperationType().getId(),
+                                                invoice.getOperationType().getName(),
+                                                invoice.getOperationType().getMovementType(),
+                                                invoice.getOperationType().getOperationStatus(),
+                                                invoice.getOperationType().getIsGlobal(),
+                                                new OperationGroupResponseDTO(
+                                                        invoice.getOperationType().getGroup().getId(),
+                                                        invoice.getOperationType().getGroup().getName(),
+                                                        invoice.getOperationType().getGroup().getIsGlobal(),
+                                                        invoice.getOperationType().getGroup().getOperationStatus()
+                                                )
+                                        ),
+                                        invoice.getIssueDate(),
+                                        invoice.getStatus(),
+                                        invoice.getQuantityInstallments(),
+                                        invoice.getTotalAmount(),
+                                        invoice.getTotalPaid(),
+                                        invoice.getRemainingBalance(),
                                         new ResponseUserDTO(
-                                                document.getCreatedBy().getId(),
-                                                document.getCreatedBy().getName(),
-                                                document.getCreatedBy().getUserStatus()
+                                                invoice.getCreatedBy().getId(),
+                                                invoice.getCreatedBy().getName(),
+                                                invoice.getCreatedBy().getUserStatus()
                                         ),
                                         new ResponseAccountDTO(
-                                                document.getAccount().getId(),
-                                                document.getAccount().getName(),
-                                                document.getAccount().getType(),
-                                                document.getAccount().getBalance(),
-                                                document.getAccount().getStatus()
+                                                invoice.getAccount().getId(),
+                                                invoice.getAccount().getName(),
+                                                invoice.getAccount().getType(),
+                                                invoice.getAccount().getBalance(),
+                                                invoice.getAccount().getStatus()
                                         ),
-                                        document.getInstallments().stream()
+                                        invoice.getInstallments().stream()
                                                 .map(installment -> new InstallmentResponseDTO(
                                                         installment.getId(),
                                                         installment.getAmount(),
@@ -234,14 +249,14 @@ public class PersonService {
                                                                 ),
                                                                 transaction.getObservations(),
                                                                 transaction.getCreatedAt()
-                                                        )).collect(Collectors.toList())
+                                                        )).toList()
 
-                                                )).collect(Collectors.toList())
-                                )).collect(Collectors.toList())
+                                                )).toList()
+                                )).toList()
                         )
 
-                )).collect(Collectors.toList());
+                )).toList();
 
-        return persons;
+
     }
 }

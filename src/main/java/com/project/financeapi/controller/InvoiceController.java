@@ -1,7 +1,7 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.document.CreateDocumentRequestDTO;
-import com.project.financeapi.dto.document.DocumentResponseDTO;
+import com.project.financeapi.dto.invoice.CreateInvoiceRequestDTO;
+import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
 import com.project.financeapi.service.InvoiceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,28 +21,28 @@ public class InvoiceController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<DocumentResponseDTO> create(
+    public ResponseEntity<InvoiceResponseDTO> create(
             @RequestHeader("X-Auth-Token") String token,
-            @Valid @RequestBody CreateDocumentRequestDTO dto) {
-        DocumentResponseDTO invoice = invoiceService.create(token, dto);
+            @Valid @RequestBody CreateInvoiceRequestDTO dto) {
+        InvoiceResponseDTO invoice = invoiceService.create(token, dto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(invoice);
     }
 
     @GetMapping()
-    public ResponseEntity<List<DocumentResponseDTO>> findAll(
+    public ResponseEntity<List<InvoiceResponseDTO>> findAll(
             @RequestHeader("X-Auth-Token") String token) {
-        List<DocumentResponseDTO> invoice = invoiceService.findAll(token);
+        List<InvoiceResponseDTO> invoice = invoiceService.findAll(token);
 
         return ResponseEntity.status(HttpStatus.OK).body(invoice);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DocumentResponseDTO> findById(
+    public ResponseEntity<InvoiceResponseDTO> findById(
             @RequestHeader("X-Auth-Token") String token,
             @PathVariable String id) {
 
-        DocumentResponseDTO invoice = invoiceService.findById(token, id);
+        InvoiceResponseDTO invoice = invoiceService.findById(token, id);
 
         return ResponseEntity.status(HttpStatus.OK).body(invoice);
     }
