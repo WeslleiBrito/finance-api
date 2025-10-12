@@ -2,14 +2,17 @@ package com.project.financeapi.service;
 
 import com.project.financeapi.dto.Installment.InstallmentDTO;
 import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
+import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
 import com.project.financeapi.dto.account.ResponseAccountDTO;
-import com.project.financeapi.dto.document.CreateDocumentRequestDTO;
-import com.project.financeapi.dto.document.DocumentResponseDTO;
+import com.project.financeapi.dto.invoice.CreateInvoiceRequestDTO;
+import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
+import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
 import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.Invoice;
 import com.project.financeapi.entity.Installment;
+import com.project.financeapi.entity.OperationType;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PersonBase;
@@ -31,24 +34,30 @@ public class InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final AccountRepository accountRepository;
     private final InstallmentRepository installmentRepository;
+    private final OperationTypeRepository operationTypeRepository;
+
     private final JwtUtil jwtUtil;
 
-    public InvoiceService(UserRepository userRepository, PersonRepository personRepository,
-                          InvoiceRepository invoiceRepository,
-                          AccountRepository accountRepository,
-                          InstallmentRepository installmentRepository,
-                          JwtUtil jwtUtil
+    public InvoiceService(
+            UserRepository userRepository,
+            PersonRepository personRepository,
+            InvoiceRepository invoiceRepository,
+            AccountRepository accountRepository,
+            InstallmentRepository installmentRepository,
+            OperationTypeRepository operationTypeRepository,
+            JwtUtil jwtUtil
     ) {
         this.userRepository = userRepository;
         this.personRepository = personRepository;
         this.invoiceRepository = invoiceRepository;
         this.accountRepository = accountRepository;
         this.installmentRepository = installmentRepository;
+        this.operationTypeRepository = operationTypeRepository;
         this.jwtUtil = jwtUtil;
     }
 
     @Transactional
-    public DocumentResponseDTO create(String token, CreateDocumentRequestDTO dto){
+    public InvoiceResponseDTO create(String token, CreateInvoiceRequestDTO dto){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
@@ -61,6 +70,16 @@ public class InvoiceService {
         AccountBase account = accountRepository.findById(dto.accountId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "A conta informada não existe."));
 
+        OperationType operationType = operationTypeRepository.findById(dto.operationTypeId())
+                .orElseThrow(
+                        () -> new BusinessException(HttpStatus.NOT_FOUND, "O tipo de operação informada não existe.")
+                );
+
+        if(!operationType.getIsGlobal() && !operationType.getCreatedBy().equals(user)){
+            throw  new BusinessException(
+                    HttpStatus.NOT_FOUND, "Você não tem permissão para usar esse tipo de operação."
+            );
+        }
 
         BigDecimal subtotalInstallments = dto.installments().stream().map(InstallmentDTO::amount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -82,7 +101,8 @@ public class InvoiceService {
                dto.totalAmount(),
                user,
                person,
-               account
+               account,
+               operationType
        ));
 
 
@@ -91,7 +111,7 @@ public class InvoiceService {
             Installment installment = new Installment(
                     installmentDTO.amount(),
                     installmentDTO.dueDate(),
-                    dto.movementType(),
+                    invoice.getOperationType().getMovementType(),
                     installmentDTO.parcelNumber(),
                     user,
                     invoice
@@ -108,7 +128,7 @@ public class InvoiceService {
 
     }
 
-    public List<DocumentResponseDTO> findAll(String token) {
+    public List<InvoiceResponseDTO> findAll(String token) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
@@ -123,7 +143,7 @@ public class InvoiceService {
                 .collect(Collectors.toList());
     }
 
-    public DocumentResponseDTO findById(String token, String id) {
+    public InvoiceResponseDTO findById(String token, String id) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
@@ -139,10 +159,23 @@ public class InvoiceService {
         );
 
     }
-    public DocumentResponseDTO toDocumentResponseDTO(Invoice invoice) {
+    public InvoiceResponseDTO toDocumentResponseDTO(Invoice invoice) {
 
-        return new DocumentResponseDTO(
+        return new InvoiceResponseDTO(
                 invoice.getId(),
+                new OperationTypeResponseDTO(
+                  invoice.getOperationType().getId(),
+                  invoice.getOperationType().getName(),
+                  invoice.getOperationType().getMovementType(),
+                  invoice.getOperationType().getOperationStatus(),
+                  invoice.getOperationType().getIsGlobal(),
+                  new OperationGroupResponseDTO(
+                          invoice.getOperationType().getGroup().getId(),
+                          invoice.getOperationType().getGroup().getName(),
+                          invoice.getOperationType().getGroup().getIsGlobal(),
+                          invoice.getOperationType().getGroup().getOperationStatus()
+                  )
+                ),
                 invoice.getIssueDate(),
                 invoice.getStatus(),
                 invoice.getQuantityInstallments(),
@@ -192,9 +225,9 @@ public class InvoiceService {
                                 ),
                                 transaction.getObservations(),
                                 transaction.getCreatedAt()
-                        )).collect(Collectors.toList())
+                        )).toList()
 
-                )).collect(Collectors.toList())
+                )).toList()
         );
     }
 
