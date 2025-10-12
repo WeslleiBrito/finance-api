@@ -4,7 +4,7 @@ import com.project.financeapi.dto.ResponseDefaultDTO;
 import com.project.financeapi.dto.operationGroup.OperationGroupCreateRequestDTO;
 import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.dto.operationGroup.UpdateRequestOperationGroup;
-import com.project.financeapi.dto.operationGroup.UpdateStatusRequestOperationGroupDTO;
+import com.project.financeapi.dto.UpdateStatusRequestDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.OperationGroup;
 import com.project.financeapi.entity.User;
@@ -108,7 +108,7 @@ public class OperationGroupService {
     }
 
     @Transactional
-    public ResponseDefaultDTO updateStatusOperationGroup(String token, String id, UpdateStatusRequestOperationGroupDTO dto){
+    public ResponseDefaultDTO updateStatusOperationGroup(String token, String id, UpdateStatusRequestDTO dto){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 

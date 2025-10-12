@@ -4,17 +4,20 @@ import com.project.financeapi.dto.OperationType.OperationTypeRequestCreateDTO;
 import com.project.financeapi.dto.OperationType.OperationTypeRequestUpdateDTO;
 import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
 import com.project.financeapi.dto.ResponseDefaultDTO;
+import com.project.financeapi.dto.UpdateStatusRequestDTO;
 import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.OperationGroup;
 import com.project.financeapi.entity.OperationType;
 import com.project.financeapi.entity.User;
+import com.project.financeapi.enums.OperationStatus;
 import com.project.financeapi.exception.AccessBlockedException;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.OperationGroupRepository;
 import com.project.financeapi.repository.OperationTypeRepository;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
+import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -139,5 +142,27 @@ public class OperationTypeService {
         return new ResponseDefaultDTO(
                 "O tipo de operação foi modificado com sucesso"
         );
+    }
+
+    @Transactional
+    public ResponseDefaultDTO updateStatusOperationType(String token, String id, UpdateStatusRequestDTO dto){
+
+        JwtPayload payload = jwtUtil.extractPayload(token);
+
+        User user = userRepository.findById(payload.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
+
+        OperationType  operationType = operationTypeRepository.findByCreatedByAndId(user, id).orElseThrow(
+                () -> new BusinessException(HttpStatus.NOT_FOUND, "O TIPO de operação informado, não existe.")
+        );
+
+        operationType.setOperationStatus(dto.operationStatus());
+
+        return new ResponseDefaultDTO(
+                "O tipo de operação: " + operationType.getName() + " foi " +
+                        (operationType.getOperationStatus() == OperationStatus.ACTIVE ? "Ativada " : "Desativada ") +
+                        "com sucesso."
+        );
+
     }
 }

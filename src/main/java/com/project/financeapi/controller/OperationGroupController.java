@@ -4,7 +4,7 @@ import com.project.financeapi.dto.ResponseDefaultDTO;
 import com.project.financeapi.dto.operationGroup.OperationGroupCreateRequestDTO;
 import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.dto.operationGroup.UpdateRequestOperationGroup;
-import com.project.financeapi.dto.operationGroup.UpdateStatusRequestOperationGroupDTO;
+import com.project.financeapi.dto.UpdateStatusRequestDTO;
 import com.project.financeapi.service.OperationGroupService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -77,7 +77,7 @@ public class OperationGroupController {
     @PutMapping("/update-status/{id}")
     public ResponseEntity<ResponseDefaultDTO> updateStatusOperationGroup(
             @RequestHeader("X-Auth-Token") String token,
-            @Valid @RequestBody UpdateStatusRequestOperationGroupDTO dto,
+            @Valid @RequestBody UpdateStatusRequestDTO dto,
             @PathVariable String id
     ){
 

@@ -4,6 +4,7 @@ import com.project.financeapi.dto.OperationType.OperationTypeRequestCreateDTO;
 import com.project.financeapi.dto.OperationType.OperationTypeRequestUpdateDTO;
 import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
 import com.project.financeapi.dto.ResponseDefaultDTO;
+import com.project.financeapi.dto.UpdateStatusRequestDTO;
 import com.project.financeapi.service.OperationTypeService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -47,5 +48,15 @@ public class OperationTypeController {
     ) {
 
         return ResponseEntity.status(HttpStatus.OK).body(operationTypeService.update(token, id, dto));
+    }
+
+    @PutMapping("/update-status/{id}")
+    public ResponseEntity<ResponseDefaultDTO> updateStatus(
+            @RequestHeader("X-Auth-Token") String token,
+            @PathVariable String id,
+            @Valid@RequestBody UpdateStatusRequestDTO dto
+    ) {
+
+        return ResponseEntity.status(HttpStatus.OK).body(operationTypeService.updateStatusOperationType(token, id, dto));
     }
 }
