@@ -1,7 +1,7 @@
 package com.project.financeapi.dto.Installment;
 
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
-import com.project.financeapi.dto.user.ResponseUserDTO;
+import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.enums.PaymentStatus;
 
@@ -18,7 +18,7 @@ public record InstallmentResponseDTO(
         PaymentStatus status,
         Integer parcelNumber,
         String documentId,
-        ResponseUserDTO createdBy,
+        UserResponseDTO createdBy,
         List<TransactionResponseDTO> transactions
 
 ) {

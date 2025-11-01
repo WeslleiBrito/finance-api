@@ -3,8 +3,7 @@ package com.project.financeapi.dto.invoice;
 import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
 import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
 import com.project.financeapi.dto.account.ResponseAccountDTO;
-import com.project.financeapi.dto.user.ResponseUserDTO;
-import com.project.financeapi.entity.OperationType;
+import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.enums.DocumentStatus;
 
 import java.math.BigDecimal;
@@ -20,7 +19,7 @@ public record InvoiceResponseDTO(
     BigDecimal totalAmount,
     BigDecimal totalPaid,
     BigDecimal remainingBalance,
-    ResponseUserDTO createdBy,
+    UserResponseDTO createdBy,
     ResponseAccountDTO account,
     List<InstallmentResponseDTO> installments
 ) {}

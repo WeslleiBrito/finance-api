@@ -4,7 +4,7 @@ import com.project.financeapi.dto.Installment.CreateInstallmentDTO;
 import com.project.financeapi.dto.Installment.InstallmentDTO;
 import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
-import com.project.financeapi.dto.user.ResponseUserDTO;
+import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.Invoice;
 import com.project.financeapi.entity.Installment;
@@ -90,8 +90,8 @@ public class InstallmentService {
                         transaction.getAmount(),
                         transaction.getInstallment().getInvoice().getIssueDate(),
                         transaction.getInstallment().getDueDate(),
-                        transaction.getPaymentDate(),
-                        new ResponseUserDTO(
+                        transaction.getSettlementDate(),
+                        new UserResponseDTO(
                                 transaction.getCreatedBy().getId(),
                                 transaction.getCreatedBy().getName(),
                                 transaction.getCreatedBy().getUserStatus()
@@ -110,7 +110,7 @@ public class InstallmentService {
                 installment.getStatus(),
                 installment.getParcelNumber(),
                 installment.getInvoice().getId(),
-                new ResponseUserDTO(
+                new UserResponseDTO(
                         installment.getCreatedBy().getId(),
                         installment.getCreatedBy().getName(),
                         installment.getCreatedBy().getUserStatus()

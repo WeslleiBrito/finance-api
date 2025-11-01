@@ -12,7 +12,7 @@ CREATE TABLE operation_type (
 );
 
 -- Inserções padrão (tipos dentro dos grupos)
-INSERT INTO operation_type (id, name, movement_type, group_id, is_global) VALUES
+INSERT INTO operation_type (id, name, movement_type, operation_group_id, is_global) VALUES
     -- Moradia
     ('00000000-0000-0000-0000-000000000101', 'Aluguel', 'EXPENSE', '00000000-0000-0000-0000-000000000001', TRUE),
     ('00000000-0000-0000-0000-000000000102', 'Condomínio', 'EXPENSE', '00000000-0000-0000-0000-000000000001', TRUE),

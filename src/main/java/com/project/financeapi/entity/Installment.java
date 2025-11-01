@@ -1,6 +1,7 @@
 package com.project.financeapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.enums.PaymentStatus;
 import jakarta.persistence.*;
@@ -36,10 +37,6 @@ public class Installment {
     @Column(nullable = false, name = "created_at")
     private LocalDate createdAt  = LocalDate.now();
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentStatus status = PaymentStatus.OPEN;
-
     @Column(name = "parcel_number", nullable = false)
     private Integer parcelNumber;
 
@@ -53,6 +50,12 @@ public class Installment {
     @JoinColumn(name = "invoice_id", nullable = false)
     private Invoice invoice;
 
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_instrument")
+    private PaymentInstrumentBase paymentInstrument;
+
+
     // Transações que foram feitas para quitar essa parcela
     @JsonBackReference
     @OneToMany(mappedBy = "installment", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -60,13 +63,23 @@ public class Installment {
 
     public Installment() {}
 
-    public Installment(BigDecimal amount, LocalDate dueDate, MovementType movementType, Integer parcelNumber, User createdBy, Invoice invoice) {
+    public Installment(
+            BigDecimal amount,
+            LocalDate dueDate,
+            MovementType movementType,
+            Integer parcelNumber,
+            User createdBy,
+            Invoice invoice,
+            PaymentInstrumentBase paymentInstrument
+    )
+    {
         this.amount = amount;
-        this.dueDate = (dueDate != null) ? dueDate : LocalDate.now();
+        this.dueDate = dueDate;
         this.movementType = movementType;
         this.parcelNumber = parcelNumber;
         this.createdBy = createdBy;
         this.invoice = invoice;
+        this.paymentInstrument = paymentInstrument;
     }
 
 
@@ -88,7 +101,6 @@ public class Installment {
      */
     public BigDecimal getTotalPaid() {
         return transactions.stream()
-                .filter(Transaction::isFinalized)
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -107,15 +119,5 @@ public class Installment {
         return getRemainingBalance().compareTo(BigDecimal.ZERO) <= 0;
     }
 
-    /**
-     * Atualiza automaticamente o status da parcela.
-     */
-    public void updateStatus() {
-        if (isPaid()) {
-            this.status = PaymentStatus.FINALIZED;
-        } else {
-            this.status = PaymentStatus.OPEN;
-        }
-    }
 
 }

@@ -12,7 +12,7 @@ import com.project.financeapi.dto.person.ResponseFinancialPersonDTO;
 import com.project.financeapi.dto.person.ResponsePersonDTO;
 import com.project.financeapi.dto.phone.ResponsePhoneDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
-import com.project.financeapi.dto.user.ResponseUserDTO;
+import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.LegalEntity;
 import com.project.financeapi.entity.PhysicalPerson;
@@ -30,7 +30,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class PersonService {
@@ -205,7 +204,7 @@ public class PersonService {
                                         invoice.getTotalAmount(),
                                         invoice.getTotalPaid(),
                                         invoice.getRemainingBalance(),
-                                        new ResponseUserDTO(
+                                        new UserResponseDTO(
                                                 invoice.getCreatedBy().getId(),
                                                 invoice.getCreatedBy().getName(),
                                                 invoice.getCreatedBy().getUserStatus()
@@ -227,7 +226,7 @@ public class PersonService {
                                                         installment.getStatus(),
                                                         installment.getParcelNumber(),
                                                         installment.getInvoice().getId(),
-                                                        new ResponseUserDTO(
+                                                        new UserResponseDTO(
                                                                 installment.getCreatedBy().getId(),
                                                                 installment.getCreatedBy().getName(),
                                                                 installment.getCreatedBy().getUserStatus()
@@ -241,8 +240,8 @@ public class PersonService {
                                                                 transaction.getAmount(),
                                                                 transaction.getIssueDate(),
                                                                 transaction.getDueDate(),
-                                                                transaction.getPaymentDate(),
-                                                                new ResponseUserDTO(
+                                                                transaction.getSettlementDate(),
+                                                                new UserResponseDTO(
                                                                         transaction.getCreatedBy().getId(),
                                                                         transaction.getCreatedBy().getName(),
                                                                         transaction.getCreatedBy().getUserStatus()

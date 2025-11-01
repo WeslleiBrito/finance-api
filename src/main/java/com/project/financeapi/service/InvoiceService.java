@@ -8,7 +8,7 @@ import com.project.financeapi.dto.invoice.CreateInvoiceRequestDTO;
 import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
 import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
-import com.project.financeapi.dto.user.ResponseUserDTO;
+import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.Invoice;
 import com.project.financeapi.entity.Installment;
@@ -182,7 +182,7 @@ public class InvoiceService {
                 invoice.getTotalAmount(),
                 invoice.getTotalPaid(),
                 invoice.getRemainingBalance(),
-                new ResponseUserDTO(
+                new UserResponseDTO(
                         invoice.getCreatedBy().getId(),
                         invoice.getCreatedBy().getName(),
                         invoice.getCreatedBy().getUserStatus()
@@ -203,7 +203,7 @@ public class InvoiceService {
                         installment.getStatus(),
                         installment.getParcelNumber(),
                         installment.getInvoice().getId(),
-                        new ResponseUserDTO(
+                        new UserResponseDTO(
                                 installment.getCreatedBy().getId(),
                                 installment.getCreatedBy().getName(),
                                 installment.getCreatedBy().getUserStatus()
@@ -217,8 +217,8 @@ public class InvoiceService {
                                 transaction.getAmount(),
                                 transaction.getIssueDate(),
                                 transaction.getDueDate(),
-                                transaction.getPaymentDate(),
-                                new ResponseUserDTO(
+                                transaction.getSettlementDate(),
+                                new UserResponseDTO(
                                         transaction.getCreatedBy().getId(),
                                         transaction.getCreatedBy().getName(),
                                         transaction.getCreatedBy().getUserStatus()

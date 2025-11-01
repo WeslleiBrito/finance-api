@@ -1,8 +1,7 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.enums.MovementType;
-import com.project.financeapi.enums.PaymentStatus;
-import com.project.financeapi.enums.TransactionType;
 import com.project.financeapi.entity.base.AccountBase;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -26,10 +25,6 @@ public class Transaction {
     private String id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TransactionType type;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "movement_type", nullable = false)
     private MovementType movementType;
 
@@ -43,13 +38,10 @@ public class Transaction {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(nullable = false, updatable = false)
-    private LocalDate paymentDate;
+    private LocalDate settlementDate;
 
     @Column(name = "issue_date", nullable = false)
     private LocalDate issueDate = LocalDate.now();
-
-    @Column(name = "due_date", nullable = false)
-    private LocalDate dueDate = LocalDate.now();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
@@ -59,13 +51,18 @@ public class Transaction {
     @JoinColumn(name = "account_id", nullable = false)
     private AccountBase account;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "installment_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "installment_id")
     private Installment installment;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentStatus status = PaymentStatus.OPEN;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_instrument_id")
+    private PaymentInstrumentBase paymentInstrument;
+
+
+    @Column(name = "is_reversed", nullable = false)
+    private boolean reversed = false;
+
 
     public Transaction() {
     }
@@ -73,45 +70,19 @@ public class Transaction {
     public Transaction(
             User createdBy,
             AccountBase account,
-            TransactionType type,
+            MovementType type,
             BigDecimal amount,
-            LocalDate issueDate,
-            LocalDate dueDate,
-            LocalDate paymentDate,
+            PaymentInstrumentBase paymentInstrument,
+            LocalDate settlementDate,
             String observations
     ) {
         this.account = account;
-        this.type = type;
-        this.amount = amount != null ? amount : BigDecimal.ZERO;
-        this.issueDate = issueDate != null ? issueDate : LocalDate.now();
-        this.dueDate = dueDate != null ? dueDate : LocalDate.now();
-        this.paymentDate = paymentDate != null ? paymentDate : LocalDate.now();
+        this.amount = amount;
+        this.settlementDate = settlementDate != null ? settlementDate : LocalDate.now();
         this.observations = (observations != null && !observations.isBlank()) ? observations : null;
-
-        this.movementType = MovementType.fromTransactionType(type);
+        this.movementType = type;
         this.createdBy = createdBy;
+        this.paymentInstrument = paymentInstrument;
     }
 
-
-    public boolean isFinalized() {
-        return this.status == PaymentStatus.FINALIZED;
-    }
-
-    public boolean isOpen() {
-        return this.status == PaymentStatus.OPEN;
-    }
-
-    public void cancel() {
-        if (this.isFinalized()) {
-            throw new IllegalStateException("Não é possível cancelar uma transação finalizada");
-        }
-        this.status = PaymentStatus.CANCELLED;
-    }
-
-    public void finalizeTransaction() {
-        if (this.status != PaymentStatus.OPEN) {
-            throw new IllegalStateException("Só é possível finalizar transações abertas");
-        }
-        this.status = PaymentStatus.FINALIZED;
-    }
 }

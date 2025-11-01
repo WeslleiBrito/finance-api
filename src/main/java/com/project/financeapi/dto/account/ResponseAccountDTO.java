@@ -1,6 +1,5 @@
 package com.project.financeapi.dto.account;
 
-import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.enums.AccountStatus;
 import com.project.financeapi.enums.AccountType;
 
