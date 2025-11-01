@@ -1,8 +1,8 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.card.CardBrandCreateRequestDTO;
-import com.project.financeapi.dto.card.CardBrandResponseDTO;
-import com.project.financeapi.dto.card.CardBrandUpdateRequestDTO;
+import com.project.financeapi.dto.card.cardBrand.CardBrandCreateRequestDTO;
+import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
+import com.project.financeapi.dto.card.cardBrand.CardBrandUpdateRequestDTO;
 import com.project.financeapi.service.CardBrandService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

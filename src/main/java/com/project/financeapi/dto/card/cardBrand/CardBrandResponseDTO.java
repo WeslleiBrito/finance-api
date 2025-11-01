@@ -1,4 +1,4 @@
-package com.project.financeapi.dto.card;
+package com.project.financeapi.dto.card.cardBrand;
 
 import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.enums.CardBrandStatus;
@@ -10,7 +10,6 @@ public record CardBrandResponseDTO(
         String name,
         CardBrandStatus status,
         Boolean isGlobal,
-        LocalDate createdAt,
-        UserResponseDTO createdBy
+        LocalDate createdAt
 ) {
 }

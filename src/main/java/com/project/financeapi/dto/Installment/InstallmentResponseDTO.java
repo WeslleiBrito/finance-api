@@ -18,7 +18,6 @@ public record InstallmentResponseDTO(
         PaymentStatus status,
         Integer parcelNumber,
         String documentId,
-        UserResponseDTO createdBy,
         List<TransactionResponseDTO> transactions
 
 ) {

@@ -1,8 +1,8 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.card.CardBrandCreateRequestDTO;
-import com.project.financeapi.dto.card.CardBrandResponseDTO;
-import com.project.financeapi.dto.card.CardBrandUpdateRequestDTO;
+import com.project.financeapi.dto.card.cardBrand.CardBrandCreateRequestDTO;
+import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
+import com.project.financeapi.dto.card.cardBrand.CardBrandUpdateRequestDTO;
 import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.CardBrand;
@@ -41,12 +41,7 @@ public class CardBrandService {
                 cardBrand.getName(),
                 cardBrand.getStatus(),
                 cardBrand.isGlobal(),
-                cardBrand.getCreatedAt(),
-                new UserResponseDTO(
-                        cardBrand.getCreatedBy().getId(),
-                        cardBrand.getCreatedBy().getName(),
-                        cardBrand.getCreatedBy().getUserStatus()
-                )
+                cardBrand.getCreatedAt()
         );
 
     }
@@ -78,12 +73,7 @@ public class CardBrandService {
                 cardBrand.getName(),
                 cardBrand.getStatus(),
                 cardBrand.isGlobal(),
-                cardBrand.getCreatedAt(),
-                new UserResponseDTO(
-                        cardBrand.getCreatedBy().getId(),
-                        cardBrand.getCreatedBy().getName(),
-                        cardBrand.getCreatedBy().getUserStatus()
-                )
+                cardBrand.getCreatedAt()
         );
     }
 
@@ -103,12 +93,7 @@ public class CardBrandService {
                         cardBrand.getName(),
                         cardBrand.getStatus(),
                         cardBrand.isGlobal(),
-                        cardBrand.getCreatedAt(),
-                        new UserResponseDTO(
-                                cardBrand.getCreatedBy().getId(),
-                                cardBrand.getCreatedBy().getName(),
-                                cardBrand.getCreatedBy().getUserStatus()
-                        )
+                        cardBrand.getCreatedAt()
                 )
         ).toList();
     }
@@ -129,12 +114,7 @@ public class CardBrandService {
                 cardBrand.getName(),
                 cardBrand.getStatus(),
                 cardBrand.isGlobal(),
-                cardBrand.getCreatedAt(),
-                new UserResponseDTO(
-                        cardBrand.getCreatedBy().getId(),
-                        cardBrand.getCreatedBy().getName(),
-                        cardBrand.getCreatedBy().getUserStatus()
-                )
+                cardBrand.getCreatedAt()
         );
     }
 }

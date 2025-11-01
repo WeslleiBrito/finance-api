@@ -143,13 +143,7 @@ public class TransactionService {
                     item.getMovementType(),
                     item.getAmount(),
                     item.getIssueDate(),
-                    item.getDueDate(),
                     item.getSettlementDate(),
-                    new UserResponseDTO(
-                            item.getCreatedBy().getId(),
-                            item.getCreatedBy().getName(),
-                            item.getCreatedBy().getUserStatus()
-                    ),
                     item.getObservations() != null ? item.getObservations() : "",
                     item.getCreatedAt()
             );

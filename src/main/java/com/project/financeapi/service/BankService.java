@@ -15,6 +15,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 public class BankService {
 
@@ -37,12 +39,7 @@ public class BankService {
                 bank.getId(),
                 bank.getName(),
                 bank.getCode(),
-                bank.getStatus(),
-                new UserResponseDTO(
-                        bank.getCreatedBy().getId(),
-                        bank.getCreatedBy().getName(),
-                        bank.getCreatedBy().getUserStatus()
-                )
+                bank.getStatus()
         );
     }
 
@@ -66,12 +63,44 @@ public class BankService {
                 bank.getId(),
                 bank.getName(),
                 bank.getCode(),
-                bank.getStatus(),
-                new UserResponseDTO(
-                        bank.getCreatedBy().getId(),
-                        bank.getCreatedBy().getName(),
-                        bank.getCreatedBy().getUserStatus()
-                )
+                bank.getStatus()
+        );
+    }
+
+    public List<BankResponseDTO> getAll(String token) {
+
+        JwtPayload payload = jwtUtil.extractPayload(token);
+
+        User user = userRepository.findById(payload.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+
+
+        List<Bank> banks = bankRepository.findAllByCreatedBy(user);
+
+        return banks.stream().map(
+                bank ->  new BankResponseDTO(
+                        bank.getId(),
+                        bank.getName(),
+                        bank.getCode(),
+                        bank.getStatus()
+        )).toList();
+    }
+
+    public BankResponseDTO getById(String token, String id){
+        JwtPayload payload = jwtUtil.extractPayload(token);
+
+        User user = userRepository.findById(payload.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+
+
+        Bank bank = bankRepository.findByCreatedByAndId(user, id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Banco não encontrado."));
+
+        return new BankResponseDTO(
+                bank.getId(),
+                bank.getName(),
+                bank.getCode(),
+                bank.getStatus()
         );
     }
 }

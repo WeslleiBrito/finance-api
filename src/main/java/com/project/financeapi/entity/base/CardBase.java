@@ -4,6 +4,7 @@ import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.CardBrand;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.enums.CardStatus;
+import com.project.financeapi.enums.InstrumentNature;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -35,8 +36,8 @@ public abstract class CardBase extends PaymentInstrumentBase {
 
 
     public CardBase() {}
-    public CardBase(String name, User createdBy) {
-        super(name, createdBy);
+    public CardBase(String name, User createdBy, InstrumentNature instrumentNature) {
+        super(name, createdBy, instrumentNature);
     }
 
 

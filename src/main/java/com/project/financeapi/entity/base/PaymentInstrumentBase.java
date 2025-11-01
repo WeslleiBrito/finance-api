@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.project.financeapi.entity.Installment;
 import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
+import com.project.financeapi.enums.InstrumentNature;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -39,6 +40,10 @@ public abstract class PaymentInstrumentBase {
     @Column(nullable = false, name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 15)
+    private InstrumentNature instrumentNature;
+
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by")
@@ -53,9 +58,10 @@ public abstract class PaymentInstrumentBase {
     private List<Transaction> transactions = new ArrayList<>();
 
 
-    public PaymentInstrumentBase(String name, User createdBy) {
+    public PaymentInstrumentBase(String name, User createdBy, InstrumentNature instrumentNature) {
         this.name = name;
         this.createdBy = createdBy;
+        this.instrumentNature = instrumentNature;
     }
 
 

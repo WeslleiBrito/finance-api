@@ -7,7 +7,6 @@ public record BankResponseDTO(
         String id,
         String name,
         String code,
-        BankStatus bankStatus,
-        UserResponseDTO user
+        BankStatus bankStatus
 ) {
 }

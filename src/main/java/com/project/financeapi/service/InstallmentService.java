@@ -91,11 +91,6 @@ public class InstallmentService {
                         transaction.getInstallment().getInvoice().getIssueDate(),
                         transaction.getInstallment().getDueDate(),
                         transaction.getSettlementDate(),
-                        new UserResponseDTO(
-                                transaction.getCreatedBy().getId(),
-                                transaction.getCreatedBy().getName(),
-                                transaction.getCreatedBy().getUserStatus()
-                        ),
                         transaction.getObservations(),
                         transaction.getCreatedAt()
                 ))

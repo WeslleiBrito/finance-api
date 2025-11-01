@@ -223,7 +223,6 @@ public class PersonService {
                                                         installment.getCreatedAt(),
                                                         installment.getDueDate(),
                                                         installment.getMovementType(),
-                                                        installment.getStatus(),
                                                         installment.getParcelNumber(),
                                                         installment.getInvoice().getId(),
                                                         new UserResponseDTO(
@@ -239,13 +238,7 @@ public class PersonService {
                                                                 transaction.getMovementType(),
                                                                 transaction.getAmount(),
                                                                 transaction.getIssueDate(),
-                                                                transaction.getDueDate(),
                                                                 transaction.getSettlementDate(),
-                                                                new UserResponseDTO(
-                                                                        transaction.getCreatedBy().getId(),
-                                                                        transaction.getCreatedBy().getName(),
-                                                                        transaction.getCreatedBy().getUserStatus()
-                                                                ),
                                                                 transaction.getObservations(),
                                                                 transaction.getCreatedAt()
                                                         )).toList()

@@ -19,7 +19,6 @@ public record InvoiceResponseDTO(
     BigDecimal totalAmount,
     BigDecimal totalPaid,
     BigDecimal remainingBalance,
-    UserResponseDTO createdBy,
     ResponseAccountDTO account,
     List<InstallmentResponseDTO> installments
 ) {}

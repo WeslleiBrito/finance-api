@@ -18,7 +18,6 @@ public record TransactionResponseDTO(
         LocalDate issueDate,
         LocalDate dueDate,
         LocalDate paymentDate,
-        UserResponseDTO createdBy,
         String observations,
         LocalDateTime createdAt
 ) {}

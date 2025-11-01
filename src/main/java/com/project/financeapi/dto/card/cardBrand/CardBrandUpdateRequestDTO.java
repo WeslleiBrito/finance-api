@@ -1,4 +1,4 @@
-package com.project.financeapi.dto.card;
+package com.project.financeapi.dto.card.cardBrand;
 
 import com.project.financeapi.enums.CardBrandStatus;
 
