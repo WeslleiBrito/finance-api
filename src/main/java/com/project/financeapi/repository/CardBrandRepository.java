@@ -6,10 +6,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface CardBrandRepository extends JpaRepository<CardBrand, String> {
+public interface CardBrandRepository extends JpaRepository<CardBrand, UUID> {
 
-    Optional<CardBrand> findByCreatedByAndId(User user, String id);
+    Optional<CardBrand> findByCreatedByAndId(User user, UUID id);
 
     List<CardBrand> findAllByCreatedBy(User user);
 

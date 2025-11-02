@@ -4,10 +4,11 @@ import com.project.financeapi.enums.AccountStatus;
 import com.project.financeapi.enums.AccountType;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 
 public record ResponseAccountDTO (
-  String id,
+  UUID id,
   String name,
   AccountType type,
   BigDecimal balance,

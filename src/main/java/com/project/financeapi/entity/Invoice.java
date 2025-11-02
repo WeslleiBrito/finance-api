@@ -6,6 +6,7 @@ import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enums.DocumentStatus;
 import com.project.financeapi.enums.MovementType;
+import com.project.financeapi.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "invoice")
@@ -23,7 +25,7 @@ public class Invoice {
     @Id
     @Column(length = 36)
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "operation_type_id", nullable = false)
@@ -40,21 +42,6 @@ public class Invoice {
         return this.getInstallments().size();
     }
 
-    /**
-     * Retorna o total já pago em todas as parcelas.
-     */
-    public BigDecimal getTotalPaid() {
-        return installments.stream()
-                .map(Installment::getTotalPaid)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    /**
-     * Retorna o saldo em aberto.
-     */
-    public BigDecimal getRemainingBalance() {
-        return totalAmount.subtract(getTotalPaid());
-    }
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -99,39 +86,36 @@ public class Invoice {
     }
 
     /**
-     * Atualiza o status do documento com base nas parcelas.
+     * Retorna o status geral da fatura com base nas parcelas.
      */
-    public void updateStatus() {
-        boolean allPaid = installments.stream().allMatch(Installment::isPaid);
-        boolean anyPaid = installments.stream().anyMatch(i -> i.getTotalPaid().compareTo(BigDecimal.ZERO) > 0);
+    public PaymentStatus getPaymentStatus() {
+        boolean allPaid = installments.stream()
+                .allMatch(i -> i.isPaid() == PaymentStatus.FINALIZED);
 
-        if (allPaid) {
-            this.status = DocumentStatus.FINALIZED;
-        } else if (anyPaid) {
-            this.status = DocumentStatus.PARTIALLY_PAID;
-        } else {
-            this.status = DocumentStatus.OPEN;
-        }
+        boolean allOpen = installments.stream()
+                .allMatch(i -> i.isPaid() == PaymentStatus.OPEN);
+
+        if (allPaid) return PaymentStatus.FINALIZED;
+        if (allOpen) return PaymentStatus.OPEN;
+
+        return PaymentStatus.PARTIALLY_PAID;
     }
 
     /**
-     * Adiciona uma parcela ao documento.
+     * Retorna o total já pago em todas as parcelas.
      */
-    public void addInstallment(Installment installment) {
-        installment.setInvoice(this);
-        this.installments.add(installment);
-    }
-
-    /**
-     * Valida se a soma das parcelas confere com o valor total do documento.
-     */
-    public boolean validateInstallmentsTotal() {
-        BigDecimal total = installments.stream()
-                .map(Installment::getAmount)
+    public BigDecimal getTotalPaid() {
+        return installments.stream()
+                .map(Installment::getTotalPaid)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return total.compareTo(this.totalAmount) == 0;
     }
 
+    /**
+     * Retorna o saldo restante.
+     */
+    public BigDecimal getRemainingBalance() {
+        return totalAmount.subtract(getTotalPaid());
+    }
 
 }
 

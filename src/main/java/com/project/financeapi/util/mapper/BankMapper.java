@@ -1,4 +1,4 @@
-package com.project.financeapi.service;
+package com.project.financeapi.util.mapper;
 
 import com.project.financeapi.dto.bank.BankUpdateRequestDTO;
 import com.project.financeapi.entity.Bank;
@@ -9,7 +9,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(componentModel = "string")
 public interface BankMapper {
+
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    
-    void updateBankDTO(BankUpdateRequestDTO dto, @MappingTarget Bank entity);
+    void updateBankDTO(BankUpdateRequestDTO dto, @MappingTarget Bank bank);
 }

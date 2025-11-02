@@ -11,8 +11,9 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface OperationTypeRepository extends JpaRepository<OperationType, String> {
+public interface OperationTypeRepository extends JpaRepository<OperationType, UUID> {
 
     @Query("""
             SELECT t FROM OperationType t
@@ -44,6 +45,7 @@ public interface OperationTypeRepository extends JpaRepository<OperationType, St
     """)
     List<OperationType> findByCreatedByAndGroup(@Param("user") User user, OperationGroup operationGroup);
 
-    Optional<OperationType> findByCreatedByAndId(User user, String id);
+
+    Optional<OperationType> findByCreatedByAndId(User user, UUID id);
 
 }

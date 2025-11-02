@@ -10,6 +10,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 @Getter
@@ -22,26 +23,19 @@ public class Transaction {
     @Column(length = 36)
     @Setter(AccessLevel.PRIVATE)
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "movement_type", nullable = false)
-    private MovementType movementType;
+    private UUID id;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount = BigDecimal.ZERO;
 
     @Column(name = "observations")
-    private String observations;
+    private String observations = null;
 
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @Column(nullable = false, updatable = false)
-    private LocalDate settlementDate;
-
-    @Column(name = "issue_date", nullable = false)
-    private LocalDate issueDate = LocalDate.now();
+    private LocalDate paymentDate;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
@@ -51,18 +45,16 @@ public class Transaction {
     @JoinColumn(name = "account_id", nullable = false)
     private AccountBase account;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "installment_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "installment_id", nullable = false)
     private Installment installment;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_instrument_id")
     private PaymentInstrumentBase paymentInstrument;
 
-
     @Column(name = "is_reversed", nullable = false)
-    private boolean reversed = false;
-
+    private Boolean isReversed;
 
     public Transaction() {
     }
@@ -70,19 +62,22 @@ public class Transaction {
     public Transaction(
             User createdBy,
             AccountBase account,
-            MovementType type,
+            Installment installment,
             BigDecimal amount,
             PaymentInstrumentBase paymentInstrument,
-            LocalDate settlementDate,
+            LocalDate paymentDate,
+            Boolean isReversed,
             String observations
     ) {
+        this.installment = installment;
         this.account = account;
         this.amount = amount;
-        this.settlementDate = settlementDate != null ? settlementDate : LocalDate.now();
+        this.paymentDate = paymentDate != null ? paymentDate : LocalDate.now();
         this.observations = (observations != null && !observations.isBlank()) ? observations : null;
-        this.movementType = type;
         this.createdBy = createdBy;
         this.paymentInstrument = paymentInstrument;
+        this.createdAt = LocalDateTime.now();
+        this.isReversed = isReversed != null ? isReversed : false;
     }
 
 }

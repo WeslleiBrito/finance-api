@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/bank")
@@ -35,7 +36,7 @@ public class BankController {
     public ResponseEntity<BankResponseDTO> update(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody BankUpdateRequestDTO dto,
-            @PathVariable String id
+            @Valid @PathVariable UUID id
     ){
         BankResponseDTO bank = bankService.update(token, dto, id);
 
@@ -52,7 +53,7 @@ public class BankController {
     @GetMapping("/{id}")
     public ResponseEntity<BankResponseDTO> getById(
             @RequestHeader("X-Auth-Token") String token,
-            @PathVariable String id
+            @Valid @PathVariable UUID id
     ){
         return ResponseEntity.status(HttpStatus.OK).body(bankService.getById(token, id));
     }

@@ -6,10 +6,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface PersonRepository extends JpaRepository<PersonBase, String> {
+public interface PersonRepository extends JpaRepository<PersonBase, UUID> {
 
     List<PersonBase> findByCreatedBy(User user);
 
-    Optional<PersonBase> findByIdAndCreatedBy(String id, User user);
+    Optional<PersonBase> findByIdAndCreatedBy(UUID id, User user);
 }

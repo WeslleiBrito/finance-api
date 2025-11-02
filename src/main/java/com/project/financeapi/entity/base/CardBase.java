@@ -6,15 +6,19 @@ import com.project.financeapi.entity.User;
 import com.project.financeapi.enums.CardStatus;
 import com.project.financeapi.enums.InstrumentNature;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 
 
 @Entity
-@Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "card")
-@Data
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "card_type", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorValue("CARD")
+@Getter
+@Setter
 public abstract class CardBase extends PaymentInstrumentBase {
 
     @Column(length = 16)

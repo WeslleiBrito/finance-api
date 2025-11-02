@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "operation_group")
@@ -18,7 +19,7 @@ public class OperationGroup {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.PRIVATE)
-    private String id;
+    private UUID id;
 
     @Column(nullable = false, unique = true, length = 80)
     private String name;

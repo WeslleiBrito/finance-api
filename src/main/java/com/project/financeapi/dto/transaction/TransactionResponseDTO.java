@@ -1,5 +1,8 @@
 package com.project.financeapi.dto.transaction;
 
+import com.project.financeapi.dto.Installment.InstallmentDTO;
+import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
+import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.enums.MovementType;
 
@@ -7,17 +10,16 @@ import com.project.financeapi.enums.MovementType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record TransactionResponseDTO(
-        String id,
-        String installmentId,
-        String documentId,
-        String accountId,
-        MovementType movementType,
+        UUID id,
+        UUID installmentId,
+        UUID accountId,
         BigDecimal amount,
-        LocalDate issueDate,
-        LocalDate dueDate,
+        MovementType movementType,
+        Boolean isReversed,
         LocalDate paymentDate,
-        String observations,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String observations
 ) {}

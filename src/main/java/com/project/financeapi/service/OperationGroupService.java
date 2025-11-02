@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -84,7 +85,7 @@ public class OperationGroupService {
     }
 
     @Transactional
-    public ResponseDefaultDTO update(String token, String id, UpdateRequestOperationGroup dto){
+    public ResponseDefaultDTO update(String token, UUID id, UpdateRequestOperationGroup dto){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
@@ -108,7 +109,7 @@ public class OperationGroupService {
     }
 
     @Transactional
-    public ResponseDefaultDTO updateStatusOperationGroup(String token, String id, UpdateStatusRequestDTO dto){
+    public ResponseDefaultDTO updateStatusOperationGroup(String token, UUID id, UpdateStatusRequestDTO dto){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 
 public record CreditCardCreateRequestDTO(
@@ -19,8 +20,8 @@ public record CreditCardCreateRequestDTO(
         @Max(value = 31, message = "A maior data para o vencimento do cartão é 31.")
         Integer dueDay,
         @NotNull(message = "A bandeira precisa ser informada.")
-        String cardBrand,
-        String bank,
+        UUID cardBrand,
+        UUID bank,
         BigDecimal revolvingInterest,
         BigDecimal fine
 

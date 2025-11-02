@@ -1,7 +1,9 @@
 package com.project.financeapi.dto.address;
 
+import java.util.UUID;
+
 public record ResponseAddressDTO(
-    String id,
+    UUID id,
     String street,
     String number,
     String neighborhood,

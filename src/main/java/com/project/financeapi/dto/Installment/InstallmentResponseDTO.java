@@ -8,16 +8,17 @@ import com.project.financeapi.enums.PaymentStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 public record InstallmentResponseDTO(
-        String id,
+        UUID id,
         BigDecimal amount,
         LocalDate createdAt,
         LocalDate dueDate,
         MovementType movementType,
         PaymentStatus status,
         Integer parcelNumber,
-        String documentId,
+        UUID invoiceId,
         List<TransactionResponseDTO> transactions
 
 ) {

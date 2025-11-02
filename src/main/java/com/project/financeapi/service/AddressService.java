@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AddressService {
@@ -39,14 +40,14 @@ public class AddressService {
 
 
     @Transactional
-    public List<Address> create(String token, String personId, List<AddressDTO> addressesList) {
+    public List<Address> create(String token, UUID id, List<AddressDTO> addressesList) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
 
-        PersonBase person = personRepository.findById(personId)
+        PersonBase person = personRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "A pessoa informada não existe."));
 
         List<Address> addresses = new ArrayList<Address>();

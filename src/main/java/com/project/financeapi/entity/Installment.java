@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "installments")
@@ -22,7 +23,7 @@ public class Installment {
     @Id
     @Column(length = 36)
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
@@ -101,7 +102,12 @@ public class Installment {
      */
     public BigDecimal getTotalPaid() {
         return transactions.stream()
-                .map(Transaction::getAmount)
+                .map(tx -> {
+                    BigDecimal value = tx.getAmount() != null ? tx.getAmount() : BigDecimal.ZERO;
+                    return tx.getIsReversed() != null && tx.getIsReversed()
+                            ? value.negate()  // se for estornada, subtrai
+                            : value;
+                })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -115,8 +121,15 @@ public class Installment {
     /**
      * Verifica se a parcela está quitada.
      */
-    public boolean isPaid() {
-        return getRemainingBalance().compareTo(BigDecimal.ZERO) <= 0;
+    public PaymentStatus isPaid() {
+
+        if(getRemainingBalance().compareTo(BigDecimal.ZERO) <= 0) {
+            return PaymentStatus.FINALIZED;
+        } else if (getRemainingBalance().compareTo(this.amount) == 0) {
+            return PaymentStatus.OPEN;
+        }
+
+        return PaymentStatus.PARTIALLY_PAID;
     }
 
 

@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 @Data
 @Entity
 @Table(name = "credit_card")
+@DiscriminatorValue("CREDIT")
 public class CreditCard extends CardBase {
 
     @Column(name = "credit_limit", nullable = false)

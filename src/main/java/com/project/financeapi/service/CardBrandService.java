@@ -14,6 +14,7 @@ import com.project.financeapi.util.JwtUtil;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
+import java.util.UUID;
 
 public class CardBrandService {
 
@@ -46,14 +47,14 @@ public class CardBrandService {
 
     }
 
-    public CardBrandResponseDTO update(String token, CardBrandUpdateRequestDTO dto, String cardBrandId){
+    public CardBrandResponseDTO update(String token, CardBrandUpdateRequestDTO dto, UUID id){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
-        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user, cardBrandId)
+        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user, id)
                 .orElseThrow(
                         () -> new BusinessException(HttpStatus.NOT_FOUND, "Bandeira de cartão não encontrada.")
                 );
@@ -98,7 +99,7 @@ public class CardBrandService {
         ).toList();
     }
 
-    public CardBrandResponseDTO getById(String token, String id) {
+    public CardBrandResponseDTO getById(String token, UUID id) {
         JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())

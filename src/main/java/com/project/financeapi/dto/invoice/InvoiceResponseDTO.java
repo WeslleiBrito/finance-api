@@ -5,20 +5,22 @@ import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
 import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.enums.DocumentStatus;
+import com.project.financeapi.enums.PaymentStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 public record InvoiceResponseDTO(
-    String id,
-    OperationTypeResponseDTO operationType,
+    UUID id,
+    UUID accountId,
     LocalDate issueDate,
-    DocumentStatus status,
+    PaymentStatus status,
     Integer quantityInstallments,
     BigDecimal totalAmount,
     BigDecimal totalPaid,
     BigDecimal remainingBalance,
-    ResponseAccountDTO account,
+    OperationTypeResponseDTO operationType,
     List<InstallmentResponseDTO> installments
 ) {}

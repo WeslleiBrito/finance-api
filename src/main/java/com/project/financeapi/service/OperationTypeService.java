@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class OperationTypeService {
@@ -111,7 +112,7 @@ public class OperationTypeService {
 
     }
 
-    public ResponseDefaultDTO update(String token, String id, OperationTypeRequestUpdateDTO dto){
+    public ResponseDefaultDTO update(String token, UUID id, OperationTypeRequestUpdateDTO dto){
 
         JwtPayload userToken = jwtUtil.extractPayload(token);
 
@@ -145,7 +146,7 @@ public class OperationTypeService {
     }
 
     @Transactional
-    public ResponseDefaultDTO updateStatusOperationType(String token, String id, UpdateStatusRequestDTO dto){
+    public ResponseDefaultDTO updateStatusOperationType(String token, UUID id, UpdateStatusRequestDTO dto){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 

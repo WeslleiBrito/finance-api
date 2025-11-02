@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/card-brand")
@@ -34,7 +35,7 @@ public class CardBrandController {
     public ResponseEntity<CardBrandResponseDTO> update(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CardBrandUpdateRequestDTO dto,
-            @PathVariable String id
+            @Valid @PathVariable UUID id
     ) {
 
         CardBrandResponseDTO cardBrand = cardBrandService.update(token, dto, id);
@@ -55,7 +56,7 @@ public class CardBrandController {
     @GetMapping("/{id}")
     public ResponseEntity<CardBrandResponseDTO> findById(
             @RequestHeader("X-Auth-Token") String token,
-            @PathVariable String id
+            @Valid @PathVariable UUID id
     ) {
         CardBrandResponseDTO cardBrand = cardBrandService.getById(token, id);
 

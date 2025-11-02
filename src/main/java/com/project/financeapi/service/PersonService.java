@@ -2,7 +2,6 @@ package com.project.financeapi.service;
 
 import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
 import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
-import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.address.ResponseAddressDTO;
 import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
 import com.project.financeapi.dto.email.ResponseEmailDTO;
@@ -12,7 +11,6 @@ import com.project.financeapi.dto.person.ResponseFinancialPersonDTO;
 import com.project.financeapi.dto.person.ResponsePersonDTO;
 import com.project.financeapi.dto.phone.ResponsePhoneDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
-import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.LegalEntity;
 import com.project.financeapi.entity.PhysicalPerson;
@@ -185,6 +183,13 @@ public class PersonService {
                         new ResponseFinancialPersonDTO(
                                 person.getInvoices().stream().map(invoice -> new InvoiceResponseDTO(
                                         invoice.getId(),
+                                        invoice.getAccount().getId(),
+                                        invoice.getIssueDate(),
+                                        invoice.getPaymentStatus(),
+                                        invoice.getQuantityInstallments(),
+                                        invoice.getTotalAmount(),
+                                        invoice.getTotalPaid(),
+                                        invoice.getRemainingBalance(),
                                         new OperationTypeResponseDTO(
                                                 invoice.getOperationType().getId(),
                                                 invoice.getOperationType().getName(),
@@ -198,24 +203,6 @@ public class PersonService {
                                                         invoice.getOperationType().getGroup().getOperationStatus()
                                                 )
                                         ),
-                                        invoice.getIssueDate(),
-                                        invoice.getStatus(),
-                                        invoice.getQuantityInstallments(),
-                                        invoice.getTotalAmount(),
-                                        invoice.getTotalPaid(),
-                                        invoice.getRemainingBalance(),
-                                        new UserResponseDTO(
-                                                invoice.getCreatedBy().getId(),
-                                                invoice.getCreatedBy().getName(),
-                                                invoice.getCreatedBy().getUserStatus()
-                                        ),
-                                        new ResponseAccountDTO(
-                                                invoice.getAccount().getId(),
-                                                invoice.getAccount().getName(),
-                                                invoice.getAccount().getType(),
-                                                invoice.getAccount().getBalance(),
-                                                invoice.getAccount().getStatus()
-                                        ),
                                         invoice.getInstallments().stream()
                                                 .map(installment -> new InstallmentResponseDTO(
                                                         installment.getId(),
@@ -223,24 +210,19 @@ public class PersonService {
                                                         installment.getCreatedAt(),
                                                         installment.getDueDate(),
                                                         installment.getMovementType(),
+                                                        installment.isPaid(),
                                                         installment.getParcelNumber(),
                                                         installment.getInvoice().getId(),
-                                                        new UserResponseDTO(
-                                                                installment.getCreatedBy().getId(),
-                                                                installment.getCreatedBy().getName(),
-                                                                installment.getCreatedBy().getUserStatus()
-                                                        ),
                                                         installment.getTransactions().stream().map(transaction -> new TransactionResponseDTO(
                                                                 transaction.getId(),
                                                                 transaction.getInstallment().getId(),
-                                                                transaction.getInstallment().getInvoice().getId(),
                                                                 transaction.getAccount().getId(),
-                                                                transaction.getMovementType(),
                                                                 transaction.getAmount(),
-                                                                transaction.getIssueDate(),
-                                                                transaction.getSettlementDate(),
-                                                                transaction.getObservations(),
-                                                                transaction.getCreatedAt()
+                                                                transaction.getInstallment().getMovementType(),
+                                                                transaction.getIsReversed(),
+                                                                transaction.getPaymentDate(),
+                                                                transaction.getCreatedAt(),
+                                                                transaction.getObservations()
                                                         )).toList()
 
                                                 )).toList()

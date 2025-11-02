@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 
 @Service
@@ -40,7 +41,7 @@ public class PhoneService {
     }
 
     @Transactional
-    public List<Phone> create(String token, String personId, List<PhoneDTO> phoneList){
+    public List<Phone> create(String token, UUID personId, List<PhoneDTO> phoneList){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 

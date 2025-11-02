@@ -4,8 +4,10 @@ import com.project.financeapi.dto.bank.BankResponseDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record CreditCardResponseDTO(
+        UUID id,
         String name,
         BigDecimal creditLimit,
         Integer closingDay,

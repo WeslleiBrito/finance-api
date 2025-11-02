@@ -29,7 +29,7 @@ public abstract class PaymentInstrumentBase {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(length = 36)
-    private String id;
+    private UUID id;
 
     @Column(nullable = false, length = 25)
     private String name;

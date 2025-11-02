@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/operation-group")
@@ -65,7 +66,7 @@ public class OperationGroupController {
     public ResponseEntity<ResponseDefaultDTO> update(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdateRequestOperationGroup dto,
-            @PathVariable String id
+            @Valid @PathVariable UUID id
     ){
 
         ResponseDefaultDTO response = operationGroupService.update(token, id, dto);
@@ -78,7 +79,7 @@ public class OperationGroupController {
     public ResponseEntity<ResponseDefaultDTO> updateStatusOperationGroup(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdateStatusRequestDTO dto,
-            @PathVariable String id
+            @Valid @PathVariable UUID id
     ){
 
         ResponseDefaultDTO response = operationGroupService.updateStatusOperationGroup(token, id, dto);

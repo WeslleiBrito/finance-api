@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -63,7 +64,7 @@ public class JwtUtil {
     public JwtPayload extractPayload(String token) {
         Claims claims = validateToken(token);
         String email = claims.getSubject();
-        String id = claims.get("id", String.class);
+        UUID id = claims.get("id", UUID.class);
         Integer tokenVersion = claims.get("tokenVersion", Integer.class);
         return new JwtPayload(id, email, tokenVersion);
     }

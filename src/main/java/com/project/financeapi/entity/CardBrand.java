@@ -18,7 +18,7 @@ public class CardBrand {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(length = 36)
-    private String id;
+    private UUID id;
 
     @Column(nullable = false, unique = true, length = 100)
     private String name;
