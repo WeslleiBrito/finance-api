@@ -12,14 +12,17 @@ import com.project.financeapi.repository.PhoneRepository;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 
 @Service
+@RequiredArgsConstructor
 public class PhoneService {
 
     private final PersonRepository personRepository;
@@ -27,20 +30,8 @@ public class PhoneService {
     private final PhoneRepository phoneRepository;
     private final JwtUtil jwtUtil;
 
-    public PhoneService(
-            PersonRepository personRepository,
-            UserRepository userRepository,
-            PhoneRepository phoneRepository,
-            JwtUtil jwtUtil
-    ) {
-        this.personRepository = personRepository;
-        this.userRepository = userRepository;
-        this.phoneRepository = phoneRepository;
-        this.jwtUtil = jwtUtil;
-    }
-
     @Transactional
-    public List<Phone> create(String token, String personId, List<PhoneDTO> phoneList){
+    public List<Phone> create(String token, UUID personId, List<PhoneDTO> phoneList){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 

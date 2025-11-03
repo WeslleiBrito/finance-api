@@ -6,18 +6,19 @@ import com.project.financeapi.dto.account.ResponseDeactivateAccountDTO;
 import com.project.financeapi.dto.account.UpdateAccountRequestDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
+import com.project.financeapi.entity.account.*;
 import com.project.financeapi.enums.AccountStatus;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.exception.AccessBlockedException;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.AccountRepository;
-import com.project.financeapi.repository.TransactionRepository;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -62,7 +63,7 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountBase update(String token, String id, UpdateAccountRequestDTO dto) {
+    public AccountBase update(String token, UUID id, UpdateAccountRequestDTO dto) {
 
         JwtPayload userToken = jwtUtil.extractPayload(token);
 
@@ -112,7 +113,7 @@ public class AccountService {
 
     }
 
-    public ResponseAccountDTO findById(String token, String id) {
+    public ResponseAccountDTO findById(String token, UUID id) {
 
         JwtPayload userToken = jwtUtil.extractPayload(token);
 
@@ -135,7 +136,7 @@ public class AccountService {
         );
     }
 
-    public ResponseDeactivateAccountDTO deactivateAccount(String token, String id) {
+    public ResponseDeactivateAccountDTO deactivateAccount(String token, UUID id) {
 
         JwtPayload userToken = jwtUtil.extractPayload(token);
 
@@ -154,7 +155,7 @@ public class AccountService {
         accountRepository.save(account);
 
         return new ResponseDeactivateAccountDTO(
-                account.getId(),
+                account.getId().toString(),
                 "A conta " + account.getName() + " foi desativada com sucesso."
         );
     }

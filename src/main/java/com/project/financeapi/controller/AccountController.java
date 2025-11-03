@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/account")
@@ -43,7 +44,7 @@ public class AccountController {
 
     @PutMapping("/{id}")
     public ResponseEntity<AccountBase> update(
-            @PathVariable String id,
+            @Valid @PathVariable UUID id,
             @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdateAccountRequestDTO dto
     ) {
@@ -53,7 +54,7 @@ public class AccountController {
 
     @PutMapping("/deactivate/{id}")
     public ResponseEntity<ResponseDeactivateAccountDTO> deactivateAccount(
-            @PathVariable String id,
+            @Valid @PathVariable UUID id,
             @RequestHeader("X-Auth-Token") String token
     ){
         ResponseDeactivateAccountDTO account = accountService.deactivateAccount(token, id);
@@ -63,7 +64,7 @@ public class AccountController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ResponseAccountDTO> getById(
-            @PathVariable String id,
+            @Valid @PathVariable UUID id,
             @RequestHeader("X-Auth-Token") String token
     ){
         ResponseAccountDTO account = accountService.findById(token, id);

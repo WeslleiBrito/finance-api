@@ -1,163 +1,141 @@
 package com.project.financeapi.service;
 
+import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
 import com.project.financeapi.dto.transaction.TransactionDTO;
 import com.project.financeapi.dto.transaction.TransactionRequestDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
-import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.dto.util.JwtPayload;
-import com.project.financeapi.entity.Invoice;
-import com.project.financeapi.entity.Installment;
-import com.project.financeapi.entity.Transaction;
-import com.project.financeapi.entity.User;
-import com.project.financeapi.enums.MovementType;
-import com.project.financeapi.enums.TransactionType;
+import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.base.AccountBase;
+import com.project.financeapi.entity.base.PaymentInstrumentBase;
+import com.project.financeapi.enums.InstrumentNature;
+import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.*;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final InstallmentRepository installmentRepository;
-    private final InvoiceRepository invoiceRepository;
+    private final PaymentInstrumentRepository paymentInstrumentRepository;
     private final JwtUtil jwtUtil;
 
-    public TransactionService(
-            TransactionRepository transactionRepository,
-            AccountRepository accountRepository,
-            UserRepository userRepository,
-            InstallmentRepository installmentRepository,
-            InvoiceRepository invoiceRepository,
-            JwtUtil jwtUtil
-    ) {
-        this.transactionRepository = transactionRepository;
-        this.accountRepository = accountRepository;
-        this.userRepository = userRepository;
-        this.installmentRepository = installmentRepository;
-        this.invoiceRepository = invoiceRepository;
-        this.jwtUtil = jwtUtil;
-    }
 
+    // =======================
+    // PRINCIPAL MÉTODO
+    // =======================
     @Transactional
     public List<TransactionResponseDTO> create(String token, TransactionRequestDTO dto) {
-        JwtPayload payload = jwtUtil.extractPayload(token);
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+        User user = getAuthenticatedUser(token);
 
-        Set<String> repetidasNoLote = new HashSet<>();
-        for (TransactionDTO t : dto.transactions()) {
-            if (!repetidasNoLote.add(t.installmentId())) {
-                throw new BusinessException(HttpStatus.BAD_REQUEST,
-                        "A parcela " + t.installmentId() + " foi informada mais de uma vez no mesmo lote.");
-            }
+        List<Transaction> transactions = transactionRepository.saveAll(dto.itens().stream()
+                .map(item -> buildTransaction(user, item))
+                .toList());
+
+
+        return transactions.stream()
+                .map(this::responseDTO)
+                .toList();
+    }
+
+
+    // =======================
+    // MÉTODOS AUXILIARES
+    // =======================
+
+    private Transaction buildTransaction(User user, TransactionDTO item) {
+
+        Installment installment = getAndValidateInstallment(item.installmentId(), user);
+
+        AccountBase account = getAndValidateAccount(item.accountId(), user);
+
+        PaymentInstrumentBase instrument = getAndValidateInstrument(item.paymentInstrumentId(), user);
+
+        BigDecimal remaining = installment.getRemainingBalance();
+        if (item.amount().compareTo(remaining) > 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST,
+                    "Valor informado (" + item.amount() + ") ultrapassa o saldo da parcela (" + remaining + ").");
         }
 
-        List<Transaction> toPersist = new ArrayList<>();
-        List<Installment> installmentsToUpdate = new ArrayList<>();
-
-        for (TransactionDTO item : dto.transactions()) {
-            Installment installment = installmentRepository.findById(item.installmentId())
-                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Parcela não encontrada"));
-
-            if (!installment.getCreatedBy().getId().equals(user.getId())) {
-                throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem acesso a esta parcela.");
-            }
-
-            AccountBase account = accountRepository.findById(dto.accountId())
-                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada"));
-
-            if (!account.getAccountHolder().getId().equals(user.getId())) {
-                throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem acesso a esta conta.");
-            }
-
-
-            BigDecimal remaining = installment.getRemainingBalance();
-            if (item.amount().compareTo(remaining) > 0) {
-                throw new BusinessException(HttpStatus.BAD_REQUEST,
-                        "Valor informado (" + item.amount() + ") ultrapassa o saldo da parcela (" + remaining + "). Parcela: " + installment.getId());
-            }
-
-            TransactionType type = (installment.getMovementType() == MovementType.INCOME)
-                    ? TransactionType.DEPOSIT
-                    : TransactionType.PAYMENT;
-
-            LocalDate paymentDate = (item.paymentDate() != null) ? item.paymentDate() : LocalDate.now();
-
-            Transaction tx = new Transaction(
-                    user,
-                    account,
-                    type,
-                    item.amount(),
-                    installment.getInvoice().getIssueDate(),
-                    installment.getDueDate(),
-                    paymentDate,
-                    item.observations()
-            );
-            tx.setInstallment(installment);
-            tx.finalizeTransaction();
-
-            account.getTransactions().add(tx);
-            installment.getTransactions().add(tx);
-
-            toPersist.add(tx);
-            installmentsToUpdate.add(installment);
-        }
-
-
-        List<Transaction> saved = transactionRepository.saveAll(toPersist);
-        installmentRepository.saveAll(installmentsToUpdate);
-        invoiceRepository.saveAll(
-                installmentsToUpdate.stream()
-                        .map(Installment::getInvoice)
-                        .distinct()
-                        .peek(Invoice::updateStatus)
-                        .toList()
+        return new Transaction(
+                user,
+                account,
+                installment,
+                item.amount(),
+                instrument,
+                item.paymentDate(),
+                item.isReversed(),
+                item.observations()
         );
 
-        TransactionResponseDTO [] transactionResponse = new TransactionResponseDTO[saved.size()];
+    }
 
-        int index = 0;
+    public TransactionResponseDTO responseDTO(Transaction transaction) {
 
-        for(Transaction item: saved){
+        return new TransactionResponseDTO(
+                transaction.getId(),
+                transaction.getInstallment().getId(),
+                transaction.getAccount().getId(),
+                transaction.getAmount(),
+                transaction.getInstallment().getMovementType(),
+                transaction.getIsReversed(),
+                transaction.getPaymentDate(),
+                transaction.getCreatedAt(),
+                transaction.getObservations()
+        );
+    }
 
-            transactionResponse[index] = new TransactionResponseDTO(
-                    item.getId(),
-                    item.getInstallment().getId(),
-                    item.getInstallment().getInvoice().getId(),
-                    item.getAccount().getId(),
-                    item.getMovementType(),
-                    item.getAmount(),
-                    item.getIssueDate(),
-                    item.getDueDate(),
-                    item.getPaymentDate(),
-                    new ResponseUserDTO(
-                            item.getCreatedBy().getId(),
-                            item.getCreatedBy().getName(),
-                            item.getCreatedBy().getUserStatus()
-                    ),
-                    item.getObservations() != null ? item.getObservations() : "",
-                    item.getCreatedAt()
-            );
+    private User getAuthenticatedUser(String token) {
+        JwtPayload payload = jwtUtil.extractPayload(token);
+        return userRepository.findById(payload.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+    }
 
-            index ++;
+
+    private AccountBase getAndValidateAccount(UUID accountId, User user) {
+        AccountBase account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada"));
+
+        if (!account.getAccountHolder().getId().equals(user.getId())) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem acesso a esta conta.");
         }
 
-        return List.of(transactionResponse);
+        return account;
+    }
+
+    private PaymentInstrumentBase getAndValidateInstrument(UUID instrumentId, User user) {
+        if (instrumentId == null) return null;
+
+        PaymentInstrumentBase instrument = paymentInstrumentRepository.findByIdAndUser(instrumentId, user.getId())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Instrumento não encontrado."));
+
+        if (instrument.getInstrumentNature() != InstrumentNature.PAYMENT) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Instrumento de pagamento inválido");
+        }
+
+        return instrument;
+    }
+
+    private Installment getAndValidateInstallment(UUID installmentId, User user) {
+
+        if (installmentId == null) return null;
+
+        return installmentRepository.findCreditCardByCreatedByAndId(user.getId(), installmentId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Instrumento não encontrado."));
     }
 
 

@@ -1,7 +1,9 @@
 package com.project.financeapi.dto.email;
 
+import java.util.UUID;
+
 public record ResponseEmailDTO(
-        String id,
+        UUID id,
         String email
 ) {
 }

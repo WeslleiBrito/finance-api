@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/invoice")
@@ -40,7 +41,7 @@ public class InvoiceController {
     @GetMapping("/{id}")
     public ResponseEntity<InvoiceResponseDTO> findById(
             @RequestHeader("X-Auth-Token") String token,
-            @PathVariable String id) {
+            @Valid @PathVariable UUID id) {
 
         InvoiceResponseDTO invoice = invoiceService.findById(token, id);
 

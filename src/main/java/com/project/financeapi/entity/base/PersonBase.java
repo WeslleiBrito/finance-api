@@ -11,7 +11,7 @@ import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.UUID;
 
 
 @Getter
@@ -27,7 +27,7 @@ public abstract class PersonBase {
     @ToString.Include
     @Column(length = 36)
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @Column(nullable = false, length = 150)
     @ToString.Include
@@ -68,28 +68,4 @@ public abstract class PersonBase {
     public PersonBase() {
     }
 
-    public void addDocument(Invoice invoice) {
-        invoices.add(invoice);
-        invoice.setPerson(this);
-    }
-
-    public void addPhone(Phone phone) {
-        phones.add(phone);
-        phone.setPerson(this);
-    }
-
-    public void addEmail(Email email) {
-        emails.add(email);
-        email.setAddress(email.getAddress());
-    }
-
-    public void addAddress(Address address){
-        addresses.add(address);
-        address.setStreet(address.getStreet());
-        address.setNumber(address.getNumber());
-        address.setNeighborhood(address.getNeighborhood());
-        address.setZipCode(address.getZipCode());
-        address.setCity(address.getCity());
-        address.setComplement(address.getComplement());
-    }
 }

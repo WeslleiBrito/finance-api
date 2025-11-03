@@ -8,21 +8,22 @@ import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 public record CreateInvoiceRequestDTO(
 
         @NotNull(message = "O tipo de operação não foi informado.")
-        String operationTypeId,
+        UUID operationTypeId,
 
         @NotNull(message = "O valor total do documento precisa ser informado.")
         @Positive(message = "O valor total do documento precisa ser maior que zero.")
         BigDecimal totalAmount,
 
         @NotNull(message = "A pessoa beneficiária/fornecedora não foi informada.")
-        String personId,
+        UUID personId,
 
         @NotNull(message = "A conta não foi informada.")
-        String accountId,
+        UUID accountId,
 
         @NotNull(message = "As parcelas devem ser informadas")
         List<@Valid InstallmentDTO> installments

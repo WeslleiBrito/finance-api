@@ -18,32 +18,22 @@ import com.project.financeapi.repository.OperationTypeRepository;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class OperationTypeService {
 
     private final OperationTypeRepository operationTypeRepository;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final OperationGroupRepository operationGroupRepository;
-
-
-    public OperationTypeService(
-            OperationTypeRepository operationTypeRepository,
-            JwtUtil jwtUtil,
-            UserRepository userRepository,
-            OperationGroupRepository operationGroupRepository
-    ) {
-        this.operationTypeRepository = operationTypeRepository;
-        this.jwtUtil = jwtUtil;
-        this.userRepository = userRepository;
-        this.operationGroupRepository = operationGroupRepository;
-    }
 
     public OperationTypeResponseDTO create(String token, OperationTypeRequestCreateDTO dto){
 
@@ -111,7 +101,7 @@ public class OperationTypeService {
 
     }
 
-    public ResponseDefaultDTO update(String token, String id, OperationTypeRequestUpdateDTO dto){
+    public ResponseDefaultDTO update(String token, UUID id, OperationTypeRequestUpdateDTO dto){
 
         JwtPayload userToken = jwtUtil.extractPayload(token);
 
@@ -145,7 +135,7 @@ public class OperationTypeService {
     }
 
     @Transactional
-    public ResponseDefaultDTO updateStatusOperationType(String token, String id, UpdateStatusRequestDTO dto){
+    public ResponseDefaultDTO updateStatusOperationType(String token, UUID id, UpdateStatusRequestDTO dto){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 

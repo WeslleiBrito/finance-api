@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 
 @Entity
 @Table(name = "emails")
@@ -21,7 +23,7 @@ public class  Email {
     @Setter(AccessLevel.PRIVATE)
     @Column(length = 36)
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
 
     @Column(nullable = false, length = 150, unique = true)

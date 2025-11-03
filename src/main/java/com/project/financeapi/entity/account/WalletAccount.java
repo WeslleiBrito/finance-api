@@ -1,5 +1,6 @@
-package com.project.financeapi.entity;
+package com.project.financeapi.entity.account;
 
+import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.enums.AccountType;
 import jakarta.persistence.Entity;

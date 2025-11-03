@@ -1,6 +1,7 @@
 package com.project.financeapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.enums.PaymentStatus;
 import jakarta.persistence.*;
@@ -11,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "installments")
@@ -21,7 +23,7 @@ public class Installment {
     @Id
     @Column(length = 36)
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
@@ -36,10 +38,6 @@ public class Installment {
     @Column(nullable = false, name = "created_at")
     private LocalDate createdAt  = LocalDate.now();
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentStatus status = PaymentStatus.OPEN;
-
     @Column(name = "parcel_number", nullable = false)
     private Integer parcelNumber;
 
@@ -53,6 +51,12 @@ public class Installment {
     @JoinColumn(name = "invoice_id", nullable = false)
     private Invoice invoice;
 
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_instrument")
+    private PaymentInstrumentBase paymentInstrument;
+
+
     // Transações que foram feitas para quitar essa parcela
     @JsonBackReference
     @OneToMany(mappedBy = "installment", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -60,13 +64,23 @@ public class Installment {
 
     public Installment() {}
 
-    public Installment(BigDecimal amount, LocalDate dueDate, MovementType movementType, Integer parcelNumber, User createdBy, Invoice invoice) {
+    public Installment(
+            BigDecimal amount,
+            LocalDate dueDate,
+            MovementType movementType,
+            Integer parcelNumber,
+            User createdBy,
+            Invoice invoice,
+            PaymentInstrumentBase paymentInstrument
+    )
+    {
         this.amount = amount;
-        this.dueDate = (dueDate != null) ? dueDate : LocalDate.now();
+        this.dueDate = dueDate;
         this.movementType = movementType;
         this.parcelNumber = parcelNumber;
         this.createdBy = createdBy;
         this.invoice = invoice;
+        this.paymentInstrument = paymentInstrument;
     }
 
 
@@ -88,8 +102,12 @@ public class Installment {
      */
     public BigDecimal getTotalPaid() {
         return transactions.stream()
-                .filter(Transaction::isFinalized)
-                .map(Transaction::getAmount)
+                .map(tx -> {
+                    BigDecimal value = tx.getAmount() != null ? tx.getAmount() : BigDecimal.ZERO;
+                    return tx.getIsReversed() != null && tx.getIsReversed()
+                            ? value.negate()  // se for estornada, subtrai
+                            : value;
+                })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -103,19 +121,16 @@ public class Installment {
     /**
      * Verifica se a parcela está quitada.
      */
-    public boolean isPaid() {
-        return getRemainingBalance().compareTo(BigDecimal.ZERO) <= 0;
+    public PaymentStatus isPaid() {
+
+        if(getRemainingBalance().compareTo(BigDecimal.ZERO) <= 0) {
+            return PaymentStatus.FINALIZED;
+        } else if (getRemainingBalance().compareTo(this.amount) == 0) {
+            return PaymentStatus.OPEN;
+        }
+
+        return PaymentStatus.PARTIALLY_PAID;
     }
 
-    /**
-     * Atualiza automaticamente o status da parcela.
-     */
-    public void updateStatus() {
-        if (isPaid()) {
-            this.status = PaymentStatus.FINALIZED;
-        } else {
-            this.status = PaymentStatus.OPEN;
-        }
-    }
 
 }

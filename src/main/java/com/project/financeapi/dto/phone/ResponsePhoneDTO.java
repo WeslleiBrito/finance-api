@@ -2,8 +2,10 @@ package com.project.financeapi.dto.phone;
 
 import com.project.financeapi.enums.PhoneType;
 
+import java.util.UUID;
+
 public record ResponsePhoneDTO(
-        String id,
+        UUID id,
         String number,
         PhoneType phoneType
 ) {

@@ -1,8 +1,7 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.enums.MovementType;
-import com.project.financeapi.enums.PaymentStatus;
-import com.project.financeapi.enums.TransactionType;
 import com.project.financeapi.entity.base.AccountBase;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -11,6 +10,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 @Getter
@@ -23,33 +23,19 @@ public class Transaction {
     @Column(length = 36)
     @Setter(AccessLevel.PRIVATE)
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TransactionType type;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "movement_type", nullable = false)
-    private MovementType movementType;
+    private UUID id;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount = BigDecimal.ZERO;
 
     @Column(name = "observations")
-    private String observations;
+    private String observations = null;
 
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @Column(nullable = false, updatable = false)
     private LocalDate paymentDate;
-
-    @Column(name = "issue_date", nullable = false)
-    private LocalDate issueDate = LocalDate.now();
-
-    @Column(name = "due_date", nullable = false)
-    private LocalDate dueDate = LocalDate.now();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
@@ -63,9 +49,12 @@ public class Transaction {
     @JoinColumn(name = "installment_id", nullable = false)
     private Installment installment;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentStatus status = PaymentStatus.OPEN;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_instrument_id")
+    private PaymentInstrumentBase paymentInstrument;
+
+    @Column(name = "is_reversed", nullable = false)
+    private Boolean isReversed;
 
     public Transaction() {
     }
@@ -73,45 +62,22 @@ public class Transaction {
     public Transaction(
             User createdBy,
             AccountBase account,
-            TransactionType type,
+            Installment installment,
             BigDecimal amount,
-            LocalDate issueDate,
-            LocalDate dueDate,
+            PaymentInstrumentBase paymentInstrument,
             LocalDate paymentDate,
+            Boolean isReversed,
             String observations
     ) {
+        this.installment = installment;
         this.account = account;
-        this.type = type;
-        this.amount = amount != null ? amount : BigDecimal.ZERO;
-        this.issueDate = issueDate != null ? issueDate : LocalDate.now();
-        this.dueDate = dueDate != null ? dueDate : LocalDate.now();
+        this.amount = amount;
         this.paymentDate = paymentDate != null ? paymentDate : LocalDate.now();
         this.observations = (observations != null && !observations.isBlank()) ? observations : null;
-
-        this.movementType = MovementType.fromTransactionType(type);
         this.createdBy = createdBy;
+        this.paymentInstrument = paymentInstrument;
+        this.createdAt = LocalDateTime.now();
+        this.isReversed = isReversed != null ? isReversed : false;
     }
 
-
-    public boolean isFinalized() {
-        return this.status == PaymentStatus.FINALIZED;
-    }
-
-    public boolean isOpen() {
-        return this.status == PaymentStatus.OPEN;
-    }
-
-    public void cancel() {
-        if (this.isFinalized()) {
-            throw new IllegalStateException("Não é possível cancelar uma transação finalizada");
-        }
-        this.status = PaymentStatus.CANCELLED;
-    }
-
-    public void finalizeTransaction() {
-        if (this.status != PaymentStatus.OPEN) {
-            throw new IllegalStateException("Só é possível finalizar transações abertas");
-        }
-        this.status = PaymentStatus.FINALIZED;
-    }
 }

@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/operation-type")
@@ -43,7 +44,7 @@ public class OperationTypeController {
     @PutMapping("/update/{id}")
     public ResponseEntity<ResponseDefaultDTO> update(
             @RequestHeader("X-Auth-Token") String token,
-            @PathVariable String id,
+            @Valid @PathVariable UUID id,
             @Valid@RequestBody OperationTypeRequestUpdateDTO dto
     ) {
 
@@ -53,7 +54,7 @@ public class OperationTypeController {
     @PutMapping("/update-status/{id}")
     public ResponseEntity<ResponseDefaultDTO> updateStatus(
             @RequestHeader("X-Auth-Token") String token,
-            @PathVariable String id,
+            @Valid @PathVariable UUID id,
             @Valid@RequestBody UpdateStatusRequestDTO dto
     ) {
 

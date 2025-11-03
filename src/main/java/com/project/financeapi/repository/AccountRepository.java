@@ -7,11 +7,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface AccountRepository extends JpaRepository<AccountBase, String> {
+public interface AccountRepository extends JpaRepository<AccountBase, UUID> {
 
     List<AccountBase> findByAccountHolder(User user);
 
-    Optional<AccountBase> findByAccountHolderAndId(User user, String id);
+    Optional<AccountBase> findByAccountHolderAndId(User user, UUID id);
 }

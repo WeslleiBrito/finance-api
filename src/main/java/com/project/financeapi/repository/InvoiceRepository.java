@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface InvoiceRepository extends JpaRepository<Invoice, String> {
+public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
     List<Invoice> findByCreatedBy(User user);
 
-    Optional<Invoice> findByIdAndCreatedBy(String id, User user);
+    Optional<Invoice> findByIdAndCreatedBy(UUID id, User user);
 }

@@ -7,6 +7,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "operation_type")
 @Setter
@@ -15,7 +17,7 @@ public class OperationType {
     @Id
     @Setter(AccessLevel.PRIVATE)
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @Column(nullable = false, unique = true, length = 80)
     private String name;

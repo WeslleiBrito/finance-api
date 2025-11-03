@@ -1,12 +1,12 @@
 CREATE TABLE invoice (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     total_amount NUMERIC(19, 2) NOT NULL,
     issue_date DATE NOT NULL,
     status VARCHAR(50) NOT NULL,
-    created_by VARCHAR(36) NOT NULL,
-    person_id VARCHAR(36) NOT NULL,
-    account_id VARCHAR(36) NOT NULL,
-    operation_type_id VARCHAR(36) NOT NULL,
+    created_by UUID NOT NULL,
+    person_id UUID NOT NULL,
+    account_id UUID NOT NULL,
+    operation_type_id UUID NOT NULL,
 
     CONSTRAINT fk_invoice_created_by
         FOREIGN KEY (created_by)

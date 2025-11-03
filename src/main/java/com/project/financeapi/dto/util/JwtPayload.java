@@ -1,4 +1,6 @@
 package com.project.financeapi.dto.util;
 
 
-public record JwtPayload(String id, String email, Integer tokenVersion) {}
+import java.util.UUID;
+
+public record JwtPayload(UUID id, String email, Integer tokenVersion) {}

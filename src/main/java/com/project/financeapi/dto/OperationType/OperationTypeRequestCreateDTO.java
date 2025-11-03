@@ -4,6 +4,8 @@ import com.project.financeapi.enums.MovementType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 
 public record OperationTypeRequestCreateDTO(
         @NotNull(message = "O nome deve ser informado.")
@@ -13,6 +15,6 @@ public record OperationTypeRequestCreateDTO(
         MovementType movementType,
         @NotNull(message = "É obrigatório informar o grupo de operação a que pertence o tipo de operação.")
         @Size(min = 36, max = 36, message = "O id do tipo do grupo de operação é inválido.")
-        String operationGroupId
+        UUID operationGroupId
 ) {
 }

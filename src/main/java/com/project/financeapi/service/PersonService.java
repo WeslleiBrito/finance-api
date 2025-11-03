@@ -2,7 +2,6 @@ package com.project.financeapi.service;
 
 import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
 import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
-import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.address.ResponseAddressDTO;
 import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
 import com.project.financeapi.dto.email.ResponseEmailDTO;
@@ -12,7 +11,6 @@ import com.project.financeapi.dto.person.ResponseFinancialPersonDTO;
 import com.project.financeapi.dto.person.ResponsePersonDTO;
 import com.project.financeapi.dto.phone.ResponsePhoneDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
-import com.project.financeapi.dto.user.ResponseUserDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.LegalEntity;
 import com.project.financeapi.entity.PhysicalPerson;
@@ -26,13 +24,14 @@ import com.project.financeapi.util.CnpjValidator;
 import com.project.financeapi.util.CpfValidator;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PersonService {
     private final PersonRepository personRepository;
     private final UserRepository userRepository;
@@ -41,22 +40,6 @@ public class PersonService {
     private final EmailService emailService;
     private final JwtUtil jwtUtil;
 
-
-    public PersonService(
-            PersonRepository personRepository,
-            UserRepository userRepository,
-            AddressService addressService,
-            PhoneService phoneService,
-            EmailService emailService,
-            JwtUtil jwtUtil
-    ) {
-        this.personRepository = personRepository;
-        this.userRepository = userRepository;
-        this.addressService = addressService;
-        this.phoneService = phoneService;
-        this.emailService = emailService;
-        this.jwtUtil = jwtUtil;
-    }
 
     @Transactional
     public PersonBase create(String token, PersonCreateRequestDTO dto){
@@ -186,6 +169,13 @@ public class PersonService {
                         new ResponseFinancialPersonDTO(
                                 person.getInvoices().stream().map(invoice -> new InvoiceResponseDTO(
                                         invoice.getId(),
+                                        invoice.getAccount().getId(),
+                                        invoice.getIssueDate(),
+                                        invoice.getPaymentStatus(),
+                                        invoice.getQuantityInstallments(),
+                                        invoice.getTotalAmount(),
+                                        invoice.getTotalPaid(),
+                                        invoice.getRemainingBalance(),
                                         new OperationTypeResponseDTO(
                                                 invoice.getOperationType().getId(),
                                                 invoice.getOperationType().getName(),
@@ -199,24 +189,6 @@ public class PersonService {
                                                         invoice.getOperationType().getGroup().getOperationStatus()
                                                 )
                                         ),
-                                        invoice.getIssueDate(),
-                                        invoice.getStatus(),
-                                        invoice.getQuantityInstallments(),
-                                        invoice.getTotalAmount(),
-                                        invoice.getTotalPaid(),
-                                        invoice.getRemainingBalance(),
-                                        new ResponseUserDTO(
-                                                invoice.getCreatedBy().getId(),
-                                                invoice.getCreatedBy().getName(),
-                                                invoice.getCreatedBy().getUserStatus()
-                                        ),
-                                        new ResponseAccountDTO(
-                                                invoice.getAccount().getId(),
-                                                invoice.getAccount().getName(),
-                                                invoice.getAccount().getType(),
-                                                invoice.getAccount().getBalance(),
-                                                invoice.getAccount().getStatus()
-                                        ),
                                         invoice.getInstallments().stream()
                                                 .map(installment -> new InstallmentResponseDTO(
                                                         installment.getId(),
@@ -224,31 +196,19 @@ public class PersonService {
                                                         installment.getCreatedAt(),
                                                         installment.getDueDate(),
                                                         installment.getMovementType(),
-                                                        installment.getStatus(),
+                                                        installment.isPaid(),
                                                         installment.getParcelNumber(),
                                                         installment.getInvoice().getId(),
-                                                        new ResponseUserDTO(
-                                                                installment.getCreatedBy().getId(),
-                                                                installment.getCreatedBy().getName(),
-                                                                installment.getCreatedBy().getUserStatus()
-                                                        ),
                                                         installment.getTransactions().stream().map(transaction -> new TransactionResponseDTO(
                                                                 transaction.getId(),
                                                                 transaction.getInstallment().getId(),
-                                                                transaction.getInstallment().getInvoice().getId(),
                                                                 transaction.getAccount().getId(),
-                                                                transaction.getMovementType(),
                                                                 transaction.getAmount(),
-                                                                transaction.getIssueDate(),
-                                                                transaction.getDueDate(),
+                                                                transaction.getInstallment().getMovementType(),
+                                                                transaction.getIsReversed(),
                                                                 transaction.getPaymentDate(),
-                                                                new ResponseUserDTO(
-                                                                        transaction.getCreatedBy().getId(),
-                                                                        transaction.getCreatedBy().getName(),
-                                                                        transaction.getCreatedBy().getUserStatus()
-                                                                ),
-                                                                transaction.getObservations(),
-                                                                transaction.getCreatedAt()
+                                                                transaction.getCreatedAt(),
+                                                                transaction.getObservations()
                                                         )).toList()
 
                                                 )).toList()

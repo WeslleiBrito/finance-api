@@ -4,8 +4,10 @@ import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.enums.OperationStatus;
 
+import java.util.UUID;
+
 public record OperationTypeResponseDTO(
-        String id,
+        UUID id,
         String name,
         MovementType movementType,
         OperationStatus operationStatus,
