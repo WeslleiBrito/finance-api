@@ -24,12 +24,14 @@ import com.project.financeapi.util.CnpjValidator;
 import com.project.financeapi.util.CpfValidator;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class PersonService {
     private final PersonRepository personRepository;
     private final UserRepository userRepository;
@@ -38,22 +40,6 @@ public class PersonService {
     private final EmailService emailService;
     private final JwtUtil jwtUtil;
 
-
-    public PersonService(
-            PersonRepository personRepository,
-            UserRepository userRepository,
-            AddressService addressService,
-            PhoneService phoneService,
-            EmailService emailService,
-            JwtUtil jwtUtil
-    ) {
-        this.personRepository = personRepository;
-        this.userRepository = userRepository;
-        this.addressService = addressService;
-        this.phoneService = phoneService;
-        this.emailService = emailService;
-        this.jwtUtil = jwtUtil;
-    }
 
     @Transactional
     public PersonBase create(String token, PersonCreateRequestDTO dto){

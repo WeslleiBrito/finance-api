@@ -1,9 +1,9 @@
 CREATE TABLE bank (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(25) NOT NULL UNIQUE,
     code VARCHAR(10) UNIQUE, -- Ex: 001, 260, 077...
     is_global BOOLEAN DEFAULT FALSE, -- bancos padrões do sistema
-    created_by VARCHAR(36), -- quem criou o banco (usuário opcional)
+    created_by UUID, -- quem criou o banco (usuário opcional)
     status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

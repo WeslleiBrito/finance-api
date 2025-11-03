@@ -1,7 +1,7 @@
 
 -- PhysicalPerson
 CREATE TABLE physical_person (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY,
     nick_name VARCHAR(255) NOT NULL,
     cpf VARCHAR(255) NOT NULL,
     CONSTRAINT fk_physical_person
@@ -12,7 +12,7 @@ CREATE TABLE physical_person (
 
 --legalEntity
 CREATE TABLE legal_entity (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY,
     trade_name VARCHAR(255) NOT NULL,
     cnpj VARCHAR(255) NOT NULL,
     CONSTRAINT fk_legal_entity

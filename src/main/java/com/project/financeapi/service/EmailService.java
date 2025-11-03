@@ -12,6 +12,7 @@ import com.project.financeapi.repository.PersonRepository;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -20,24 +21,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class EmailService {
     private final EmailRepository emailRepository;
     private final PersonRepository personRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
-    public EmailService(
-            PersonRepository personRepository,
-            EmailRepository emailRepository,
-            UserRepository userRepository,
-            JwtUtil jwtUtil
-        )
-    {
-        this.personRepository = personRepository;
-        this.emailRepository = emailRepository;
-        this.userRepository = userRepository;
-        this.jwtUtil = jwtUtil;
-    }
 
     @Transactional
     public List<Email> create(String token, UUID personId, List<EmailDTO> listEmail){

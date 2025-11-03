@@ -71,14 +71,17 @@ public abstract class AccountBase {
             return initialValue;
         }
 
-        return initialValue.add(transactions.stream()
-                .map(t -> {
-                    if(t.getMovementType() == MovementType.INCOME){
-                        return t.getAmount();
-                    }else{
-                        return t.getAmount().negate();
-                    }
-                }).reduce(BigDecimal.ZERO, BigDecimal::add));
+        return initialValue.add(
+                transactions.stream()
+                        .map(t -> {
+                            BigDecimal value = t.getAmount() != null ? t.getAmount() : BigDecimal.ZERO;
+                            return t.getInstallment().getMovementType() == MovementType.INCOME
+                                    ? value
+                                    : value.negate();
+                        })
+                        .reduce(BigDecimal.ZERO, BigDecimal::add)
+        );
+
     }
 
 }

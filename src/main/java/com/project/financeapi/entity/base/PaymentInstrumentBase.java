@@ -20,7 +20,7 @@ import java.util.UUID;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@Table(name = "payment_instruments")
+@Table(name = "payment_instrument")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -41,7 +41,7 @@ public abstract class PaymentInstrumentBase {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 15)
+    @Column(nullable = false, length = 15, name="instrument_nature")
     private InstrumentNature instrumentNature;
 
     @JsonBackReference

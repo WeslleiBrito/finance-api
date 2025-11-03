@@ -1,9 +1,9 @@
 CREATE TABLE operation_type (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(80) NOT NULL,
     movement_type VARCHAR(30) NOT NULL,
-    operation_group_id VARCHAR(36) NOT NULL,
-    created_by VARCHAR(36),
+    operation_group_id UUID  NOT NULL,
+    created_by UUID,
     is_global BOOLEAN DEFAULT FALSE,
     operation_type_status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
     CONSTRAINT uq_operation_type_user UNIQUE (created_by, name),

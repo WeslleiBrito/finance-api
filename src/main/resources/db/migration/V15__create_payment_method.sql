@@ -1,9 +1,9 @@
 CREATE TABLE payment_method (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL UNIQUE,
     status VARCHAR(20) DEFAULT 'ACTIVE' NOT NULL,
     is_global BOOLEAN DEFAULT FALSE NOT NULL,
-    created_by VARCHAR(36),
+    created_by UUID,
     created_at TIMESTAMP DEFAULT NOW() NOT NULL,
     CONSTRAINT fk_payment_method_user FOREIGN KEY (created_by) REFERENCES users(id)
 );

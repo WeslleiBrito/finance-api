@@ -18,6 +18,7 @@ import com.project.financeapi.repository.OperationTypeRepository;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -26,25 +27,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class OperationTypeService {
 
     private final OperationTypeRepository operationTypeRepository;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final OperationGroupRepository operationGroupRepository;
-
-
-    public OperationTypeService(
-            OperationTypeRepository operationTypeRepository,
-            JwtUtil jwtUtil,
-            UserRepository userRepository,
-            OperationGroupRepository operationGroupRepository
-    ) {
-        this.operationTypeRepository = operationTypeRepository;
-        this.jwtUtil = jwtUtil;
-        this.userRepository = userRepository;
-        this.operationGroupRepository = operationGroupRepository;
-    }
 
     public OperationTypeResponseDTO create(String token, OperationTypeRequestCreateDTO dto){
 

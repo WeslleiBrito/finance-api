@@ -11,22 +11,20 @@ import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.CardBrandRepository;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Service
+@RequiredArgsConstructor
 public class CardBrandService {
 
     private final CardBrandRepository cardBrandRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-
-    public CardBrandService(CardBrandRepository cardBrandRepository, UserRepository userRepository, JwtUtil jwtUtil) {
-        this.cardBrandRepository = cardBrandRepository;
-        this.userRepository = userRepository;
-        this.jwtUtil = jwtUtil;
-    }
 
     public CardBrandResponseDTO create(String token, CardBrandCreateRequestDTO dto){
 

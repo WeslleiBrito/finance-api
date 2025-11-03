@@ -4,11 +4,11 @@
 -- =========================================================
 
 CREATE TABLE card_brand (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL UNIQUE,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     is_global BOOLEAN NOT NULL DEFAULT FALSE,
-    created_by VARCHAR(36),
+    created_by UUID,
     created_at DATE NOT NULL DEFAULT CURRENT_DATE,
 
     CONSTRAINT fk_card_flag_user FOREIGN KEY (created_by)

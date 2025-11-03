@@ -10,23 +10,20 @@ import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.dto.user.TokenUser;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.util.JwtUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
-    }
 
     public TokenUser signup(SignupRequestDTO dto){
 

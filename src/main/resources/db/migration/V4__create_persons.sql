@@ -1,8 +1,8 @@
 CREATE TABLE persons (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(150) NOT NULL,
     person_type VARCHAR(50),
-    created_by VARCHAR(36) NOT NULL,
+    created_by UUID NOT NULL,
     CONSTRAINT fk_created_by
         FOREIGN KEY (created_by)
         REFERENCES users(id)

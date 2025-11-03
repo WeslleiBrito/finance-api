@@ -39,7 +39,7 @@ public class Invoice {
     private LocalDate issueDate = LocalDate.now();
 
     public int getQuantityInstallments() {
-        return this.getInstallments().size();
+        return this.installments.size();
     }
 
 

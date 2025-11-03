@@ -68,28 +68,4 @@ public abstract class PersonBase {
     public PersonBase() {
     }
 
-    public void addDocument(Invoice invoice) {
-        invoices.add(invoice);
-        invoice.setPerson(this);
-    }
-
-    public void addPhone(Phone phone) {
-        phones.add(phone);
-        phone.setPerson(this);
-    }
-
-    public void addEmail(Email email) {
-        emails.add(email);
-        email.setAddress(email.getAddress());
-    }
-
-    public void addAddress(Address address){
-        addresses.add(address);
-        address.setStreet(address.getStreet());
-        address.setNumber(address.getNumber());
-        address.setNeighborhood(address.getNeighborhood());
-        address.setZipCode(address.getZipCode());
-        address.setCity(address.getCity());
-        address.setComplement(address.getComplement());
-    }
 }

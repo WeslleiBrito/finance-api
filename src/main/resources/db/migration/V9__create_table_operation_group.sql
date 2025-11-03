@@ -1,7 +1,7 @@
 CREATE TABLE operation_group (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(80) NOT NULL UNIQUE,
-    created_by VARCHAR(36),
+    created_by UUID,
     is_global BOOLEAN DEFAULT FALSE,
     operation_group_status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
     CONSTRAINT uq_operation_group_user UNIQUE (created_by, name),
