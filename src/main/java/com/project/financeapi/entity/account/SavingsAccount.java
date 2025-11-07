@@ -1,5 +1,6 @@
 package com.project.financeapi.entity.account;
 
+import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.enums.AccountType;
@@ -17,8 +18,9 @@ import java.math.BigDecimal;
 public class SavingsAccount extends AccountBase {
     private BigDecimal interestRate = BigDecimal.valueOf(0.005);
 
-    public SavingsAccount(User accountHolder, BigDecimal initialValue) {
-        super(AccountType.SAVINGS, accountHolder, initialValue);
+    public SavingsAccount(User accountHolder, String name, BigDecimal initialValue, Bank bank, BigDecimal interestRate) {
+        super(AccountType.SAVINGS, accountHolder, name, initialValue, bank);
+        this.interestRate = interestRate;
     }
 
     public SavingsAccount() {

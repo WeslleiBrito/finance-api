@@ -1,5 +1,6 @@
 package com.project.financeapi.entity.account;
 
+import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.enums.AccountType;
@@ -18,8 +19,9 @@ public class InvestmentAccount extends AccountBase {
 
     private BigDecimal riskLevel;
 
-    public InvestmentAccount(User accountHolder, BigDecimal initialValue) {
-        super(AccountType.INVESTMENT, accountHolder, initialValue);
+    public InvestmentAccount(User accountHolder, String name, BigDecimal initialValue, Bank bank, BigDecimal riskLevel) {
+        super(AccountType.INVESTMENT, accountHolder, name, initialValue, bank);
+        this.riskLevel = riskLevel;
     }
 
     public InvestmentAccount() {

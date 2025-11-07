@@ -34,7 +34,7 @@ public class JwtUtil {
     public String generateToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
-                .claim("id", user.getId())
+                .claim("id", user.getId().toString())
                 .claim("tokenVersion", user.getTokenVersion())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
@@ -64,7 +64,7 @@ public class JwtUtil {
     public JwtPayload extractPayload(String token) {
         Claims claims = validateToken(token);
         String email = claims.getSubject();
-        UUID id = claims.get("id", UUID.class);
+        UUID id = UUID.fromString(claims.get("id", String.class));
         Integer tokenVersion = claims.get("tokenVersion", Integer.class);
         return new JwtPayload(id, email, tokenVersion);
     }

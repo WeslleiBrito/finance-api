@@ -1,9 +1,12 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.account.CreateAccountRequestDTO;
+import com.project.financeapi.dto.ResponseValidateDTO;
+import com.project.financeapi.dto.account.create.*;
 import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.account.ResponseDeactivateAccountDTO;
 import com.project.financeapi.dto.account.UpdateAccountRequestDTO;
+import com.project.financeapi.dto.account.response.*;
+import com.project.financeapi.dto.account.response.CreateCheckingAccountResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.account.*;
@@ -12,55 +15,147 @@ import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.exception.AccessBlockedException;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.AccountRepository;
+import com.project.financeapi.repository.BankRepository;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 
 @Service
+@RequiredArgsConstructor
 public class AccountService {
 
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final BankRepository bankRepository;
 
-    public AccountService(AccountRepository accountRepository,
-                          UserRepository userRepository,
-                          JwtUtil jwtUtil
-    ) {
-        this.accountRepository = accountRepository;
-        this.userRepository = userRepository;
-        this.jwtUtil = jwtUtil;
+
+    @Transactional
+    public CreateCheckingAccountResponseDTO create(String token, CreateCheckingAccountRequestDTO dto) {
+
+        ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
+
+        CheckingAccount account = new CheckingAccount(
+                validate.user(), dto.baseAccount().name(), dto.baseAccount().initialValue(),
+                validate.bank(), dto.overdraftLimit()
+        );
+
+        account = accountRepository.save(account);
+
+        return new CreateCheckingAccountResponseDTO(
+                account.getId(),
+                account.getName(),
+                account.getType(),
+                account.getBalance(),
+                account.getStatus(),
+                account.getOverdraftLimit()
+        );
+
     }
 
     @Transactional
-    public AccountBase create(String token, CreateAccountRequestDTO dto) {
+    public CreateInvestmentAccountResponseDTO create(String token, CreateInvestmentAccountRequestDTO dto) {
 
-        JwtPayload payload = jwtUtil.extractPayload(token);
+        ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
 
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+        InvestmentAccount account = new InvestmentAccount(
+                validate.user(), dto.baseAccount().name(),
+                dto.baseAccount().initialValue(),
+                validate.bank(), dto.riskLevel()
+        );
 
-        AccountBase account = null;
+        account = accountRepository.save(account);
 
-        switch (dto.type()) {
-            case CHECKING -> account = new CheckingAccount(user, dto.initialValue());
-            case SAVINGS -> account = new SavingsAccount(user, dto.initialValue());
-            case PAYMENT -> account = new PaymentAccount(user, dto.initialValue());
-            case WALLET -> account = new WalletAccount(user, dto.initialValue());
-            case INVESTMENT -> account = new InvestmentAccount(user, dto.initialValue());
-        }
-
-        account.setName(dto.name());
-
-        return accountRepository.save(account);
+        return new CreateInvestmentAccountResponseDTO(
+                account.getId(),
+                account.getName(),
+                account.getType(),
+                account.getBalance(),
+                account.getStatus(),
+                account.getRiskLevel()
+        );
 
     }
+
+    @Transactional
+    public CreateSavingsAccountResponseDTO create(String token, CreateSavingsAccountRequestDTO dto) {
+
+        ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
+
+        SavingsAccount account = new SavingsAccount(
+                validate.user(), dto.baseAccount().name(),
+                dto.baseAccount().initialValue(),
+                validate.bank(), dto.interestRate()
+        );
+
+        account = accountRepository.save(account);
+
+        return new CreateSavingsAccountResponseDTO(
+                account.getId(),
+                account.getName(),
+                account.getType(),
+                account.getBalance(),
+                account.getStatus(),
+                account.getInterestRate()
+        );
+
+    }
+
+    @Transactional
+    public CreatePaymentAccountResponseDTO create(String token, CreatePaymentAccountRequestDTO dto) {
+
+        ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
+
+        PaymentAccount account = new PaymentAccount(
+                validate.user(), dto.baseAccount().name(),
+                dto.baseAccount().initialValue(),
+                validate.bank(), dto.provider()
+        );
+
+        account = accountRepository.save(account);
+
+        return new CreatePaymentAccountResponseDTO(
+                account.getId(),
+                account.getName(),
+                account.getType(),
+                account.getBalance(),
+                account.getStatus(),
+                account.getProvider()
+        );
+
+    }
+
+    @Transactional
+    public CreateWalletAccountResponseDTO create(String token, CreateWalletAccountRequestDTO dto) {
+
+        ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
+
+        WalletAccount account = new WalletAccount(
+                validate.user(), dto.baseAccount().name(),
+                dto.baseAccount().initialValue(),
+                validate.bank()
+        );
+
+        account = accountRepository.save(account);
+
+        return new CreateWalletAccountResponseDTO(
+                account.getId(),
+                account.getName(),
+                account.getType(),
+                account.getBalance(),
+                account.getStatus()
+        );
+
+    }
+  
 
     @Transactional
     public AccountBase update(String token, UUID id, UpdateAccountRequestDTO dto) {
@@ -157,6 +252,27 @@ public class AccountService {
         return new ResponseDeactivateAccountDTO(
                 account.getId().toString(),
                 "A conta " + account.getName() + " foi desativada com sucesso."
+        );
+    }
+
+
+    private ResponseValidateDTO validate(String token, UUID bankId) {
+
+        JwtPayload payload = jwtUtil.extractPayload(token);
+
+        User user = userRepository.findById(payload.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+
+        Bank bank = null;
+
+        if(bankId != null){
+            bank = bankRepository.findByCreatedByAndId(user, bankId)
+                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Banco não encontrado"));
+        }
+
+        return new ResponseValidateDTO(
+                user,
+                bank
         );
     }
 

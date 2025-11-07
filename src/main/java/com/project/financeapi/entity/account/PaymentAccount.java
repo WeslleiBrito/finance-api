@@ -1,5 +1,6 @@
 package com.project.financeapi.entity.account;
 
+import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.enums.AccountType;
@@ -17,8 +18,9 @@ import java.math.BigDecimal;
 public class PaymentAccount extends AccountBase {
     private String provider;
 
-    public PaymentAccount(User accountHolder, BigDecimal initialValue) {
-        super(AccountType.PAYMENT, accountHolder, initialValue);
+    public PaymentAccount(User accountHolder, String name, BigDecimal initialValue, Bank bank, String provider) {
+        super(AccountType.PAYMENT, accountHolder, name, initialValue, bank);
+        this.provider = provider;
     }
 
     public PaymentAccount() {

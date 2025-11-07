@@ -1,9 +1,14 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.account.CreateAccountRequestDTO;
+import com.project.financeapi.dto.account.create.CreateAccountBase;
 import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.account.ResponseDeactivateAccountDTO;
 import com.project.financeapi.dto.account.UpdateAccountRequestDTO;
+import com.project.financeapi.dto.account.create.CreateCheckingAccountRequestDTO;
+import com.project.financeapi.dto.account.create.CreateInvestmentAccountRequestDTO;
+import com.project.financeapi.dto.account.response.CreateCheckingAccountResponseDTO;
+import com.project.financeapi.dto.account.response.CreateInvestmentAccountResponseDTO;
+import com.project.financeapi.entity.account.CheckingAccount;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.service.AccountService;
 import jakarta.validation.Valid;
@@ -24,15 +29,23 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<AccountBase> create(
+    @PostMapping("/create/checking")
+    public ResponseEntity<CreateCheckingAccountResponseDTO> createChecking(
             @RequestHeader("X-Auth-Token") String token,
-            @Valid @RequestBody CreateAccountRequestDTO dto
+            @Valid @RequestBody CreateCheckingAccountRequestDTO dto
     ){
-        AccountBase account = accountService.create(token, dto);
+        CreateCheckingAccountResponseDTO account = accountService.create(token, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(account);
     }
 
+    @PostMapping("/create/investment")
+    public ResponseEntity<CreateInvestmentAccountResponseDTO> createInvestment(
+            @RequestHeader("X-Auth-Token") String token,
+            @Valid @RequestBody CreateInvestmentAccountRequestDTO dto
+    ){
+        CreateInvestmentAccountResponseDTO account = accountService.create(token, dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(account);
+    }
 
     @GetMapping
     public  ResponseEntity<List<ResponseAccountDTO>> findAll(

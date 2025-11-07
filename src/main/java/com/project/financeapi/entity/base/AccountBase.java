@@ -1,6 +1,7 @@
 package com.project.financeapi.entity.base;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.project.financeapi.entity.Bank;
 import com.project.financeapi.enums.AccountStatus;
 import com.project.financeapi.enums.AccountType;
 import com.project.financeapi.entity.Transaction;
@@ -52,14 +53,20 @@ public abstract class AccountBase {
     @JoinColumn(name = "user_id", nullable = false)
     private User accountHolder;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bank_id")
+    private Bank bank;
+
     @JsonManagedReference
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<Transaction>();
 
-    public AccountBase(AccountType type, User accountHolder, BigDecimal initialValue) {
+    public AccountBase(AccountType type, User accountHolder, String name, BigDecimal initialValue, Bank bank) {
         this.type = type;
         this.accountHolder = accountHolder;
         this.initialValue = initialValue != null ? initialValue : BigDecimal.ZERO;
+        this.bank = bank;
+        this.name = name;
     }
 
     public AccountBase() {
