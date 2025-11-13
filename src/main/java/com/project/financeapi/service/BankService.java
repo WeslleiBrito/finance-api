@@ -23,7 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BankService {
 
-    private BankRepository bankRepository;
+    private final BankRepository bankRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final BankMapper bankMapper;

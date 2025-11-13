@@ -9,18 +9,20 @@ CREATE TABLE transactions (
     account_id UUID NOT NULL,
     installment_id UUID NOT NULL,
     payment_instrument_id UUID,
+    instrument_type VARCHAR(30) NOT NULL DEFAULT 'GENERIC', -- CARD | PAYMENT_INSTRUMENT
+
     CONSTRAINT fk_transaction_created_by
         FOREIGN KEY (created_by)
-        REFERENCES users(id)
-        ON DELETE CASCADE,
+        REFERENCES users(id) ON DELETE CASCADE,
+
     CONSTRAINT fk_transaction_account
         FOREIGN KEY (account_id)
-        REFERENCES account_base(id)
-        ON DELETE CASCADE,
+        REFERENCES account_base(id) ON DELETE CASCADE,
+
     CONSTRAINT fk_transaction_installment
         FOREIGN KEY (installment_id)
-        REFERENCES installments(id)
-        ON DELETE CASCADE,
+        REFERENCES installments(id) ON DELETE CASCADE,
+
     CONSTRAINT fk_transaction_payment_instrument
         FOREIGN KEY (payment_instrument_id)
         REFERENCES payment_instrument(id)

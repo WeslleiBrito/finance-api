@@ -1,20 +1,15 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.bank.BankResponseDTO;
-import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.card.creditCard.CreditCardCreateRequestDTO;
-import com.project.financeapi.dto.card.creditCard.CreditCardResponseDTO;
 import com.project.financeapi.dto.card.creditCard.CreditCardUpdateRequestDTO;
+import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.CardBrand;
 import com.project.financeapi.entity.User;
-import com.project.financeapi.entity.payment.CreditCard;
+import com.project.financeapi.entity.CreditCard;
 import com.project.financeapi.exception.BusinessException;
-import com.project.financeapi.repository.BankRepository;
-import com.project.financeapi.repository.CardBrandRepository;
-import com.project.financeapi.repository.CardRepository;
-import com.project.financeapi.repository.UserRepository;
+import com.project.financeapi.repository.*;
 import com.project.financeapi.util.JwtUtil;
 import com.project.financeapi.util.mapper.CreditCardMapper;
 import lombok.RequiredArgsConstructor;
@@ -28,39 +23,16 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CreditCardService {
 
-    private final CardRepository cardRepository;
+
+    private final CreditCardRepository creditCardRepository;
     private final UserRepository userRepository;
     private final CardBrandRepository cardBrandRepository;
     private final BankRepository bankRepository;
     private final JwtUtil jwtUtil;
     private final CreditCardMapper creditCardMapper;
 
-    private CreditCardResponseDTO responseDTO (CreditCard creditCard) {
-        return new CreditCardResponseDTO(
-                creditCard.getId(),
-                creditCard.getName(),
-                creditCard.getCreditLimit(),
-                creditCard.getClosingDay(),
-                new CardBrandResponseDTO(
-                        creditCard.getCardBrand().getId(),
-                        creditCard.getCardBrand().getName(),
-                        creditCard.getCardBrand().getStatus(),
-                        creditCard.getCardBrand().isGlobal(),
-                        creditCard.getCardBrand().getCreatedAt()
-                ),
-                new BankResponseDTO(
-                        creditCard.getBank().getId(),
-                        creditCard.getBank().getName(),
-                        creditCard.getBank().getCode(),
-                        creditCard.getBank().getStatus()
-                ),
-                creditCard.getAvailableLimit(),
-                creditCard.getRevolvingInterest(),
-                creditCard.getFine()
-        );
-    }
 
-    public CreditCardResponseDTO create(
+    public CreditCardDetailsDTO create(
             String token,
             CreditCardCreateRequestDTO dto
     ) {
@@ -70,7 +42,7 @@ public class CreditCardService {
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
-        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user, dto.cardBrand())
+        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), dto.cardBrand())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bandeira de cartão não encontrada."));
 
 
@@ -83,13 +55,14 @@ public class CreditCardService {
 
         }
 
-        CreditCard creditCard = cardRepository.save(
+        CreditCard creditCard = creditCardRepository.save(
                 new CreditCard(
                         dto.name(),
                         user,
                         dto.creditLimit(),
                         dto.closingDay(),
                         dto.dueDay(),
+                        dto.expirationDate(),
                         cardBrand,
                         bank,
                         dto.revolvingInterest(),
@@ -97,51 +70,53 @@ public class CreditCardService {
                 )
         );
 
-        return responseDTO(creditCard);
+        return creditCard.toDTO();
     }
 
 
-    public CreditCardResponseDTO update(String token, CreditCardUpdateRequestDTO dto, UUID id) {
+    public CreditCardDetailsDTO update(String token, CreditCardUpdateRequestDTO dto, UUID id) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
-        CreditCard creditCard = cardRepository.findCreditCardByCreatedByAndId(user.getId(), id)
+        CreditCard creditCard = creditCardRepository.findByCreatedByAndId(user.getId(), id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Cartão não encontrado."));
 
         creditCardMapper.updateCreditCardDTO(dto, creditCard);
 
-        cardRepository.save(creditCard);
+        creditCardRepository.save(creditCard);
 
-        return responseDTO(creditCard);
+        return creditCard.toDTO();
     }
 
 
-    public List<CreditCardResponseDTO> getAll(String token){
+    public List<CreditCardDetailsDTO> getAll(String token){
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
-        List<CreditCard> creditCards = cardRepository.findAllCreditCardByCreatedBy(user.getId());
+        List<CreditCard> creditCards = creditCardRepository.findAllByCreatedBy_Id(user.getId());
 
-        return creditCards.stream().map(this::responseDTO).toList();
+        return creditCards.stream().map(
+                CreditCard::toDTO
+        ).toList();
 
     }
 
-    public CreditCardResponseDTO getById(String token, UUID id) {
+    public CreditCardDetailsDTO getById(String token, UUID id) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
-        CreditCard creditCard = cardRepository.findCreditCardByCreatedByAndId(user.getId(), id)
+        CreditCard creditCard = creditCardRepository.findByCreatedByAndId(user.getId(), id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Cartão não encontrado."));
 
-        return responseDTO(creditCard);
+        return creditCard.toDTO();
     }
 }

@@ -1,15 +1,11 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
 import com.project.financeapi.dto.transaction.TransactionDTO;
 import com.project.financeapi.dto.transaction.TransactionRequestDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.base.AccountBase;
-import com.project.financeapi.entity.base.PaymentInstrumentBase;
-import com.project.financeapi.enums.InstrumentNature;
-import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.*;
 import com.project.financeapi.util.JwtUtil;
@@ -19,9 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +26,6 @@ public class TransactionService {
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final InstallmentRepository installmentRepository;
-    private final PaymentInstrumentRepository paymentInstrumentRepository;
     private final JwtUtil jwtUtil;
 
 
@@ -63,7 +57,6 @@ public class TransactionService {
 
         AccountBase account = getAndValidateAccount(item.accountId(), user);
 
-        PaymentInstrumentBase instrument = getAndValidateInstrument(item.paymentInstrumentId(), user);
 
         BigDecimal remaining = installment.getRemainingBalance();
         if (item.amount().compareTo(remaining) > 0) {
@@ -76,7 +69,6 @@ public class TransactionService {
                 account,
                 installment,
                 item.amount(),
-                instrument,
                 item.paymentDate(),
                 item.isReversed(),
                 item.observations()
@@ -115,19 +107,6 @@ public class TransactionService {
         }
 
         return account;
-    }
-
-    private PaymentInstrumentBase getAndValidateInstrument(UUID instrumentId, User user) {
-        if (instrumentId == null) return null;
-
-        PaymentInstrumentBase instrument = paymentInstrumentRepository.findByIdAndUser(instrumentId, user.getId())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Instrumento não encontrado."));
-
-        if (instrument.getInstrumentNature() != InstrumentNature.PAYMENT) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "Instrumento de pagamento inválido");
-        }
-
-        return instrument;
     }
 
     private Installment getAndValidateInstallment(UUID installmentId, User user) {

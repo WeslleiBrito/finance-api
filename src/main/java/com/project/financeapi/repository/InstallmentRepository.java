@@ -2,7 +2,6 @@ package com.project.financeapi.repository;
 
 import com.project.financeapi.entity.Invoice;
 import com.project.financeapi.entity.Installment;
-import com.project.financeapi.entity.payment.CreditCard;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

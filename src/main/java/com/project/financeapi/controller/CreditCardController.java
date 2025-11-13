@@ -1,8 +1,8 @@
 package com.project.financeapi.controller;
 
 import com.project.financeapi.dto.card.creditCard.CreditCardCreateRequestDTO;
-import com.project.financeapi.dto.card.creditCard.CreditCardResponseDTO;
 import com.project.financeapi.dto.card.creditCard.CreditCardUpdateRequestDTO;
+import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.service.CreditCardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class CreditCardController {
     private final CreditCardService creditCardService;
 
     @PostMapping
-    public ResponseEntity<CreditCardResponseDTO> create(
+    public ResponseEntity<CreditCardDetailsDTO> create(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CreditCardCreateRequestDTO dto
     ) {
@@ -30,7 +30,7 @@ public class CreditCardController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CreditCardResponseDTO> update(
+    public ResponseEntity<CreditCardDetailsDTO> update(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable UUID id,
             @Valid @RequestBody CreditCardUpdateRequestDTO dto
@@ -39,14 +39,14 @@ public class CreditCardController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CreditCardResponseDTO>> getAll(
+    public ResponseEntity<List<CreditCardDetailsDTO>> getAll(
             @RequestHeader("X-Auth-Token") String token
     ) {
         return ResponseEntity.status(HttpStatus.OK).body(creditCardService.getAll(token));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CreditCardResponseDTO> getById(
+    public ResponseEntity<CreditCardDetailsDTO> getById(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable UUID id
     ) {
