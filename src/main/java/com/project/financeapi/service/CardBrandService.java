@@ -1,5 +1,6 @@
 package com.project.financeapi.service;
 
+import ch.qos.logback.core.net.SyslogOutputStream;
 import com.project.financeapi.dto.card.cardBrand.CardBrandCreateRequestDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandUpdateRequestDTO;
@@ -52,7 +53,7 @@ public class CardBrandService {
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
-        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user, id)
+        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), id)
                 .orElseThrow(
                         () -> new BusinessException(HttpStatus.NOT_FOUND, "Bandeira de cartão não encontrada.")
                 );
@@ -84,7 +85,9 @@ public class CardBrandService {
         User user = userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
-        List<CardBrand> cardBrands = cardBrandRepository.findAllByCreatedBy(user);
+        List<CardBrand> cardBrands = cardBrandRepository.findAllByCreatedBy(user.getId());
+
+        System.out.println(cardBrands);
 
         return cardBrands.stream().map(
                 cardBrand -> new CardBrandResponseDTO(
@@ -104,7 +107,7 @@ public class CardBrandService {
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
 
-        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user, id)
+        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bandeira de cartão não encontrada."));
 
 

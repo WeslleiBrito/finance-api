@@ -1,5 +1,8 @@
 package com.project.financeapi.entity.account;
 
+import com.project.financeapi.dto.account.AccountUpdateDTO;
+import com.project.financeapi.dto.account.response.CreatePaymentAccountResponseDTO;
+import com.project.financeapi.dto.account.update.UpdatePaymentAccountRequestDTO;
 import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
@@ -24,5 +27,27 @@ public class PaymentAccount extends AccountBase {
     }
 
     public PaymentAccount() {
+    }
+
+    @Override
+    public CreatePaymentAccountResponseDTO toDTO(){
+        return new CreatePaymentAccountResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getType(),
+                this.getBalance(),
+                this.getStatus(),
+                this.provider
+        );
+    }
+
+    @Override
+    public void updateFrom(AccountUpdateDTO dto) {
+
+        if (!(dto instanceof UpdatePaymentAccountRequestDTO paymentDto)) {
+            throw new IllegalArgumentException("DTO incompatível com conta corrente");
+        }
+
+        if(paymentDto.provider() != null) this.provider = paymentDto.provider();
     }
 }

@@ -1,6 +1,8 @@
 package com.project.financeapi.entity.base;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.project.financeapi.dto.account.AccountResponseDTO;
+import com.project.financeapi.dto.account.AccountUpdateDTO;
 import com.project.financeapi.entity.Bank;
 import com.project.financeapi.enums.AccountStatus;
 import com.project.financeapi.enums.AccountType;
@@ -19,6 +21,7 @@ import java.util.UUID;
 
 
 @Getter
+@Setter
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class AccountBase {
@@ -59,7 +62,7 @@ public abstract class AccountBase {
 
     @JsonManagedReference
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Transaction> transactions = new ArrayList<Transaction>();
+    private List<Transaction> transactions = new ArrayList<>();
 
     public AccountBase(AccountType type, User accountHolder, String name, BigDecimal initialValue, Bank bank) {
         this.type = type;
@@ -88,6 +91,24 @@ public abstract class AccountBase {
                         })
                         .reduce(BigDecimal.ZERO, BigDecimal::add)
         );
+
+    }
+
+    public abstract AccountResponseDTO toDTO();
+
+    public void updateFrom(AccountUpdateDTO dto) {
+
+        if(dto.name() != null){
+            this.name = dto.name();
+        }
+
+        if(dto.status() != null){
+            this.status = dto.status();
+        }
+
+        if(dto.status() != null){
+            this.type = dto.type();
+        }
 
     }
 

@@ -1,5 +1,6 @@
 package com.project.financeapi.dto.account.response;
 
+import com.project.financeapi.dto.account.AccountResponseDTO;
 import com.project.financeapi.enums.AccountStatus;
 import com.project.financeapi.enums.AccountType;
 
@@ -14,5 +15,5 @@ public record CreatePaymentAccountResponseDTO(
         BigDecimal balance,
         AccountStatus status,
         String provider
-) {
+) implements AccountResponseDTO {
 }

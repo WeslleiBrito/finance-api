@@ -1,5 +1,10 @@
 package com.project.financeapi.entity.account;
 
+import com.project.financeapi.dto.account.AccountUpdateDTO;
+import com.project.financeapi.dto.account.response.CreateInvestmentAccountResponseDTO;
+import com.project.financeapi.dto.account.response.CreateWalletAccountResponseDTO;
+import com.project.financeapi.dto.account.update.UpdateSavingsAccountRequestDTO;
+import com.project.financeapi.dto.account.update.UpdateWalletAccountRequestDTO;
 import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
@@ -18,5 +23,26 @@ public class WalletAccount extends AccountBase {
     }
 
     public WalletAccount() {
+    }
+
+    @Override
+    public CreateWalletAccountResponseDTO toDTO(){
+        return new CreateWalletAccountResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getType(),
+                this.getBalance(),
+                this.getStatus()
+        );
+    }
+
+
+    @Override
+    public void updateFrom(AccountUpdateDTO dto) {
+
+        if (!(dto instanceof UpdateWalletAccountRequestDTO paymentDto)) {
+            throw new IllegalArgumentException("DTO incompatível com conta corrente");
+        }
+
     }
 }

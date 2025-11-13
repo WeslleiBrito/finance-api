@@ -1,5 +1,8 @@
 package com.project.financeapi.entity.account;
 
+import com.project.financeapi.dto.account.AccountUpdateDTO;
+import com.project.financeapi.dto.account.response.CreateInvestmentAccountResponseDTO;
+import com.project.financeapi.dto.account.update.UpdateInvestmentAccountRequestDTO;
 import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
@@ -25,5 +28,28 @@ public class InvestmentAccount extends AccountBase {
     }
 
     public InvestmentAccount() {
+    }
+
+    @Override
+    public CreateInvestmentAccountResponseDTO toDTO(){
+        return new CreateInvestmentAccountResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getType(),
+                this.getBalance(),
+                this.getStatus(),
+                this.riskLevel
+        );
+    }
+
+    @Override
+    public void updateFrom(AccountUpdateDTO dto) {
+        if (!(dto instanceof UpdateInvestmentAccountRequestDTO investmentDto)) {
+            throw new IllegalArgumentException("DTO incompatível com conta corrente");
+        }
+
+        if(investmentDto.riskLevel() != null){
+            this.riskLevel = investmentDto.riskLevel();
+        }
     }
 }

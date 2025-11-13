@@ -3,6 +3,7 @@ package com.project.financeapi.entity;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.entity.base.AccountBase;
+import com.project.financeapi.interfaces.PaymentInstrument;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -49,9 +50,10 @@ public class Transaction {
     @JoinColumn(name = "installment_id", nullable = false)
     private Installment installment;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    // Mapeamento genérico, aceitando qualquer instrumento que implemente PaymentInstrument
+    @ManyToOne(fetch = FetchType.LAZY, targetEntity = PaymentInstrumentBase.class)
     @JoinColumn(name = "payment_instrument_id")
-    private PaymentInstrumentBase paymentInstrument;
+    private PaymentInstrument paymentInstrument;
 
     @Column(name = "is_reversed", nullable = false)
     private Boolean isReversed;
@@ -64,7 +66,6 @@ public class Transaction {
             AccountBase account,
             Installment installment,
             BigDecimal amount,
-            PaymentInstrumentBase paymentInstrument,
             LocalDate paymentDate,
             Boolean isReversed,
             String observations
@@ -75,7 +76,6 @@ public class Transaction {
         this.paymentDate = paymentDate != null ? paymentDate : LocalDate.now();
         this.observations = (observations != null && !observations.isBlank()) ? observations : null;
         this.createdBy = createdBy;
-        this.paymentInstrument = paymentInstrument;
         this.createdAt = LocalDateTime.now();
         this.isReversed = isReversed != null ? isReversed : false;
     }

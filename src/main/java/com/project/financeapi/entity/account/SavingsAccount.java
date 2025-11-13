@@ -1,5 +1,8 @@
 package com.project.financeapi.entity.account;
 
+import com.project.financeapi.dto.account.AccountUpdateDTO;
+import com.project.financeapi.dto.account.response.CreateSavingsAccountResponseDTO;
+import com.project.financeapi.dto.account.update.UpdateSavingsAccountRequestDTO;
 import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
@@ -24,5 +27,28 @@ public class SavingsAccount extends AccountBase {
     }
 
     public SavingsAccount() {
+    }
+
+    @Override
+    public CreateSavingsAccountResponseDTO toDTO(){
+        return new CreateSavingsAccountResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getType(),
+                this.getBalance(),
+                this.getStatus(),
+                this.getInterestRate()
+        );
+    }
+
+    @Override
+    public void updateFrom(AccountUpdateDTO dto) {
+
+        if (!(dto instanceof UpdateSavingsAccountRequestDTO paymentDto)) {
+            throw new IllegalArgumentException("DTO incompatível com conta corrente");
+        }
+
+        if(paymentDto.interestRate() != null) this.interestRate = paymentDto.interestRate();
+
     }
 }

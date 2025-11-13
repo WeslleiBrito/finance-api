@@ -2,10 +2,12 @@ package com.project.financeapi.entity.base;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.project.financeapi.entity.Installment;
+import com.project.financeapi.dto.payment.PaymentMethodDetailsDTO;
 import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.enums.InstrumentNature;
+import com.project.financeapi.enums.PaymentType;
+import com.project.financeapi.interfaces.PaymentInstrument;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -24,7 +26,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-public abstract class PaymentInstrumentBase {
+public abstract class PaymentInstrumentBase implements PaymentInstrument {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -44,6 +46,10 @@ public abstract class PaymentInstrumentBase {
     @Column(nullable = false, length = 15, name="instrument_nature")
     private InstrumentNature instrumentNature;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_type", nullable = false)
+    private PaymentType paymentType;
+
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by")
@@ -58,28 +64,13 @@ public abstract class PaymentInstrumentBase {
     private List<Transaction> transactions = new ArrayList<>();
 
 
-    public PaymentInstrumentBase(String name, User createdBy, InstrumentNature instrumentNature) {
+    public PaymentInstrumentBase(String name, User createdBy, InstrumentNature instrumentNature, PaymentType paymentType) {
         this.name = name;
         this.createdBy = createdBy;
         this.instrumentNature = instrumentNature;
+        this.paymentType = paymentType;
     }
 
-
-    /**
-     * Adiciona uma transação a este instrumento.
-     */
-    public void addTransaction(Transaction transaction) {
-        transactions.add(transaction);
-        transaction.setPaymentInstrument(this);
-    }
-
-    /**
-     * Remove uma transação deste instrumento.
-     */
-    public void removeTransaction(Transaction transaction) {
-        transactions.remove(transaction);
-        transaction.setPaymentInstrument(null);
-    }
 
     /**
      * Retorna o saldo consolidado (créditos - débitos).
@@ -98,4 +89,6 @@ public abstract class PaymentInstrumentBase {
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    public abstract PaymentMethodDetailsDTO toDTO();
 }

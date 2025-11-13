@@ -1,12 +1,14 @@
 package com.project.financeapi.service;
 
 import com.project.financeapi.dto.ResponseValidateDTO;
+import com.project.financeapi.dto.account.AccountResponseDTO;
 import com.project.financeapi.dto.account.create.*;
 import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.account.ResponseDeactivateAccountDTO;
 import com.project.financeapi.dto.account.UpdateAccountRequestDTO;
 import com.project.financeapi.dto.account.response.*;
 import com.project.financeapi.dto.account.response.CreateCheckingAccountResponseDTO;
+import com.project.financeapi.dto.account.update.*;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.account.*;
@@ -48,16 +50,8 @@ public class AccountService {
                 validate.bank(), dto.overdraftLimit()
         );
 
-        account = accountRepository.save(account);
 
-        return new CreateCheckingAccountResponseDTO(
-                account.getId(),
-                account.getName(),
-                account.getType(),
-                account.getBalance(),
-                account.getStatus(),
-                account.getOverdraftLimit()
-        );
+        return accountRepository.save(account).toDTO();
 
     }
 
@@ -72,16 +66,8 @@ public class AccountService {
                 validate.bank(), dto.riskLevel()
         );
 
-        account = accountRepository.save(account);
 
-        return new CreateInvestmentAccountResponseDTO(
-                account.getId(),
-                account.getName(),
-                account.getType(),
-                account.getBalance(),
-                account.getStatus(),
-                account.getRiskLevel()
-        );
+        return accountRepository.save(account).toDTO();
 
     }
 
@@ -96,16 +82,7 @@ public class AccountService {
                 validate.bank(), dto.interestRate()
         );
 
-        account = accountRepository.save(account);
-
-        return new CreateSavingsAccountResponseDTO(
-                account.getId(),
-                account.getName(),
-                account.getType(),
-                account.getBalance(),
-                account.getStatus(),
-                account.getInterestRate()
-        );
+        return accountRepository.save(account).toDTO();
 
     }
 
@@ -120,16 +97,8 @@ public class AccountService {
                 validate.bank(), dto.provider()
         );
 
-        account = accountRepository.save(account);
 
-        return new CreatePaymentAccountResponseDTO(
-                account.getId(),
-                account.getName(),
-                account.getType(),
-                account.getBalance(),
-                account.getStatus(),
-                account.getProvider()
-        );
+        return accountRepository.save(account).toDTO();
 
     }
 
@@ -144,51 +113,103 @@ public class AccountService {
                 validate.bank()
         );
 
-        account = accountRepository.save(account);
 
-        return new CreateWalletAccountResponseDTO(
-                account.getId(),
-                account.getName(),
-                account.getType(),
-                account.getBalance(),
-                account.getStatus()
-        );
+        return accountRepository.save(account).toDTO();
 
     }
   
 
     @Transactional
-    public AccountBase update(String token, UUID id, UpdateAccountRequestDTO dto) {
+    public AccountResponseDTO update(String token, UUID id, UpdateCheckingAccountRequestDTO dto) {
 
-        JwtPayload userToken = jwtUtil.extractPayload(token);
+        ResponseValidateDTO validate = validate(token, dto.bankId());
 
-        userRepository.findById(userToken.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
-
-        AccountBase account = accountRepository.findById(id)
+        AccountBase account = accountRepository.findByAccountHolderAndId(validate.user(), id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada"));
 
 
-        if (!account.getAccountHolder().getId().equals(userToken.id())) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar esta conta");
+        if(validate.bank() != null){
+            account.setBank(validate.bank());
         }
 
-        if (dto.name() != null && !dto.name().isBlank()) {
-            account.setName(dto.name());
-        }
+        account.updateFrom(dto);
 
-        if (dto.type() != null) {
-            account.setType(dto.type());
-        }
-
-        if (dto.status() != null) {
-            account.setStatus(dto.status());
-        }
-
-        return accountRepository.save(account);
+        return accountRepository.save(account).toDTO();
     }
 
-    public List<ResponseAccountDTO> findAll(String token) {
+    @Transactional
+    public AccountResponseDTO update(String token, UUID id, UpdateInvestmentAccountRequestDTO dto) {
+
+        ResponseValidateDTO validate = validate(token, dto.bankId());
+
+        AccountBase account = accountRepository.findByAccountHolderAndId(validate.user(), id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada"));
+
+
+        if(validate.bank() != null){
+            account.setBank(validate.bank());
+        }
+
+        account.updateFrom(dto);
+
+        return accountRepository.save(account).toDTO();
+    }
+
+    @Transactional
+    public AccountResponseDTO update(String token, UUID id, UpdatePaymentAccountRequestDTO dto) {
+
+        ResponseValidateDTO validate = validate(token, dto.bankId());
+
+        AccountBase account = accountRepository.findByAccountHolderAndId(validate.user(), id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada"));
+
+
+        if(validate.bank() != null){
+            account.setBank(validate.bank());
+        }
+
+        account.updateFrom(dto);
+
+        return accountRepository.save(account).toDTO();
+    }
+
+    @Transactional
+    public AccountResponseDTO update(String token, UUID id, UpdateSavingsAccountRequestDTO dto) {
+
+        ResponseValidateDTO validate = validate(token, dto.bankId());
+
+        AccountBase account = accountRepository.findByAccountHolderAndId(validate.user(), id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada"));
+
+
+        if(validate.bank() != null){
+            account.setBank(validate.bank());
+        }
+
+        account.updateFrom(dto);
+
+        return accountRepository.save(account).toDTO();
+    }
+
+    @Transactional
+    public AccountResponseDTO update(String token, UUID id, UpdateWalletAccountRequestDTO dto) {
+
+        ResponseValidateDTO validate = validate(token, dto.bankId());
+
+        AccountBase account = accountRepository.findByAccountHolderAndId(validate.user(), id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada"));
+
+
+        if(validate.bank() != null){
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Esse tipo de conta não aceita banco.");
+        }
+
+        account.updateFrom(dto);
+
+        return accountRepository.save(account).toDTO();
+    }
+
+    public List<AccountResponseDTO> findAll(String token) {
 
         JwtPayload userToken = jwtUtil.extractPayload(token);
 
@@ -197,18 +218,13 @@ public class AccountService {
 
         List<AccountBase> accounts = accountRepository.findByAccountHolder(user);
 
+
         return accounts.stream().filter(accountBase -> accountBase.getStatus() == AccountStatus.ACTIVE)
-                .map(account -> new ResponseAccountDTO(
-                account.getId(),
-                account.getName(),
-                account.getType(),
-                account.getBalance(),
-                account.getStatus()
-        )).collect(Collectors.toList());
+                .map(AccountBase::toDTO).toList();
 
     }
 
-    public ResponseAccountDTO findById(String token, UUID id) {
+    public AccountResponseDTO findById(String token, UUID id) {
 
         JwtPayload userToken = jwtUtil.extractPayload(token);
 
@@ -222,13 +238,7 @@ public class AccountService {
             throw new RuntimeException("Verifique o id informado, conta não localizada.");
         }
 
-        return new ResponseAccountDTO(
-                account.getId(),
-                account.getName(),
-                account.getType(),
-                account.getBalance(),
-                account.getStatus()
-        );
+        return account.toDTO();
     }
 
     public ResponseDeactivateAccountDTO deactivateAccount(String token, UUID id) {

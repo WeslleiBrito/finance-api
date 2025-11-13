@@ -1,5 +1,8 @@
 package com.project.financeapi.entity.account;
 
+import com.project.financeapi.dto.account.AccountUpdateDTO;
+import com.project.financeapi.dto.account.update.UpdateCheckingAccountRequestDTO;
+import com.project.financeapi.dto.account.response.CreateCheckingAccountResponseDTO;
 import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
@@ -25,4 +28,29 @@ public class CheckingAccount extends AccountBase {
 
     public CheckingAccount() {
     }
+    @Override
+    public void updateFrom(AccountUpdateDTO dto) {
+
+        if (!(dto instanceof UpdateCheckingAccountRequestDTO checkingDto)) {
+            throw new IllegalArgumentException("DTO incompatível com conta corrente");
+        }
+
+        if(checkingDto.overdraftLimit() != null){
+            this.overdraftLimit = checkingDto.overdraftLimit();
+        }
+    }
+    @Override
+    public CreateCheckingAccountResponseDTO toDTO(){
+
+        return new CreateCheckingAccountResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getType(),
+                this.getBalance(),
+                this.getStatus(),
+                this.getOverdraftLimit()
+        );
+    }
+
+
 }
