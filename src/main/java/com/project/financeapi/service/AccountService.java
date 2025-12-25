@@ -3,9 +3,7 @@ package com.project.financeapi.service;
 import com.project.financeapi.dto.ResponseValidateDTO;
 import com.project.financeapi.dto.account.AccountResponseDTO;
 import com.project.financeapi.dto.account.create.*;
-import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.account.ResponseDeactivateAccountDTO;
-import com.project.financeapi.dto.account.UpdateAccountRequestDTO;
 import com.project.financeapi.dto.account.response.*;
 import com.project.financeapi.dto.account.response.CreateCheckingAccountResponseDTO;
 import com.project.financeapi.dto.account.update.*;
@@ -25,9 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 
 @Service

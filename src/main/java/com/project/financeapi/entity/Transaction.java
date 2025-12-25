@@ -1,7 +1,7 @@
 package com.project.financeapi.entity;
 
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
-import com.project.financeapi.enums.MovementType;
+
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.interfaces.PaymentInstrument;
 import jakarta.persistence.*;
