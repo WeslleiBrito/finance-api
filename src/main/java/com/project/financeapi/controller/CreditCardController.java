@@ -38,6 +38,15 @@ public class CreditCardController {
         return ResponseEntity.status(HttpStatus.OK).body(creditCardService.update(token, dto, id));
     }
 
+    @PatchMapping("/{id}")
+    public HttpStatus deactivateCreditCard(
+            @RequestHeader("X-Auth-Token") String token,
+            @Valid @PathVariable UUID id)
+    {
+        creditCardService.deactivateCreditCard(token, id);
+        return HttpStatus.OK;
+    }
+
     @GetMapping
     public ResponseEntity<List<CreditCardDetailsDTO>> getAll(
             @RequestHeader("X-Auth-Token") String token

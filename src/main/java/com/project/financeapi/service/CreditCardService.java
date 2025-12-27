@@ -8,17 +8,24 @@ import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.CardBrand;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.CreditCard;
+import com.project.financeapi.enums.CardStatus;
+import com.project.financeapi.enums.PaymentStatus;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.*;
 import com.project.financeapi.util.JwtUtil;
 import com.project.financeapi.util.mapper.CreditCardMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CreditCardService {
@@ -30,12 +37,10 @@ public class CreditCardService {
     private final BankRepository bankRepository;
     private final JwtUtil jwtUtil;
     private final CreditCardMapper creditCardMapper;
+    private static final Logger logger = LoggerFactory.getLogger(CreditCardService.class);
 
 
-    public CreditCardDetailsDTO create(
-            String token,
-            CreditCardCreateRequestDTO dto
-    ) {
+    public CreditCardDetailsDTO create(String token, @NotNull CreditCardCreateRequestDTO dto) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
@@ -73,7 +78,6 @@ public class CreditCardService {
         return creditCard.toDTO();
     }
 
-
     public CreditCardDetailsDTO update(String token, CreditCardUpdateRequestDTO dto, UUID id) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
@@ -91,20 +95,24 @@ public class CreditCardService {
         return creditCard.toDTO();
     }
 
-
     public List<CreditCardDetailsDTO> getAll(String token){
 
-        JwtPayload payload = jwtUtil.extractPayload(token);
+        try {
+            JwtPayload payload = jwtUtil.extractPayload(token);
 
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+            User user = userRepository.findById(payload.id())
+                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
-        List<CreditCard> creditCards = creditCardRepository.findAllByCreatedBy_Id(user.getId());
+            List<CreditCard> creditCards = creditCardRepository.findAllByCreatedBy_Id(user.getId());
 
-        return creditCards.stream().map(
-                CreditCard::toDTO
-        ).toList();
+            return creditCards.stream().map(
+                    CreditCard::toDTO
+            ).toList();
 
+        } catch (Exception e) {
+            logger.error(">>> ERRO FATAL no método getAll: ", e);
+            throw e;
+        }
     }
 
     public CreditCardDetailsDTO getById(String token, UUID id) {
@@ -118,5 +126,19 @@ public class CreditCardService {
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Cartão não encontrado."));
 
         return creditCard.toDTO();
+    }
+
+    public void deactivateCreditCard(String token, UUID id) {
+        JwtPayload payload = jwtUtil.extractPayload(token);
+
+        User user = userRepository.findById(payload.id())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+
+        CreditCard creditCard = creditCardRepository.findByCreatedByAndId(user.getId(), id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Cartão não encontrado."));
+
+        creditCard.setStatus(CardStatus.CANCELED);
+
+        creditCardRepository.save(creditCard);
     }
 }

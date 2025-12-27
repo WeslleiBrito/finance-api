@@ -2,6 +2,7 @@ package com.project.financeapi.entity.base;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.project.financeapi.dto.Installment.InstallmentDTO;
 import com.project.financeapi.dto.payment.PaymentMethodDetailsDTO;
 import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
@@ -71,7 +72,6 @@ public abstract class PaymentInstrumentBase implements PaymentInstrument {
         this.paymentType = paymentType;
     }
 
-
     /**
      * Retorna o saldo consolidado (créditos - débitos).
      */
@@ -91,4 +91,5 @@ public abstract class PaymentInstrumentBase implements PaymentInstrument {
     }
 
     public abstract PaymentMethodDetailsDTO toDTO();
+    public abstract List<InstallmentDTO> process(List<InstallmentDTO> installmentDTOS);
 }

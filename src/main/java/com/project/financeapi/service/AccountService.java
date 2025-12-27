@@ -20,6 +20,7 @@ import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -52,7 +53,7 @@ public class AccountService {
     }
 
     @Transactional
-    public CreateInvestmentAccountResponseDTO create(String token, CreateInvestmentAccountRequestDTO dto) {
+    public CreateInvestmentAccountResponseDTO create(String token, @NotNull CreateInvestmentAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
 
@@ -68,7 +69,7 @@ public class AccountService {
     }
 
     @Transactional
-    public CreateSavingsAccountResponseDTO create(String token, CreateSavingsAccountRequestDTO dto) {
+    public CreateSavingsAccountResponseDTO create(String token, @NotNull CreateSavingsAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
 
@@ -83,7 +84,7 @@ public class AccountService {
     }
 
     @Transactional
-    public CreatePaymentAccountResponseDTO create(String token, CreatePaymentAccountRequestDTO dto) {
+    public CreatePaymentAccountResponseDTO create(String token, @NotNull CreatePaymentAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
 
@@ -99,7 +100,7 @@ public class AccountService {
     }
 
     @Transactional
-    public CreateWalletAccountResponseDTO create(String token, CreateWalletAccountRequestDTO dto) {
+    public CreateWalletAccountResponseDTO create(String token, @NotNull CreateWalletAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
 

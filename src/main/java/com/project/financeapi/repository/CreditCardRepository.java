@@ -12,20 +12,20 @@ import java.util.UUID;
 public interface CreditCardRepository extends JpaRepository<CreditCard, UUID> {
 
     @Query("""
-SELECT c FROM CreditCard c
-WHERE c.id = :cardId
-  AND c.createdBy.id = :userId
-""")
+            SELECT c FROM CreditCard c
+            WHERE c.id = :cardId
+              AND c.createdBy.id = :userId
+              AND c.status != "CANCELED"
+            """)
     Optional<CreditCard> findByCreatedByAndId(
             @Param("userId") UUID userId,
             @Param("cardId") UUID cardId
     );
 
-
     @Query("""
-SELECT c FROM CreditCard c
-WHERE c.createdBy = :userId
-""")
+            SELECT c FROM CreditCard c
+            WHERE c.status != "CANCELED" AND c.createdBy.id = :userId
+            """)
     List<CreditCard> findAllByCreatedBy_Id(@Param("userId") UUID userId);
 
 }

@@ -1,5 +1,6 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.dto.Installment.InstallmentDTO;
 import com.project.financeapi.dto.bank.BankResponseDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
@@ -7,11 +8,15 @@ import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.enums.CardStatus;
 import com.project.financeapi.enums.InstrumentNature;
 import com.project.financeapi.enums.PaymentType;
+import com.project.financeapi.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.http.HttpStatus;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 
@@ -136,4 +141,72 @@ public class CreditCard extends PaymentInstrumentBase {
                 )
         );
     }
+
+    @Override
+    public List<InstallmentDTO> process(List<InstallmentDTO> installments) {
+
+        if (installments == null || installments.isEmpty()) {
+            return installments;
+        }
+
+        // Ordena por número da parcela
+        List<InstallmentDTO> ordered = installments.stream()
+                .sorted(Comparator.comparing(InstallmentDTO::parcelNumber))
+                .toList();
+
+        BigDecimal totalPurchaseAmount = ordered.stream()
+                .map(InstallmentDTO::amount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Valida limite
+        if (getAvailableLimit().compareTo(totalPurchaseAmount) < 0) {
+            throw new BusinessException(
+                    HttpStatus.BAD_REQUEST,
+                    "Limite insuficiente no cartão de crédito."
+            );
+        }
+
+        LocalDate today = LocalDate.now();
+
+        // Determina se entra na fatura atual ou próxima
+        boolean afterClosing =
+                today.getDayOfMonth() > this.closingDay;
+
+        LocalDate firstDueDate = afterClosing
+                ? calculateDueDate(today.plusMonths(1))
+                : calculateDueDate(today);
+
+        List<InstallmentDTO> processed = new ArrayList<>();
+
+        for (int i = 0; i < ordered.size(); i++) {
+
+            InstallmentDTO dto = ordered.get(i);
+
+            LocalDate dueDate = firstDueDate.plusMonths(i);
+
+            processed.add(new InstallmentDTO(
+                    dto.amount(),
+                    dto.parcelNumber(),
+                    dueDate,
+                    dto.instrument()
+            ));
+        }
+
+        return processed;
+    }
+
+    /**
+     * Calcula a data de vencimento baseada no dueDay
+     */
+    private LocalDate calculateDueDate(LocalDate baseDate) {
+
+        int day = Math.min(this.dueDay, baseDate.lengthOfMonth());
+
+        return LocalDate.of(
+                baseDate.getYear(),
+                baseDate.getMonth(),
+                day
+        );
+    }
+
 }

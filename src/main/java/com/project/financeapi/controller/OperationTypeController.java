@@ -51,7 +51,7 @@ public class OperationTypeController {
         return ResponseEntity.status(HttpStatus.OK).body(operationTypeService.update(token, id, dto));
     }
 
-    @PutMapping("/update-status/{id}")
+    @PatchMapping("/update-status/{id}")
     public ResponseEntity<ResponseDefaultDTO> updateStatus(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable UUID id,
