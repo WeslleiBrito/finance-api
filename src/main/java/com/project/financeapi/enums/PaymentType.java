@@ -5,7 +5,7 @@ public enum PaymentType {
     DEBIT_CARD,
     PIX,
     BANK_TRANSFER,
-    WALLET,
+    CASH,
     BOLETO,
     TICKET
 }

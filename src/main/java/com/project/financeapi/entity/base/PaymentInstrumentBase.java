@@ -7,6 +7,7 @@ import com.project.financeapi.dto.payment.PaymentMethodDetailsDTO;
 import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.enums.InstrumentNature;
+import com.project.financeapi.enums.InstrumentStatus;
 import com.project.financeapi.enums.PaymentType;
 import com.project.financeapi.interfaces.PaymentInstrument;
 import jakarta.persistence.*;
@@ -51,8 +52,12 @@ public abstract class PaymentInstrumentBase implements PaymentInstrument {
     @Column(name = "payment_type", nullable = false)
     private PaymentType paymentType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private InstrumentStatus status = InstrumentStatus.ACTIVE;
+
     @JsonBackReference
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     @Setter(AccessLevel.PROTECTED)
     private User createdBy;
@@ -61,7 +66,7 @@ public abstract class PaymentInstrumentBase implements PaymentInstrument {
      * Transações associadas a este instrumento (ex: compras, pagamentos, transferências).
      */
     @JsonManagedReference
-    @OneToMany(mappedBy = "paymentInstrument", cascade = CascadeType.ALL, orphanRemoval = false)
+    @OneToMany(mappedBy = "paymentInstrument", cascade = CascadeType.ALL)
     private List<Transaction> transactions = new ArrayList<>();
 
 
@@ -91,5 +96,6 @@ public abstract class PaymentInstrumentBase implements PaymentInstrument {
     }
 
     public abstract PaymentMethodDetailsDTO toDTO();
+
     public abstract List<InstallmentDTO> process(List<InstallmentDTO> installmentDTOS);
 }

@@ -5,7 +5,6 @@ import com.project.financeapi.dto.bank.BankResponseDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
-import com.project.financeapi.enums.CardStatus;
 import com.project.financeapi.enums.InstrumentNature;
 import com.project.financeapi.enums.PaymentType;
 import com.project.financeapi.exception.BusinessException;
@@ -23,7 +22,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "credit_card")
-@DiscriminatorValue("CREDIT")
+@DiscriminatorValue("CREDIT_CARD")
 public class CreditCard extends PaymentInstrumentBase {
 
     @Column(name = "card_holder_name", nullable = false, length = 60)
@@ -39,9 +38,6 @@ public class CreditCard extends PaymentInstrumentBase {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "card_brand_id")
     private CardBrand cardBrand;
-
-    @Enumerated(EnumType.STRING)
-    private CardStatus status = CardStatus.ACTIVE;
 
     @Column(name = "credit_limit", nullable = false)
     private BigDecimal creditLimit;
