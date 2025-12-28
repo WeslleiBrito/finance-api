@@ -1,0 +1,2 @@
+ALTER TABLE payment_instrument
+ADD COLUMN status VARCHAR(15) NOT NULL DEFAULT 'ACTIVE';

@@ -41,5 +41,5 @@ public interface PaymentInstrument {
                 .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
     }
 
-
+    PaymentMethodDetailsDTO toDTO();
 }

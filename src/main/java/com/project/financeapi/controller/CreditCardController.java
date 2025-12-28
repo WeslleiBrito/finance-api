@@ -20,23 +20,6 @@ public class CreditCardController {
 
     private final CreditCardService creditCardService;
 
-    @PostMapping
-    public ResponseEntity<CreditCardDetailsDTO> create(
-            @RequestHeader("X-Auth-Token") String token,
-            @Valid @RequestBody CreditCardCreateRequestDTO dto
-    ) {
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(creditCardService.create(token, dto));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<CreditCardDetailsDTO> update(
-            @RequestHeader("X-Auth-Token") String token,
-            @Valid @PathVariable UUID id,
-            @Valid @RequestBody CreditCardUpdateRequestDTO dto
-    ){
-        return ResponseEntity.status(HttpStatus.OK).body(creditCardService.update(token, dto, id));
-    }
 
     @GetMapping
     public ResponseEntity<List<CreditCardDetailsDTO>> getAll(

@@ -3,9 +3,7 @@ package com.project.financeapi.service;
 import com.project.financeapi.dto.ResponseValidateDTO;
 import com.project.financeapi.dto.account.AccountResponseDTO;
 import com.project.financeapi.dto.account.create.*;
-import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.account.ResponseDeactivateAccountDTO;
-import com.project.financeapi.dto.account.UpdateAccountRequestDTO;
 import com.project.financeapi.dto.account.response.*;
 import com.project.financeapi.dto.account.response.CreateCheckingAccountResponseDTO;
 import com.project.financeapi.dto.account.update.*;
@@ -22,12 +20,11 @@ import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -56,7 +53,7 @@ public class AccountService {
     }
 
     @Transactional
-    public CreateInvestmentAccountResponseDTO create(String token, CreateInvestmentAccountRequestDTO dto) {
+    public CreateInvestmentAccountResponseDTO create(String token, @NotNull CreateInvestmentAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
 
@@ -72,7 +69,7 @@ public class AccountService {
     }
 
     @Transactional
-    public CreateSavingsAccountResponseDTO create(String token, CreateSavingsAccountRequestDTO dto) {
+    public CreateSavingsAccountResponseDTO create(String token, @NotNull CreateSavingsAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
 
@@ -87,7 +84,7 @@ public class AccountService {
     }
 
     @Transactional
-    public CreatePaymentAccountResponseDTO create(String token, CreatePaymentAccountRequestDTO dto) {
+    public CreatePaymentAccountResponseDTO create(String token, @NotNull CreatePaymentAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
 
@@ -103,7 +100,7 @@ public class AccountService {
     }
 
     @Transactional
-    public CreateWalletAccountResponseDTO create(String token, CreateWalletAccountRequestDTO dto) {
+    public CreateWalletAccountResponseDTO create(String token, @NotNull CreateWalletAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
 

@@ -4,6 +4,7 @@ import com.project.financeapi.dto.bank.BankResponseDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.enums.CardStatus;
 import com.project.financeapi.enums.InstrumentNature;
+import com.project.financeapi.enums.InstrumentStatus;
 import com.project.financeapi.enums.PaymentType;
 
 import java.math.BigDecimal;
@@ -25,7 +26,7 @@ public record CreditCardDetailsDTO(
         BigDecimal availableLimit,
         BigDecimal RevolvingInterest,
         BigDecimal fine,
-        CardStatus status,
+        InstrumentStatus status,
         CardBrandResponseDTO cardBrand,
         BankResponseDTO bank
 ) implements PaymentMethodDetailsDTO {

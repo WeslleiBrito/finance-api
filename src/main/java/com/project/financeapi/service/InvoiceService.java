@@ -22,14 +22,12 @@ import com.project.financeapi.repository.*;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,88 +45,102 @@ public class InvoiceService {
 
 
     @Transactional
-    public InvoiceResponseDTO create(String token, CreateInvoiceRequestDTO dto){
+    public InvoiceResponseDTO create(String token, CreateInvoiceRequestDTO dto) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
 
         User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
+                .orElseThrow(() -> new BusinessException(
+                        HttpStatus.NOT_FOUND, "Usuário não encontrado"
+                ));
 
         PersonBase person = personRepository.findById(dto.personId())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "A pessoa informada não existe."));
+                .orElseThrow(() -> new BusinessException(
+                        HttpStatus.NOT_FOUND, "Pessoa não encontrada"
+                ));
 
         AccountBase account = accountRepository.findById(dto.accountId())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "A conta informada não existe."));
+                .orElseThrow(() -> new BusinessException(
+                        HttpStatus.NOT_FOUND, "Conta não encontrada"
+                ));
 
-        OperationType operationType = operationTypeRepository.findByCreatedByAndId(user, dto.operationTypeId())
-                .orElseThrow(
-                        () -> new BusinessException(HttpStatus.NOT_FOUND, "O tipo de operação informada não existe.")
-                );
+        OperationType operationType =
+                operationTypeRepository.findByCreatedByAndId(user, dto.operationTypeId())
+                        .orElseThrow(() -> new BusinessException(
+                                HttpStatus.NOT_FOUND, "Tipo de operação inválido"
+                        ));
 
-        if(!operationType.getIsGlobal() && !operationType.getCreatedBy().equals(user)){
-            throw  new BusinessException(
-                    HttpStatus.NOT_FOUND, "Você não tem permissão para usar esse tipo de operação."
-            );
-        }
-
-        BigDecimal subtotalInstallments = dto.installments().stream().map(InstallmentDTO::amount)
+        BigDecimal sumInstallments = dto.installments().stream()
+                .map(InstallmentDTO::amount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-
-        if(dto.totalAmount().compareTo(subtotalInstallments) < 0){
+        if (dto.totalAmount().compareTo(sumInstallments) != 0) {
             throw new BusinessException(
-                    HttpStatus.NOT_FOUND, "O valor do total do documento é MENOR que a soma das parcelas"
+                    HttpStatus.BAD_REQUEST,
+                    "Total do documento diferente da soma das parcelas"
             );
         }
 
-        if(dto.totalAmount().compareTo(subtotalInstallments) > 0){
-            throw new BusinessException(
-                    HttpStatus.NOT_FOUND, "O valor do total do documento é MAIOR que a soma das parcelas"
-            );
+        Invoice invoice = invoiceRepository.save(new Invoice(
+                dto.totalAmount(),
+                user,
+                person,
+                account,
+                operationType
+        ));
+
+        // 🔹 Agrupa por instrumento
+        Map<UUID, List<InstallmentDTO>> groupedByInstrument =
+                dto.installments().stream()
+                        .collect(Collectors.groupingBy(
+                                InstallmentDTO::instrument,
+                                Collectors.collectingAndThen(
+                                        Collectors.toList(),
+                                        list -> list.stream()
+                                                .sorted(Comparator.comparing(InstallmentDTO::parcelNumber))
+                                                .toList()
+                                )
+                        ));
+
+        List<InstallmentDTO> processedInstallments = new ArrayList<>();
+
+        // 🔹 Processa por instrumento
+        for (var entry : groupedByInstrument.entrySet()) {
+
+            PaymentInstrumentBase instrument =
+                    paymentInstrumentRepository
+                            .findByIdAndUser(entry.getKey(), user.getId())
+                            .orElseThrow(() -> new BusinessException(
+                                    HttpStatus.NOT_FOUND,
+                                    "Instrumento de pagamento inválido"
+                            ));
+
+            List<InstallmentDTO> processed =
+                    instrument.process(entry.getValue());
+
+            processedInstallments.addAll(processed);
         }
 
-       Invoice invoice = invoiceRepository.save(new Invoice(
-               dto.totalAmount(),
-               user,
-               person,
-               account,
-               operationType
-       ));
+        // 🔹 Cria entidades
+        List<Installment> installments = processedInstallments.stream()
+                .map(dtoItem -> new Installment(
+                        dtoItem.amount(),
+                        dtoItem.dueDate(),
+                        operationType.getMovementType(),
+                        dtoItem.parcelNumber(),
+                        user,
+                        invoice,
+                        paymentInstrumentRepository.getReferenceById(dtoItem.instrument())
+                ))
+                .toList();
 
-       Installment [] installments = new Installment[dto.installments().size()];
+        installmentRepository.saveAll(installments);
 
-       int index = 0;
+        invoice.setInstallments(installments);
 
-        for(InstallmentDTO installmentDTO : dto.installments()) {
-
-            PaymentInstrumentBase paymentInstrument = paymentInstrumentRepository
-                    .findByIdAndUser(installmentDTO.instrument(), user.getId())
-                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Instrumento não encontrado."));
-
-            Installment installment = new Installment(
-                    installmentDTO.amount(),
-                    installmentDTO.dueDate(),
-                    invoice.getOperationType().getMovementType(),
-                    installmentDTO.parcelNumber(),
-                    user,
-                    invoice,
-                    paymentInstrument
-            );
-
-            installments[index] = installment;
-
-            index += 1;
-        }
-
-        installmentRepository.saveAll(Arrays.asList(installments));
-
-
-        return this.toDocumentResponseDTO(invoiceRepository.findByIdAndCreatedBy(invoice.getId(), user)
-                .orElseThrow(() -> new RuntimeException(
-                "O documento informado não exite."
-        )));
-
+        return toDocumentResponseDTO(invoice);
     }
+
 
     public List<InvoiceResponseDTO> findAll(String token) {
 
@@ -144,7 +156,6 @@ public class InvoiceService {
                 .map(this::toDocumentResponseDTO)
                 .collect(Collectors.toList());
     }
-
     public InvoiceResponseDTO findById(String token, UUID id) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
@@ -161,7 +172,7 @@ public class InvoiceService {
         );
 
     }
-    public InvoiceResponseDTO toDocumentResponseDTO(Invoice invoice) {
+    public InvoiceResponseDTO toDocumentResponseDTO(@NotNull Invoice invoice) {
 
         return new InvoiceResponseDTO(
                 invoice.getId(),

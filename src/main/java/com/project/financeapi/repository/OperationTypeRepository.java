@@ -45,7 +45,13 @@ public interface OperationTypeRepository extends JpaRepository<OperationType, UU
     """)
     List<OperationType> findByCreatedByAndGroup(@Param("user") User user, OperationGroup operationGroup);
 
-
-    Optional<OperationType> findByCreatedByAndId(User user, UUID id);
+    @Query(
+            """
+                SELECT t FROM OperationType t
+                WHERE (t.createdBy IS NULL OR t.createdBy = :user) 
+                AND t.id = :id
+            """
+    )
+    Optional<OperationType> findByCreatedByAndId(@Param("user") User user, @Param("id") UUID id);
 
 }
