@@ -14,6 +14,7 @@ import com.project.financeapi.dto.transaction.TransactionResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.LegalEntity;
 import com.project.financeapi.entity.PhysicalPerson;
+import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enums.PersonType;
@@ -199,17 +200,7 @@ public class PersonService {
                                                         installment.isPaid(),
                                                         installment.getParcelNumber(),
                                                         installment.getInvoice().getId(),
-                                                        installment.getTransactions().stream().map(transaction -> new TransactionResponseDTO(
-                                                                transaction.getId(),
-                                                                transaction.getInstallment().getId(),
-                                                                transaction.getAccount().getId(),
-                                                                transaction.getAmount(),
-                                                                transaction.getInstallment().getMovementType(),
-                                                                transaction.getIsReversed(),
-                                                                transaction.getPaymentDate(),
-                                                                transaction.getCreatedAt(),
-                                                                transaction.getObservations()
-                                                        )).toList()
+                                                        installment.getTransactions().stream().map(Transaction::toResponse).toList()
 
                                                 )).toList()
                                 )).toList()

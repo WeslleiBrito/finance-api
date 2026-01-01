@@ -84,32 +84,25 @@ public class Installment {
     }
 
 
-    /**
-     * Helper para manter consistência bidirecional
-     */
-    public void addTransaction(Transaction transaction) {
-        transactions.add(transaction);
-        transaction.setInstallment(this);
-    }
-
-    public void removeTransaction(Transaction transaction) {
-        transactions.remove(transaction);
-        transaction.setInstallment(null);
-    }
 
     /**
      * Retorna o total já pago/recebido nesta parcela.
      */
     public BigDecimal getTotalPaid() {
+
         return transactions.stream()
-                .map(tx -> {
-                    BigDecimal value = tx.getAmount() != null ? tx.getAmount() : BigDecimal.ZERO;
-                    return tx.getIsReversed() != null && tx.getIsReversed()
-                            ? value.negate()  // se for estornada, subtrai
+                .filter(t -> t.getEffectiveAmount() != null)
+                .map(t -> {
+                    BigDecimal value = t.getEffectiveAmount();
+
+                    return t.getMovementType() == MovementType.REVERSAL
+                            ? value.negate()
                             : value;
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+
 
     /**
      * Retorna o saldo em aberto da parcela.

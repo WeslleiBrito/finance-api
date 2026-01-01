@@ -10,10 +10,7 @@ import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
 import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
-import com.project.financeapi.entity.Invoice;
-import com.project.financeapi.entity.Installment;
-import com.project.financeapi.entity.OperationType;
-import com.project.financeapi.entity.User;
+import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.entity.base.PersonBase;
@@ -207,17 +204,7 @@ public class InvoiceService {
                                 installment.getParcelNumber(),
                                 installment.getInvoice().getId(),
                                 installment.getTransactions().stream().map(
-                                        transaction -> new TransactionResponseDTO(
-                                                transaction.getId(),
-                                                transaction.getInstallment().getId(),
-                                                transaction.getAccount().getId(),
-                                                transaction.getAmount(),
-                                                transaction.getInstallment().getMovementType(),
-                                                transaction.getIsReversed(),
-                                                transaction.getPaymentDate(),
-                                                transaction.getCreatedAt(),
-                                                transaction.getObservations()
-                                        )
+                                        Transaction::toResponse
                                 ).toList()
                         )
                 ).toList()

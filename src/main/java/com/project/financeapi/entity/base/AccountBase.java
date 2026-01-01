@@ -85,7 +85,7 @@ public abstract class AccountBase {
                 transactions.stream()
                         .map(t -> {
                             BigDecimal value = t.getAmount() != null ? t.getAmount() : BigDecimal.ZERO;
-                            return t.getInstallment().getMovementType() == MovementType.INCOME
+                            return t.getInstallment().getMovementType() == MovementType.RECEIPT
                                     ? value
                                     : value.negate();
                         })

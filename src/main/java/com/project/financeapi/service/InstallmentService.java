@@ -7,6 +7,7 @@ import com.project.financeapi.dto.transaction.TransactionResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.Invoice;
 import com.project.financeapi.entity.Installment;
+import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.exception.BusinessException;
@@ -78,17 +79,7 @@ public class InstallmentService {
 
         // converter as transações da parcela
         List<TransactionResponseDTO> transactionDTOs = installment.getTransactions().stream()
-                .map(transaction -> new TransactionResponseDTO(
-                        transaction.getId(),
-                        transaction.getInstallment().getId(),
-                        transaction.getAccount().getId(),
-                        transaction.getAmount(),
-                        transaction.getInstallment().getMovementType(),
-                        transaction.getIsReversed(),
-                        transaction.getPaymentDate(),
-                        transaction.getCreatedAt(),
-                        transaction.getObservations()
-                ))
+                .map(Transaction::toResponse)
                 .toList();
 
         return new InstallmentResponseDTO(

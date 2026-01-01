@@ -4,6 +4,7 @@ import com.project.financeapi.dto.Installment.InstallmentDTO;
 import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
 import com.project.financeapi.dto.account.ResponseAccountDTO;
 import com.project.financeapi.dto.user.UserResponseDTO;
+import com.project.financeapi.enums.MovementDirection;
 import com.project.financeapi.enums.MovementType;
 
 
@@ -16,9 +17,20 @@ public record TransactionResponseDTO(
         UUID id,
         UUID installmentId,
         UUID accountId,
+        UUID paymentInstrumentId,
+
         BigDecimal amount,
+        BigDecimal interest,
+        BigDecimal fine,
+        BigDecimal discount,
+        BigDecimal effectiveAmount,
+
         MovementType movementType,
-        Boolean isReversed,
+        MovementDirection movementDirection,
+
+        UUID reversedTransactionId,
+        boolean reversed,
+
         LocalDate paymentDate,
         LocalDateTime createdAt,
         String observations
