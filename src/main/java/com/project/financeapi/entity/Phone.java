@@ -1,6 +1,7 @@
 package com.project.financeapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.project.financeapi.dto.phone.ResponsePhoneDTO;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enums.PhoneType;
 import jakarta.persistence.*;
@@ -33,7 +34,6 @@ public class Phone {
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
-    @Setter(AccessLevel.NONE)
     private User createdBy;
 
     @JsonBackReference
@@ -49,5 +49,13 @@ public class Phone {
     }
 
     public Phone() {
+    }
+
+    public ResponsePhoneDTO toResponse() {
+        return new ResponsePhoneDTO(
+                this.getId(),
+                this.number,
+                this.getType()
+        );
     }
 }

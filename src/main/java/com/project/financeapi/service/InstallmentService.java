@@ -84,14 +84,18 @@ public class InstallmentService {
 
         return new InstallmentResponseDTO(
                 installment.getId(),
+                installment.getInvoice().getId(),
+                installment.getParcelNumber(),
                 installment.getAmount(),
-                installment.getCreatedAt(),
-                installment.getDueDate(),
+                installment.getTotalPaid(),
+                installment.getTotalInterest(),
+                installment.getTotalFine(),
+                installment.getTotalDiscount(),
                 installment.getMovementType(),
                 installment.isPaid(),
-                installment.getParcelNumber(),
-                installment.getInvoice().getId(),
-                transactionDTOs
+                installment.getDueDate(),
+                installment.getCreatedAt(),
+                installment.toResponse().transactions()
         );
     }
 }

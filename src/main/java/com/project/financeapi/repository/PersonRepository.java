@@ -13,4 +13,5 @@ public interface PersonRepository extends JpaRepository<PersonBase, UUID> {
     List<PersonBase> findByCreatedBy(User user);
 
     Optional<PersonBase> findByIdAndCreatedBy(UUID id, User user);
+
 }

@@ -1,7 +1,6 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.person.PersonCreateRequestDTO;
-import com.project.financeapi.dto.person.ResponsePersonDTO;
+import com.project.financeapi.dto.person.*;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.service.PersonService;
 import jakarta.validation.Valid;
@@ -21,22 +20,33 @@ public class PersonController {
         this.personService = personService;
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<PersonBase> create(
+    @PostMapping("/create/physical")
+    public ResponseEntity<PersonResponseDTO> createPhysical(
             @RequestHeader("X-Auth-Token") String token,
-            @Valid @RequestBody PersonCreateRequestDTO dto
-            )
+            @Valid @RequestBody PersonCreatePhysicalRequestDTO dto
+    )
     {
-        PersonBase person = personService.create(token, dto);
+        PersonResponseDTO person = personService.createPhysicalPerson(token, dto);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(person);
+    }
+
+    @PostMapping("/create/legal")
+    public ResponseEntity<PersonResponseDTO> createLegal(
+            @RequestHeader("X-Auth-Token") String token,
+            @Valid @RequestBody PersonCreateLegalRequestDTO dto
+    )
+    {
+        PersonResponseDTO person = personService.createLegalPerson(token, dto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(person);
     }
 
     @GetMapping
-    public ResponseEntity<List<ResponsePersonDTO>> findAll(
+    public ResponseEntity<List<PersonResponseDTO>> findAll(
             @RequestHeader("X-Auth-Token") String token
     ){
-        List<ResponsePersonDTO> persons = personService.findAll(token);
+        List<PersonResponseDTO> persons = personService.findAll(token);
 
         return ResponseEntity.status(HttpStatus.OK).body(persons);
     }

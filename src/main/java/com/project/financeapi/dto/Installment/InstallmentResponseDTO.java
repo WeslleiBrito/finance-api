@@ -12,13 +12,17 @@ import java.util.UUID;
 
 public record InstallmentResponseDTO(
         UUID id,
+        UUID invoiceId,
+        Integer parcelNumber,
         BigDecimal amount,
-        LocalDate createdAt,
-        LocalDate dueDate,
+        BigDecimal totalPaid,
+        BigDecimal totalInterest,
+        BigDecimal totalFine,
+        BigDecimal TotalDiscount,
         MovementType movementType,
         PaymentStatus status,
-        Integer parcelNumber,
-        UUID invoiceId,
+        LocalDate dueDate,
+        LocalDate createdAt,
         List<TransactionResponseDTO> transactions
 
 ) {

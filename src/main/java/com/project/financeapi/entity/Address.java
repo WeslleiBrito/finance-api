@@ -1,6 +1,7 @@
 package com.project.financeapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.project.financeapi.dto.address.ResponseAddressDTO;
 import com.project.financeapi.entity.base.PersonBase;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -48,13 +49,11 @@ public class Address {
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
-    @Setter(AccessLevel.NONE)
     private User createdBy;
 
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", nullable = false)
-    @Setter(AccessLevel.NONE)
     private PersonBase person;
 
     public Address() {
@@ -81,5 +80,18 @@ public class Address {
         this.zipCode = zipCode;
         this.createdBy = createdBy;
         this.person = person;
+    }
+
+    public ResponseAddressDTO toResponse() {
+        return new ResponseAddressDTO(
+                this.getId(),
+                this.getStreet(),
+                this.getNumber(),
+                this.getNeighborhood(),
+                this.getCity(),
+                this.state,
+                this.getZipCode(),
+                this.getComplement()
+        );
     }
 }

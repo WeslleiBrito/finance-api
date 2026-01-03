@@ -135,8 +135,9 @@ public class InvoiceService {
 
         invoice.setInstallments(installments);
 
-        return toDocumentResponseDTO(invoice);
+        return invoice.toResponse();
     }
+
     public List<InvoiceResponseDTO> findAll(String token) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
@@ -147,10 +148,9 @@ public class InvoiceService {
 
         List<Invoice> invoices = invoiceRepository.findByCreatedBy(user);
 
-        return invoices.stream()
-                .map(this::toDocumentResponseDTO)
-                .collect(Collectors.toList());
+        return invoices.stream().map(Invoice::toResponse).toList();
     }
+
     public InvoiceResponseDTO findById(String token, UUID id) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
@@ -162,52 +162,8 @@ public class InvoiceService {
                 "O documento informado não exite."
         ));
 
-        return toDocumentResponseDTO(
-                invoice
-        );
+        return invoice.toResponse();
 
-    }
-    public InvoiceResponseDTO toDocumentResponseDTO(@NotNull Invoice invoice) {
-
-        return new InvoiceResponseDTO(
-                invoice.getId(),
-                invoice.getAccount().getId(),
-                invoice.getIssueDate(),
-                invoice.getPaymentStatus(),
-                invoice.getQuantityInstallments(),
-                invoice.getTotalAmount(),
-                invoice.getTotalPaid(),
-                invoice.getTotalDiscount(),
-                invoice.getRemainingBalance(),
-                new OperationTypeResponseDTO(
-                        invoice.getOperationType().getId(),
-                        invoice.getOperationType().getName(),
-                        invoice.getOperationType().getMovementType(),
-                        invoice.getOperationType().getOperationStatus(),
-                        invoice.getOperationType().getIsGlobal(),
-                        new OperationGroupResponseDTO(
-                                invoice.getOperationType().getGroup().getId(),
-                                invoice.getOperationType().getName(),
-                                invoice.getOperationType().getGroup().getIsGlobal(),
-                                invoice.getOperationType().getGroup().getOperationStatus()
-                        )
-                ),
-                invoice.getInstallments().stream().map(
-                        installment -> new InstallmentResponseDTO(
-                                installment.getId(),
-                                installment.getAmount(),
-                                installment.getCreatedAt(),
-                                installment.getDueDate(),
-                                installment.getMovementType(),
-                                installment.isPaid(),
-                                installment.getParcelNumber(),
-                                installment.getInvoice().getId(),
-                                installment.getTransactions().stream().map(
-                                        Transaction::toResponse
-                                ).toList()
-                        )
-                ).toList()
-        );
     }
 
 }

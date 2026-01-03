@@ -1,5 +1,9 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.dto.email.ResponseEmailDTO;
+import com.project.financeapi.dto.person.PersonResponseDTO;
+import com.project.financeapi.dto.person.PhysicalPersonResponseDTO;
+import com.project.financeapi.dto.person.ResponsePersonDTO;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enums.PersonType;
 import jakarta.persistence.Column;
@@ -29,5 +33,21 @@ public class PhysicalPerson extends PersonBase {
     }
 
     public PhysicalPerson() {
+    }
+
+    @Override
+    public PhysicalPersonResponseDTO toDTO() {
+
+        return new PhysicalPersonResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getNickname(),
+                this.getCpf(),
+                this.getPersonType(),
+                this.getPhones().stream().map(Phone::toResponse).toList(),
+                this.getEmails().stream().map(Email::toResponse).toList(),
+                this.getAddresses().stream().map(Address::toResponse).toList(),
+                this.getInvoices().stream().map(Invoice::toResponse).toList()
+        );
     }
 }

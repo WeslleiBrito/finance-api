@@ -2,6 +2,8 @@ package com.project.financeapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
+import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enums.DocumentStatus;
@@ -119,6 +121,24 @@ public class Invoice {
      */
     public BigDecimal getRemainingBalance() {
         return totalAmount.subtract(getTotalPaid().add(getTotalDiscount()));
+    }
+
+    public InvoiceResponseDTO toResponse() {
+        return new InvoiceResponseDTO(
+                this.getId(),
+                this.getAccount().getId(),
+                this.getOperationType().getId(),
+                this.getIssueDate(),
+                this.getPaymentStatus(),
+                this.getQuantityInstallments(),
+                this.getTotalAmount(),
+                this.getTotalPaid(),
+                this.getTotalDiscount(),
+                this.getRemainingBalance(),
+                getInstallments().stream().map(
+                        Installment::toResponse
+                ).toList()
+        );
     }
 
 }

@@ -15,6 +15,7 @@ import java.util.UUID;
 public record InvoiceResponseDTO(
     UUID id,
     UUID accountId,
+    UUID operationTypeId,
     LocalDate issueDate,
     PaymentStatus status,
     Integer quantityInstallments,
@@ -22,6 +23,5 @@ public record InvoiceResponseDTO(
     BigDecimal totalPaid,
     BigDecimal totalDiscount,
     BigDecimal remainingBalance,
-    OperationTypeResponseDTO operationType,
     List<InstallmentResponseDTO> installments
 ) {}

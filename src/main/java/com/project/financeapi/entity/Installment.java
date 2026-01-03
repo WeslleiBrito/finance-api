@@ -1,6 +1,7 @@
 package com.project.financeapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.enums.PaymentStatus;
@@ -84,7 +85,6 @@ public class Installment {
     }
 
 
-
     /**
      * Retorna o total já pago/recebido nesta parcela.
      */
@@ -117,6 +117,36 @@ public class Installment {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public BigDecimal getTotalInterest() {
+        return transactions.stream()
+                .filter(t -> t.getInterest() != null) // Filtra transações inválidas
+                .map(t -> {
+                    // 1. Tratamento de Null: Se for null, considera ZERO
+                    BigDecimal interestVal = t.getInterest();
+
+                    // 2. Tratamento de Estorno: Se a transação for estorno, o desconto deve ser anulado (negativado)
+                    return t.getMovementType() == MovementType.REVERSAL
+                            ? interestVal.negate()
+                            : interestVal;
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getTotalFine() {
+        return transactions.stream()
+                .filter(t -> t.getFine() != null) // Filtra transações inválidas
+                .map(t -> {
+                    // 1. Tratamento de Null: Se for null, considera ZERO
+                    BigDecimal fineVal = t.getFine();
+
+                    // 2. Tratamento de Estorno: Se a transação for estorno, o desconto deve ser anulado (negativado)
+                    return t.getMovementType() == MovementType.REVERSAL
+                            ? fineVal.negate()
+                            : fineVal;
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     /**
      * Retorna o saldo em aberto da parcela.
      */
@@ -140,5 +170,24 @@ public class Installment {
         return PaymentStatus.PARTIALLY_PAID;
     }
 
+    public InstallmentResponseDTO toResponse(){
+        return new InstallmentResponseDTO(
+                this.getId(),
+                this.getInvoice().getId(),
+                this.getParcelNumber(),
+                this.getAmount(),
+                this.getTotalPaid(),
+                this.getTotalInterest(),
+                this.getTotalFine(),
+                this.getTotalDiscount(),
+                this.movementType,
+                this.isPaid(),
+                this.getDueDate(),
+                this.getCreatedAt(),
+                this.getTransactions().stream().map(
+                        Transaction::toResponse
+                ).toList()
+        );
+    }
 
 }
