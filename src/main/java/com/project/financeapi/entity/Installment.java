@@ -102,13 +102,28 @@ public class Installment {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public BigDecimal getTotalDiscount() {
+        return transactions.stream()
+                .filter(t -> t.getEffectiveAmount() != null) // Filtra transações inválidas
+                .map(t -> {
+                    // 1. Tratamento de Null: Se for null, considera ZERO
+                    BigDecimal discountVal = t.getDiscount() == null ? BigDecimal.ZERO : t.getDiscount();
 
+                    // 2. Tratamento de Estorno: Se a transação for estorno, o desconto deve ser anulado (negativado)
+                    return t.getMovementType() == MovementType.REVERSAL
+                            ? discountVal.negate()
+                            : discountVal;
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
     /**
      * Retorna o saldo em aberto da parcela.
      */
     public BigDecimal getRemainingBalance() {
-        return this.amount.subtract(getTotalPaid());
+
+            return this.amount.subtract(
+                    getTotalPaid());
     }
 
     /**

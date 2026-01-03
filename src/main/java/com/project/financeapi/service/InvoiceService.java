@@ -137,8 +137,6 @@ public class InvoiceService {
 
         return toDocumentResponseDTO(invoice);
     }
-
-
     public List<InvoiceResponseDTO> findAll(String token) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);
@@ -179,6 +177,7 @@ public class InvoiceService {
                 invoice.getQuantityInstallments(),
                 invoice.getTotalAmount(),
                 invoice.getTotalPaid(),
+                invoice.getTotalDiscount(),
                 invoice.getRemainingBalance(),
                 new OperationTypeResponseDTO(
                         invoice.getOperationType().getId(),

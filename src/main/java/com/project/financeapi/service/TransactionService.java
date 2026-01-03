@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -90,6 +91,12 @@ public class TransactionService {
 
             validateAccountAndInstrumentCompatibility(account, instrument);
 
+            if(LocalDate.now().isBefore(dto.paymentDate())){
+                throw new BusinessException(
+                        HttpStatus.BAD_REQUEST,
+                        "A data informada não pode ser mair que a data atual."
+                );
+            }
             // 💰 Valores
             BigDecimal interest = defaultZero(dto.interest());
             BigDecimal fine = defaultZero(dto.fine());

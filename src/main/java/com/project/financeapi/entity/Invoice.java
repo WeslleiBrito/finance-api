@@ -110,11 +110,15 @@ public class Invoice {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public BigDecimal getTotalDiscount() {
+        return installments.stream().map(Installment::getTotalDiscount).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     /**
      * Retorna o saldo restante.
      */
     public BigDecimal getRemainingBalance() {
-        return totalAmount.subtract(getTotalPaid());
+        return totalAmount.subtract(getTotalPaid().add(getTotalDiscount()));
     }
 
 }

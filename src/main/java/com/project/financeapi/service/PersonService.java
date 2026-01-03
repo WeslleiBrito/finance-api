@@ -176,6 +176,7 @@ public class PersonService {
                                         invoice.getQuantityInstallments(),
                                         invoice.getTotalAmount(),
                                         invoice.getTotalPaid(),
+                                        invoice.getTotalDiscount(),
                                         invoice.getRemainingBalance(),
                                         new OperationTypeResponseDTO(
                                                 invoice.getOperationType().getId(),

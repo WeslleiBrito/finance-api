@@ -20,6 +20,7 @@ public record InvoiceResponseDTO(
     Integer quantityInstallments,
     BigDecimal totalAmount,
     BigDecimal totalPaid,
+    BigDecimal totalDiscount,
     BigDecimal remainingBalance,
     OperationTypeResponseDTO operationType,
     List<InstallmentResponseDTO> installments
