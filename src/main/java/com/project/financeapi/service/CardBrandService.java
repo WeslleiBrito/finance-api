@@ -1,10 +1,8 @@
 package com.project.financeapi.service;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
 import com.project.financeapi.dto.card.cardBrand.CardBrandCreateRequestDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandUpdateRequestDTO;
-import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.CardBrand;
 import com.project.financeapi.entity.User;

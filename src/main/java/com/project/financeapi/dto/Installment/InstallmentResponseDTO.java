@@ -1,7 +1,6 @@
 package com.project.financeapi.dto.Installment;
 
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
-import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.enums.PaymentStatus;
 

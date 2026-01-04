@@ -1,15 +1,11 @@
 package com.project.financeapi.entity;
 
-import com.project.financeapi.dto.email.ResponseEmailDTO;
-import com.project.financeapi.dto.person.PersonResponseDTO;
 import com.project.financeapi.dto.person.PhysicalPersonResponseDTO;
-import com.project.financeapi.dto.person.ResponsePersonDTO;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enums.PersonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 

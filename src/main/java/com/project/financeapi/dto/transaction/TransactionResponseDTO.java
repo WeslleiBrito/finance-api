@@ -1,9 +1,5 @@
 package com.project.financeapi.dto.transaction;
 
-import com.project.financeapi.dto.Installment.InstallmentDTO;
-import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
-import com.project.financeapi.dto.account.ResponseAccountDTO;
-import com.project.financeapi.dto.user.UserResponseDTO;
 import com.project.financeapi.enums.MovementDirection;
 import com.project.financeapi.enums.MovementType;
 

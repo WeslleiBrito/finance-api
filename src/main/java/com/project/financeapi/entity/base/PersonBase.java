@@ -2,7 +2,6 @@ package com.project.financeapi.entity.base;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.project.financeapi.dto.person.PersonResponseDTO;
-import com.project.financeapi.dto.person.ResponsePersonDTO;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.enums.PersonType;
 import jakarta.persistence.*;

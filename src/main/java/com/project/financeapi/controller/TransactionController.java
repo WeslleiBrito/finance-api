@@ -1,7 +1,6 @@
 package com.project.financeapi.controller;
 
 import com.project.financeapi.dto.transaction.CreateTransactionRequestDTO;
-import com.project.financeapi.dto.transaction.TransactionRequestDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
 import com.project.financeapi.service.TransactionService;
 import jakarta.validation.Valid;
