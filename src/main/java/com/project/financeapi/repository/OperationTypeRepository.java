@@ -48,10 +48,33 @@ public interface OperationTypeRepository extends JpaRepository<OperationType, UU
     @Query(
             """
                 SELECT t FROM OperationType t
-                WHERE (t.createdBy IS NULL OR t.createdBy = :user) 
+                WHERE (t.createdBy IS NULL OR t.createdBy = :user)
                 AND t.id = :id
             """
     )
     Optional<OperationType> findByCreatedByAndId(@Param("user") User user, @Param("id") UUID id);
+
+    @Query(
+            """
+                SELECT p FROM OperationType p
+                WHERE p.operationStatus = :operationStatus AND (p.createdBy IS NULL OR p.createdBy = :user)
+            """
+    )
+    List<OperationType> findAllByUserOperationStatus(@Param("user") User user, @Param("operationStatus") OperationStatus operationStatus);
+
+    @Query(
+            """
+                SELECT COUNT(p) > 0
+                FROM OperationType p
+                WHERE LOWER(p.name) = LOWER(:name)
+                AND (p.createdBy.id IS NULL OR p.createdBy.id = :userid)
+                AND p.group.id = :operationGroupId
+            """
+    )
+    boolean existsByCreatedBy_IdAndNameAndOperationGroup_Id(
+            @Param("userId") UUID userId,
+            @Param("name") String name,
+            @Param("operationGroupId") UUID operationGroupId
+    );
 
 }

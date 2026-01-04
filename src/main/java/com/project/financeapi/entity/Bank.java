@@ -1,5 +1,6 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.dto.bank.BankResponseDTO;
 import com.project.financeapi.enums.BankStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -55,5 +56,14 @@ public class Bank {
     public Bank(String name, User createdBy) {
         this.name = name;
         this.createdBy = createdBy;
+    }
+
+    public BankResponseDTO toResponse() {
+        return new BankResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getCode(),
+                this.getStatus()
+        );
     }
 }

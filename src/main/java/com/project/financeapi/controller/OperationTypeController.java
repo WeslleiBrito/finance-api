@@ -4,7 +4,7 @@ import com.project.financeapi.dto.OperationType.OperationTypeRequestCreateDTO;
 import com.project.financeapi.dto.OperationType.OperationTypeRequestUpdateDTO;
 import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
 import com.project.financeapi.dto.ResponseDefaultDTO;
-import com.project.financeapi.dto.UpdateStatusRequestDTO;
+import com.project.financeapi.enums.OperationStatus;
 import com.project.financeapi.service.OperationTypeService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -33,14 +33,6 @@ public class OperationTypeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(operationTypeService.create(token, dto));
     }
 
-    @GetMapping
-    public ResponseEntity<List<OperationTypeResponseDTO>> findAll(
-            @RequestHeader("X-Auth-Token") String token
-    ) {
-
-        return ResponseEntity.status(HttpStatus.OK).body(operationTypeService.findAll(token));
-    }
-
     @PutMapping("/update/{id}")
     public ResponseEntity<ResponseDefaultDTO> update(
             @RequestHeader("X-Auth-Token") String token,
@@ -52,12 +44,36 @@ public class OperationTypeController {
     }
 
     @PatchMapping("/update-status/{id}")
-    public ResponseEntity<ResponseDefaultDTO> updateStatus(
+    public ResponseEntity<HttpStatus> updateStatus(
             @RequestHeader("X-Auth-Token") String token,
-            @Valid @PathVariable UUID id,
-            @Valid@RequestBody UpdateStatusRequestDTO dto
+            @Valid @PathVariable UUID id
+    ) {
+        operationTypeService.updateStatusOperationType(token, id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<List<OperationTypeResponseDTO>> findAll(
+            @RequestHeader("X-Auth-Token") String token
     ) {
 
-        return ResponseEntity.status(HttpStatus.OK).body(operationTypeService.updateStatusOperationType(token, id, dto));
+        return ResponseEntity.status(HttpStatus.OK).body(operationTypeService.findAll(token));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OperationTypeResponseDTO> findById(
+            @RequestHeader("X-Auth-Token") String token,
+            @Valid @PathVariable UUID id
+    ){
+        return ResponseEntity.status(HttpStatus.OK).body(operationTypeService.findById(token, id));
+    }
+
+    @GetMapping("/operation-status/{status}")
+    public ResponseEntity<List<OperationTypeResponseDTO>> findAllOperationStatus(
+            @RequestHeader("X-Auth-Token") String token,
+            @Valid @PathVariable OperationStatus status
+    ){
+        return ResponseEntity.status(HttpStatus.OK).body(operationTypeService.findAllOperationStatus(token, status));
     }
 }

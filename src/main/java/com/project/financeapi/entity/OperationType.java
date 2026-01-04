@@ -1,5 +1,6 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
 import com.project.financeapi.enums.MovementType;
 import com.project.financeapi.enums.OperationStatus;
 import jakarta.persistence.*;
@@ -49,5 +50,16 @@ public class OperationType {
     }
 
     public OperationType() {
+    }
+
+    public OperationTypeResponseDTO toResponse() {
+        return new OperationTypeResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getMovementType(),
+                this.getOperationStatus(),
+                this.getIsGlobal(),
+                this.getGroup().toResponse()
+        );
     }
 }

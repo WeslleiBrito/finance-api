@@ -1,5 +1,6 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.enums.OperationStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -35,6 +36,10 @@ public class OperationGroup {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OperationType> operationTypes = new ArrayList<>();
+
+
     public OperationGroup() {}
 
     public OperationGroup(String name, User createdBy) {
@@ -42,9 +47,12 @@ public class OperationGroup {
         this.createdBy = createdBy;
     }
 
-
-
-    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OperationType> operationTypes = new ArrayList<>();
-
+    public OperationGroupResponseDTO toResponse() {
+        return new OperationGroupResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getIsGlobal(),
+                this.getOperationStatus()
+        );
+    }
 }

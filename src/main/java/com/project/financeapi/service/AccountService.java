@@ -38,7 +38,7 @@ public class AccountService {
 
 
     @Transactional
-    public CreateCheckingAccountResponseDTO create(String token, CreateCheckingAccountRequestDTO dto) {
+    public CreateCheckingAccountResponseDTO create(String token, @NotNull CreateCheckingAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.baseAccount().bankId());
 
@@ -114,10 +114,9 @@ public class AccountService {
         return accountRepository.save(account).toDTO();
 
     }
-  
 
     @Transactional
-    public AccountResponseDTO update(String token, UUID id, UpdateCheckingAccountRequestDTO dto) {
+    public AccountResponseDTO update(String token, UUID id, @NotNull UpdateCheckingAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.bankId());
 
@@ -135,7 +134,7 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountResponseDTO update(String token, UUID id, UpdateInvestmentAccountRequestDTO dto) {
+    public AccountResponseDTO update(String token, UUID id, @NotNull UpdateInvestmentAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.bankId());
 
@@ -153,7 +152,7 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountResponseDTO update(String token, UUID id, UpdatePaymentAccountRequestDTO dto) {
+    public AccountResponseDTO update(String token, UUID id, @NotNull UpdatePaymentAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.bankId());
 
@@ -171,7 +170,7 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountResponseDTO update(String token, UUID id, UpdateSavingsAccountRequestDTO dto) {
+    public AccountResponseDTO update(String token, UUID id, @NotNull UpdateSavingsAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.bankId());
 
@@ -189,7 +188,7 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountResponseDTO update(String token, UUID id, UpdateWalletAccountRequestDTO dto) {
+    public AccountResponseDTO update(String token, UUID id, @NotNull UpdateWalletAccountRequestDTO dto) {
 
         ResponseValidateDTO validate = validate(token, dto.bankId());
 
@@ -262,7 +261,7 @@ public class AccountService {
         );
     }
 
-
+    @NotNull
     private ResponseValidateDTO validate(String token, UUID bankId) {
 
         JwtPayload payload = jwtUtil.extractPayload(token);

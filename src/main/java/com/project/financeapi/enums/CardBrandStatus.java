@@ -1,6 +1,19 @@
 package com.project.financeapi.enums;
 
+
 public enum CardBrandStatus {
-    ACTIVE,
-    INACTIVE
+    ACTIVE  {
+        @Override
+        public CardBrandStatus toggle() {
+            return INACTIVE;
+        }
+    },
+    INACTIVE {
+        @Override
+        public CardBrandStatus toggle() {
+            return ACTIVE;
+        }
+    };
+
+    public abstract CardBrandStatus toggle();
 }

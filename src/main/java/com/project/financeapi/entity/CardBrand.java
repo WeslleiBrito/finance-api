@@ -1,5 +1,7 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
+import com.project.financeapi.dto.card.creditCard.CardResponseDTO;
 import com.project.financeapi.enums.CardBrandStatus;
 import com.project.financeapi.enums.CardStatus;
 import jakarta.persistence.*;
@@ -42,5 +44,16 @@ public class CardBrand {
     public CardBrand(String name, User createdBy) {
         this.name = name;
         this.createdBy = createdBy;
+    }
+
+    public CardBrandResponseDTO toResponse() {
+
+        return new CardBrandResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getStatus(),
+                this.isGlobal,
+                this.getCreatedAt()
+        );
     }
 }

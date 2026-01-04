@@ -4,6 +4,7 @@ package com.project.financeapi.controller;
 import com.project.financeapi.dto.bank.BankCreateRequestDTO;
 import com.project.financeapi.dto.bank.BankResponseDTO;
 import com.project.financeapi.dto.bank.BankUpdateRequestDTO;
+import com.project.financeapi.enums.BankStatus;
 import com.project.financeapi.service.BankService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -43,18 +44,37 @@ public class BankController {
         return ResponseEntity.status(HttpStatus.OK).body(bank);
     }
 
+    @PatchMapping("/update-status/{id}")
+    public ResponseEntity<HttpStatus> updateStatus(
+            @RequestHeader("X-Auth-Token") String token,
+            @Valid @PathVariable UUID id
+    ){
+        bankService.updateStatus(token, id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+
     @GetMapping
-    public ResponseEntity<List<BankResponseDTO>> getAll(
+    public ResponseEntity<List<BankResponseDTO>> findAll(
             @RequestHeader("X-Auth-Token") String token
     ){
-        return ResponseEntity.status(HttpStatus.OK).body(bankService.getAll(token));
+        return ResponseEntity.status(HttpStatus.OK).body(bankService.findAll(token));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BankResponseDTO> getById(
+    public ResponseEntity<BankResponseDTO> findById(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable UUID id
     ){
         return ResponseEntity.status(HttpStatus.OK).body(bankService.getById(token, id));
+    }
+
+    @GetMapping("/bank-status/{status}")
+    public ResponseEntity<List<BankResponseDTO>> findAllOperationStatus(
+            @RequestHeader("X-Auth-Token") String token,
+            @Valid @PathVariable BankStatus status
+    ){
+        return ResponseEntity.status(HttpStatus.OK).body(bankService.findAllBankStatus(token, status));
     }
 }
