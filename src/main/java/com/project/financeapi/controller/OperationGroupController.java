@@ -1,11 +1,11 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.ResponseDefaultDTO;
-import com.project.financeapi.dto.operationGroup.OperationGroupCreateRequestDTO;
-import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
-import com.project.financeapi.dto.operationGroup.UpdateRequestOperationGroup;
-import com.project.financeapi.enums.OperationStatus;
+import com.project.financeapi.dto.operationGroup_.OperationGroupCreateRequestDTO;
+import com.project.financeapi.dto.operationGroup_.OperationGroupResponseDTO;
+import com.project.financeapi.dto.operationGroup_.UpdateRequestOperationGroup;
+import com.project.financeapi.enumSystem.StatusEntity;
 import com.project.financeapi.service.OperationGroupService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/operation-group")
+@Tag(name = "Grupos de Operação", description = "Gerenciamento de agrupamentos para operações financeiras")
 public class OperationGroupController {
 
     private final OperationGroupService operationGroupService;
@@ -47,7 +48,7 @@ public class OperationGroupController {
     @GetMapping("/operation-staus/{status}")
     public ResponseEntity<List<OperationGroupResponseDTO>> findActive(
             @RequestHeader("X-Auth-Token") String token,
-            @Valid @PathVariable OperationStatus status
+            @Valid @PathVariable StatusEntity status
             ){
         List<OperationGroupResponseDTO> operationGroups = operationGroupService.findAllOperationStatus(token, status);
 
@@ -65,13 +66,13 @@ public class OperationGroupController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<ResponseDefaultDTO> update(
+    public ResponseEntity<OperationGroupResponseDTO> update(
             @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdateRequestOperationGroup dto,
             @Valid @PathVariable UUID id
     ){
 
-        ResponseDefaultDTO response = operationGroupService.update(token, id, dto);
+        OperationGroupResponseDTO response = operationGroupService.update(token, id, dto);
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
 

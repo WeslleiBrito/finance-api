@@ -1,7 +1,6 @@
 package com.project.financeapi.dto.invoice;
 
-import com.project.financeapi.dto.Installment.InstallmentDTO;
-import com.project.financeapi.enums.MovementType;
+import com.project.financeapi.dto.Installments.InstallmentDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

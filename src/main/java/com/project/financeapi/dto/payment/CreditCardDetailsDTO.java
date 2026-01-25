@@ -1,11 +1,10 @@
 package com.project.financeapi.dto.payment;
 
-import com.project.financeapi.dto.bank.BankResponseDTO;
+import com.project.financeapi.dto.bank.*;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
-import com.project.financeapi.enums.CardStatus;
-import com.project.financeapi.enums.InstrumentNature;
-import com.project.financeapi.enums.InstrumentStatus;
-import com.project.financeapi.enums.PaymentType;
+import com.project.financeapi.enumSystem.InstrumentNature;
+import com.project.financeapi.enumSystem.InstrumentStatus;
+import com.project.financeapi.enumSystem.PaymentType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,7 +14,6 @@ import java.util.UUID;
 public record CreditCardDetailsDTO(
         UUID id,
         PaymentType paymentType,
-        Boolean isGlobal,
         LocalDateTime createdAt,
         InstrumentNature instrumentNature,
         LocalDate expirationDate, // opcional

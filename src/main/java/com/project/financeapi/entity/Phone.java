@@ -3,7 +3,7 @@ package com.project.financeapi.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.project.financeapi.dto.phone.ResponsePhoneDTO;
 import com.project.financeapi.entity.base.PersonBase;
-import com.project.financeapi.enums.PhoneType;
+import com.project.financeapi.enumSystem.PhoneType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

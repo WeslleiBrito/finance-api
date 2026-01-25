@@ -1,8 +1,8 @@
 package com.project.financeapi.dto;
 
-import com.project.financeapi.enums.OperationStatus;
+import com.project.financeapi.enumSystem.StatusEntity;
 
 public record UpdateStatusRequestDTO(
-        OperationStatus operationStatus
+        StatusEntity statusEntity
 ) {
 }

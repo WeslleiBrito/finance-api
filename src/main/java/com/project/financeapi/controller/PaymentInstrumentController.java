@@ -5,6 +5,7 @@ import com.project.financeapi.dto.card.creditCard.UpdateCreditCardRequestDTO;
 import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.dto.payment.PaymentMethodDetailsDTO;
 import com.project.financeapi.service.PaymentInstrumentService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/payment-instruments")
 @RequiredArgsConstructor
+@Tag(name = "Instrumentos de Pagamento", description = "Criação e gerenciamento de métodos de pagamento (ex: Cartões de Crédito)")
 public class PaymentInstrumentController {
 
     private final PaymentInstrumentService paymentInstrumentService;

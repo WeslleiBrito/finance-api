@@ -3,6 +3,7 @@ package com.project.financeapi.controller;
 import com.project.financeapi.dto.invoice.CreateInvoiceRequestDTO;
 import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
 import com.project.financeapi.service.InvoiceService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/invoice")
+@Tag(name = "Faturas", description = "Gerenciamento e processamento de faturas")
 public class InvoiceController {
 
     private final InvoiceService invoiceService;

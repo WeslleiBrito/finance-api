@@ -1,7 +1,7 @@
 package com.project.financeapi.dto.invoice;
 
-import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
-import com.project.financeapi.enums.PaymentStatus;
+import com.project.financeapi.dto.Installments.InstallmentResponseDTO;
+import com.project.financeapi.enumSystem.PaymentStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

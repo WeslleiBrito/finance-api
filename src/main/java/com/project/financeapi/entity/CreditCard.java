@@ -1,12 +1,12 @@
 package com.project.financeapi.entity;
 
-import com.project.financeapi.dto.Installment.InstallmentDTO;
-import com.project.financeapi.dto.bank.BankResponseDTO;
+import com.project.financeapi.dto.Installments.InstallmentDTO;
+import com.project.financeapi.dto.bank.*;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
-import com.project.financeapi.enums.InstrumentNature;
-import com.project.financeapi.enums.PaymentType;
+import com.project.financeapi.enumSystem.InstrumentNature;
+import com.project.financeapi.enumSystem.PaymentType;
 import com.project.financeapi.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -110,7 +110,6 @@ public class CreditCard extends PaymentInstrumentBase {
         return new CreditCardDetailsDTO(
                 this.getId(),
                 this.getPaymentType(),
-                this.getIsGlobal(),
                 this.getCreatedAt(),
                 this.getInstrumentNature(),
                 this.getExpirationDate(),
@@ -132,8 +131,7 @@ public class CreditCard extends PaymentInstrumentBase {
                 new BankResponseDTO(
                         this.getBank().getId(),
                         this.getBank().getName(),
-                        this.getBank().getCode(),
-                        this.getBank().getStatus()
+                        this.getBank().getCode()
                 )
         );
     }

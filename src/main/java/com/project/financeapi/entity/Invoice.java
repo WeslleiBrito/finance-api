@@ -2,13 +2,11 @@ package com.project.financeapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
 import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PersonBase;
-import com.project.financeapi.enums.DocumentStatus;
-import com.project.financeapi.enums.MovementType;
-import com.project.financeapi.enums.PaymentStatus;
+import com.project.financeapi.enumSystem.DocumentStatus;
+import com.project.financeapi.enumSystem.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

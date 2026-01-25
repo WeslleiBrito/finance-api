@@ -1,6 +1,6 @@
 package com.project.financeapi.dto.OperationType;
 
-import com.project.financeapi.enums.MovementType;
+import com.project.financeapi.enumSystem.MovementType;
 
 import java.util.UUID;
 

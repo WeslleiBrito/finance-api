@@ -3,7 +3,7 @@ package com.project.financeapi.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.financeapi.entity.base.AccountBase;
-import com.project.financeapi.enums.UserStatus;
+import com.project.financeapi.enumSystem.UserStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

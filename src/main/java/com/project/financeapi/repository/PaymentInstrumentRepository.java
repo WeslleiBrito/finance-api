@@ -1,7 +1,7 @@
 package com.project.financeapi.repository;
 
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
-import com.project.financeapi.enums.InstrumentNature;
+import com.project.financeapi.enumSystem.InstrumentNature;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

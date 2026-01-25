@@ -1,16 +1,16 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.ResponseDefaultDTO;
-import com.project.financeapi.dto.operationGroup.OperationGroupCreateRequestDTO;
-import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
-import com.project.financeapi.dto.operationGroup.UpdateRequestOperationGroup;
+import com.project.financeapi.dto.operationGroup_.OperationGroupCreateRequestDTO;
+import com.project.financeapi.dto.operationGroup_.OperationGroupResponseDTO;
+import com.project.financeapi.dto.operationGroup_.UpdateRequestOperationGroup;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.OperationGroup;
 import com.project.financeapi.entity.User;
-import com.project.financeapi.enums.OperationStatus;
-import com.project.financeapi.exception.AccessBlockedException;
+import com.project.financeapi.entity.UserOperationGroup;
+import com.project.financeapi.enumSystem.StatusEntity;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.OperationGroupRepository;
+import com.project.financeapi.repository.UserOperationGroupRepository;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -27,51 +28,57 @@ import java.util.UUID;
 public class OperationGroupService {
 
     private final OperationGroupRepository operationGroupRepository;
+    private final UserOperationGroupRepository userOperationGroupRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
 
     @Transactional
-    public OperationGroupResponseDTO create(String token, @NotNull OperationGroupCreateRequestDTO dto) {
-
+    public OperationGroupResponseDTO create(
+            String token,
+            @NotNull OperationGroupCreateRequestDTO dto
+    ) {
         User user = getUser(token);
 
-        if(operationGroupRepository.nameExitsByCreatedBy(user, dto.name())){
-            throw new BusinessException(HttpStatus.CONFLICT, "Já exite um grupo de operação com esse nome.");
-        }
-
-        OperationGroup operationGroup = operationGroupRepository.save(
-                new OperationGroup(dto.name(), user)
+        validateGroupName(user.getId(), dto.name(), false);
+        // 1️⃣ Cria o grupo (definição)
+        OperationGroup group = new OperationGroup(
+                dto.name(),
+                user
         );
 
+        operationGroupRepository.save(group);
 
-        return operationGroup.toResponse();
+        // 2️⃣ Cria o vínculo usuário ↔ grupo
+        UserOperationGroup link = new UserOperationGroup(
+                user,
+                group
+        );
+
+        userOperationGroupRepository.save(link);
+
+        return group.toResponse();
     }
 
+
     @Transactional
-    public ResponseDefaultDTO update(String token, UUID id, @NotNull UpdateRequestOperationGroup dto) {
+    public OperationGroupResponseDTO update(String token, UUID id, @NotNull UpdateRequestOperationGroup dto) {
 
         User user = getUser(token);
 
-        OperationGroup operationGroup = operationGroupRepository.findByCreatedByById(user, id).orElseThrow(() -> new BusinessException(
-                HttpStatus.NOT_FOUND, "O grupo de operação não foi localizada."
-        ));
+        OperationGroup operationGroup = validateGroupAccess(user.getId(), id);
 
-        if(!operationGroup.getName().equalsIgnoreCase(dto.name())) {
-            if (operationGroupRepository.nameExitsByCreatedBy(user, dto.name())) {
-                throw new BusinessException(HttpStatus.CONFLICT, "Já exite um grupo de operação com esse nome.");
-            }
+        if(dto.name() != null){
+
+            validateGroupName(user.getId(), dto.name(), true);
+
+            operationGroup.setName(dto.name());
+
+            operationGroup = operationGroupRepository.save(operationGroup);
+
         }
 
-        if(operationGroup.getIsGlobal()){
-            throw new AccessBlockedException("Você não tem permissão para editar este grupo de operação.");
-        }
-
-        operationGroup.setName(dto.name());
-
-        operationGroupRepository.save(operationGroup);
-
-        return new ResponseDefaultDTO("Grupo de operação editado com sucesso");
+        return operationGroup.toResponse();
     }
 
     @Transactional
@@ -79,31 +86,29 @@ public class OperationGroupService {
 
         User user = getUser(token);
 
-
-        OperationGroup operationGroup = operationGroupRepository.findByCreatedByById(user, id).orElseThrow(() -> new BusinessException(
+        UserOperationGroup userOperationGroup = userOperationGroupRepository.findByUserIdAndOperationGroupId(user.getId(), id)
+                .orElseThrow(() -> new BusinessException(
                 HttpStatus.NOT_FOUND, "O grupo de operação não foi localizada."
         ));
 
-        if(operationGroup.getIsGlobal()){
-            throw new AccessBlockedException("Você não tem permissão para desativar este grupo de operação.");
-        }
+        userOperationGroup.setEnabled(!userOperationGroup.isEnabled());
 
-        operationGroup.setOperationStatus(operationGroup.getOperationStatus().toggle());
-
-        operationGroupRepository.save(operationGroup);
+        userOperationGroupRepository.save(userOperationGroup);
 
     }
 
     public List<OperationGroupResponseDTO> findAll(String token) {
 
-        User user = getUser(token);
+        return operationGroupRepository.findAllOperationGroupUserId(getUser(token).getId())
+                .stream()
+                .map(OperationGroup::toResponse)
+                .toList();
 
-        return operationGroupRepository.findAllByUserOrDefault(user).stream().map(OperationGroup::toResponse).toList();
     }
 
-    public List<OperationGroupResponseDTO> findAllOperationStatus(String token, OperationStatus operationStatus) {
+    public List<OperationGroupResponseDTO> findAllOperationStatus(String token, StatusEntity statusEntity) {
 
-        return operationGroupRepository.findAllByUserOperationStatus(getUser(token), operationStatus)
+        return userOperationGroupRepository.findVisibleGroupsForUserStatus(getUser(token).getId(), statusEntity)
                 .stream().map(OperationGroup::toResponse).toList();
     }
 
@@ -111,7 +116,7 @@ public class OperationGroupService {
 
         User user = getUser(token);
 
-        OperationGroup operationGroup = operationGroupRepository.findByCreatedByById(user, id).orElseThrow(
+        OperationGroup operationGroup = userOperationGroupRepository.findByUserById(user.getId(), id).orElseThrow(
                 () -> new BusinessException(
                         HttpStatus.BAD_REQUEST, "O grupo de operação não foi encontrado"
                 )
@@ -125,6 +130,34 @@ public class OperationGroupService {
 
         return userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
+    }
+
+
+    private OperationGroup validateGroupAccess(UUID userId, UUID groupId)
+    {
+        OperationGroup group = operationGroupRepository
+                .findByIdAndStatus(groupId, StatusEntity.ACTIVE)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Grupo de operação não encontrado."));
+
+        boolean allowed = userOperationGroupRepository.existsByUserIdAndOperationGroupId(userId, groupId);
+
+        if (!allowed) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Grupo não disponível para o usuário");
+        }
+
+        return group;
+    }
+
+    private void validateGroupName(UUID userId, String name, boolean edition) {
+
+        Optional<OperationGroup> existsName = operationGroupRepository.findAccessibleByName(userId, name);
+
+        if(existsName.isPresent()){
+
+            if(existsName.get().isSystem() || !edition){
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe um grupo com esse nome");
+            }
+        }
     }
 
 }

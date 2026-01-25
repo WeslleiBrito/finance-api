@@ -8,11 +8,11 @@ import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.OperationGroup;
 import com.project.financeapi.entity.OperationType;
 import com.project.financeapi.entity.User;
-import com.project.financeapi.enums.OperationStatus;
-import com.project.financeapi.exception.AccessBlockedException;
+import com.project.financeapi.enumSystem.StatusEntity;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.OperationGroupRepository;
 import com.project.financeapi.repository.OperationTypeRepository;
+import com.project.financeapi.repository.UserOperationTypeRepository;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
@@ -30,6 +30,7 @@ import java.util.UUID;
 public class OperationTypeService {
 
     private final OperationTypeRepository operationTypeRepository;
+    private final UserOperationTypeRepository userOperationTypeRepository;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final OperationGroupRepository operationGroupRepository;
@@ -39,23 +40,18 @@ public class OperationTypeService {
 
         User user = getUser(token);
 
-        OperationGroup operationGroup = operationGroupRepository.findByCreatedByById(user, dto.operationGroupId())
+        OperationGroup operationGroup = operationGroupRepository.findByUserIdAndId(user.getId(), dto.operationGroupId())
             .orElseThrow(
                 () -> new BusinessException(HttpStatus.NOT_FOUND, "O grupo de operação informado não existe."));
 
-        if(operationGroup.getOperationStatus() == OperationStatus.INACTIVATED){
+        if(operationGroup.getStatus() == StatusEntity.INACTIVATED){
             throw new BusinessException(HttpStatus.BAD_REQUEST,
                     "Não é permitido associar um grupo inativado."
             );
         }
 
-        if(operationTypeRepository.existsByCreatedBy_IdAndNameAndOperationGroup_Id(
-                user.getId(), dto.name(), operationGroup.getId())
-        ){
-            throw new BusinessException(HttpStatus.CONFLICT,
-                    "Já existe um tipo de operação com esse nome ligado a este grupo de operação."
-            );
-        }
+
+        validateTypeOperationName(user.getId(), operationGroup.getId(), dto.name(), false);
 
         OperationType operationType = operationTypeRepository.save(new OperationType(
                 dto.name(),
@@ -73,42 +69,34 @@ public class OperationTypeService {
 
         User user = getUser(token);
 
-        OperationType  operationType = operationTypeRepository.findByCreatedByAndId(user, id).orElseThrow(
+        OperationType  operationType = operationTypeRepository.findByUserIdAndId(user.getId(), id).orElseThrow(
                 () -> new BusinessException(HttpStatus.NOT_FOUND, "O TIPO de operação informado não existe.")
         );
-
-        if(operationType.getIsGlobal()){
-            throw new AccessBlockedException("Você não tem permissão para modificar");
-        }
-
 
         Optional.ofNullable(dto.name()).ifPresent(operationType::setName);
         Optional.ofNullable(dto.movementType()).ifPresent(operationType::setMovementType);
 
         if(dto.operationGroupId() != null){
 
-            OperationGroup operationGroup = operationGroupRepository.findByCreatedByById(user, dto.operationGroupId()).orElseThrow(
+            OperationGroup operationGroup = operationGroupRepository.findByUserIdAndId(user.getId(), dto.operationGroupId()).orElseThrow(
                     () -> new BusinessException(HttpStatus.NOT_FOUND, "O GRUPO de operação informado, não existe.")
             );
 
-            if(operationGroup.getOperationStatus() == OperationStatus.INACTIVATED){
+            if(operationGroup.getStatus() == StatusEntity.INACTIVATED){
                 throw new BusinessException(HttpStatus.BAD_REQUEST,
                         "Não é permitido associar um grupo inativado."
                 );
             }
 
-            if(!operationGroup.getName().equals(dto.name())) {
-
-                if (operationTypeRepository.existsByCreatedBy_IdAndNameAndOperationGroup_Id(
-                        user.getId(), dto.name(), operationGroup.getId())
-                ) {
-                    throw new BusinessException(HttpStatus.CONFLICT,
-                            "Já existe um tipo de operação com esse nome ligado a este grupo de operação."
-                    );
-                }
-            }
-
             operationType.setGroup(operationGroup);
+        }
+
+        if(dto.name() != null){
+            validateTypeOperationName(user.getId(), operationType.getGroup().getId(), dto.name(), true);
+        }
+
+        if(dto.movementType() != null){
+            operationType.setMovementType(dto.movementType());
         }
 
         operationTypeRepository.save(operationType);
@@ -123,22 +111,20 @@ public class OperationTypeService {
 
         User user = getUser(token);
 
-        OperationType  operationType = operationTypeRepository.findByCreatedByAndId(user, id).orElseThrow(
+        OperationType  operationType = operationTypeRepository.findByUserIdAndId(user.getId(), id).orElseThrow(
                 () -> new BusinessException(HttpStatus.NOT_FOUND, "O TIPO de operação informado, não existe.")
         );
 
-        operationType.setOperationStatus(operationType.getOperationStatus().toggle());
+        operationType.setStatus(operationType.getStatus().toggle());
 
     }
 
     public List<OperationTypeResponseDTO> findAll(String token){
 
-        JwtPayload userToken = jwtUtil.extractPayload(token);
+        User user = getUser(token);
 
-        User user = userRepository.findById(userToken.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
-
-        return operationTypeRepository.findAllByUserOrDefault(user).stream().map(OperationType::toResponse).toList();
+        return operationTypeRepository.findAllOperationTypeUserId(user.getId())
+                .stream().map(OperationType::toResponse).toList();
 
     }
 
@@ -146,17 +132,17 @@ public class OperationTypeService {
 
         User user = getUser(token);
 
-        OperationType  operationType = operationTypeRepository.findByCreatedByAndId(user, id).orElseThrow(
+        OperationType  operationType = operationTypeRepository.findByUserIdAndId(user.getId(), id).orElseThrow(
                 () -> new BusinessException(HttpStatus.NOT_FOUND, "O TIPO de operação informado não existe.")
         );
 
         return operationType.toResponse();
     }
 
-    public List<OperationTypeResponseDTO> findAllOperationStatus(String token, OperationStatus operationStatus){
+    public List<OperationTypeResponseDTO> findAllOperationStatus(String token, boolean isEnabled){
         User user = getUser(token);
 
-        return operationTypeRepository.findAllByUserOperationStatus(user, operationStatus).stream()
+        return userOperationTypeRepository.findAllByUserIdEnabled(user.getId(), isEnabled).stream()
                 .map(OperationType::toResponse).toList();
     }
 
@@ -165,5 +151,20 @@ public class OperationTypeService {
 
         return userRepository.findById(payload.id())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
+    }
+
+    private void validateTypeOperationName(UUID userId, UUID groupId, String name, boolean edition) {
+
+        Optional<OperationType> existsName = operationTypeRepository.findAccessibleByName(userId, groupId, name);
+
+        if(existsName.isPresent()){
+
+            if(existsName.get().isSystem() || !edition){
+                throw new BusinessException(
+                        HttpStatus.CONFLICT,
+                        "Já existe um tipo de operação com esse nome ligado a este grupo de operação."
+                );
+            }
+        }
     }
 }

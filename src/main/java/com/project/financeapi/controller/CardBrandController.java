@@ -3,8 +3,9 @@ package com.project.financeapi.controller;
 import com.project.financeapi.dto.card.cardBrand.CardBrandCreateRequestDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandUpdateRequestDTO;
-import com.project.financeapi.enums.CardBrandStatus;
+import com.project.financeapi.enumSystem.CardBrandStatus;
 import com.project.financeapi.service.CardBrandService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/card-brand")
 @RequiredArgsConstructor
+@Tag(name = "Bandeiras de Cartão", description = "Gerenciamento das bandeiras de cartões disponíveis")
 public class CardBrandController {
 
     private final CardBrandService cardBrandService;

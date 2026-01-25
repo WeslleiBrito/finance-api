@@ -5,10 +5,7 @@ import com.project.financeapi.dto.card.creditCard.UpdateCreditCardRequestDTO;
 import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.dto.payment.PaymentMethodDetailsDTO;
 import com.project.financeapi.dto.util.JwtPayload;
-import com.project.financeapi.entity.Bank;
-import com.project.financeapi.entity.CardBrand;
-import com.project.financeapi.entity.CreditCard;
-import com.project.financeapi.entity.User;
+import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.*;
@@ -49,7 +46,7 @@ public class PaymentInstrumentService {
 
         if(dto.bank() != null){
 
-            bank = bankRepository.findByCreatedByAndId(user, dto.bank())
+            bank = bankRepository.findById(dto.bank())
                     .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Banco não encontrado."));
 
         }
@@ -139,7 +136,7 @@ public class PaymentInstrumentService {
 
         if(dto.bankId() != null){
 
-            Bank bank = bankRepository.findByCreatedByAndId(user, dto.bankId())
+            Bank bank = bankRepository.findById(dto.bankId())
                     .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Banco não encontrado."));
 
             creditCard.setBank(bank);
@@ -214,5 +211,4 @@ public class PaymentInstrumentService {
 
         return instrument.toDTO();
     }
-
 }

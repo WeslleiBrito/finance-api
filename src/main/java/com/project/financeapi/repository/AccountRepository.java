@@ -3,6 +3,8 @@ package com.project.financeapi.repository;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,4 +17,15 @@ public interface AccountRepository extends JpaRepository<AccountBase, UUID> {
     List<AccountBase> findByAccountHolder(User user);
 
     Optional<AccountBase> findByAccountHolderAndId(User user, UUID id);
+
+    @Query("""
+            SELECT COUNT(a) > 0
+            FROM AccountBase a
+            WHERE LOWER(a.name) = LOWER(:name) AND (a.accountHolder.id IS NULL OR a.accountHolder.id = :userId)
+           """
+    )
+    boolean nameExitsByAccountHolderId(
+            @Param("name") String name,
+            @Param("userId") UUID userId
+    );
 }

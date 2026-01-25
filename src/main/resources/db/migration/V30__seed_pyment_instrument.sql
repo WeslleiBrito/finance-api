@@ -1,0 +1,6 @@
+INSERT INTO operation_group (id, name, instrument_nature, payment_type, is_system, created_by)
+VALUES
+('10000000-0000-0000-0000-000000000001', 'Dinheiro', 'PAYMENT', 'CASH', TRUE, NULL),
+('10000000-0000-0000-0000-000000000002', 'PIX', 'PAYMENT', 'PIX', TRUE, NULL);
+('10000000-0000-0000-0000-000000000003', 'Boleto', 'PURCHASE', 'BOLETO', TRUE, NULL);
+('10000000-0000-0000-0000-000000000004', 'Transferência Bancária', 'PAYMENT', 'BANK_TRANSFER', TRUE, NULL);

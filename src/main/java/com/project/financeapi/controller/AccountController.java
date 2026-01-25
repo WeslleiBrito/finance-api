@@ -5,6 +5,7 @@ import com.project.financeapi.dto.account.create.*;
 import com.project.financeapi.dto.account.response.*;
 import com.project.financeapi.dto.account.update.*;
 import com.project.financeapi.service.AccountService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/account")
 @RequiredArgsConstructor
+@Tag(name = "Contas", description = "Gerenciamento de contas bancárias (Corrente, Poupança, Investimento, etc.)")
 public class AccountController {
 
     private final AccountService accountService;
@@ -124,14 +126,14 @@ public class AccountController {
         return ResponseEntity.status(HttpStatus.OK).body(account);
     }
 
-    @PutMapping("/deactivate/{id}")
-    public ResponseEntity<ResponseDeactivateAccountDTO> deactivateAccount(
+    @PatchMapping("/update-status/{id}")
+    public ResponseEntity<HttpStatus> updateStatus(
             @Valid @PathVariable UUID id,
             @RequestHeader("X-Auth-Token") String token
     ){
-        ResponseDeactivateAccountDTO account = accountService.deactivateAccount(token, id);
+        accountService.updateStatus(token, id);
 
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(account);
+        return ResponseEntity.noContent().build();
     }
 
 

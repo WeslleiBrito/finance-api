@@ -1,10 +1,10 @@
 package com.project.financeapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
+import com.project.financeapi.dto.Installments.InstallmentResponseDTO;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
-import com.project.financeapi.enums.MovementType;
-import com.project.financeapi.enums.PaymentStatus;
+import com.project.financeapi.enumSystem.MovementType;
+import com.project.financeapi.enumSystem.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

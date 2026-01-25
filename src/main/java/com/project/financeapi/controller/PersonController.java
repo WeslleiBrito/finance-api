@@ -1,8 +1,8 @@
 package com.project.financeapi.controller;
 
 import com.project.financeapi.dto.person.*;
-import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.service.PersonService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/person")
+@Tag(name = "Pessoas", description = "Endpoints para cadastro e consulta de pessoas físicas e jurídicas")
 public class PersonController {
 
     private final PersonService personService;

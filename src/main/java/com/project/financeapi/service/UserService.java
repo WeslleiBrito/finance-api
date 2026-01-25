@@ -4,7 +4,7 @@ import com.project.financeapi.dto.user.LoginRequestDTO;
 import com.project.financeapi.dto.user.SignupRequestDTO;
 import com.project.financeapi.dto.user.UpdatePasswordRequestDTO;
 import com.project.financeapi.entity.User;
-import com.project.financeapi.enums.UserStatus;
+import com.project.financeapi.enumSystem.UserStatus;
 import com.project.financeapi.exception.*;
 import com.project.financeapi.repository.UserRepository;
 import com.project.financeapi.dto.user.TokenUser;

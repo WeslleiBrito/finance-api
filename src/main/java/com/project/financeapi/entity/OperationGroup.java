@@ -1,9 +1,8 @@
 package com.project.financeapi.entity;
 
-import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
-import com.project.financeapi.enums.OperationStatus;
+import com.project.financeapi.dto.operationGroup_.OperationGroupResponseDTO;
+import com.project.financeapi.enumSystem.StatusEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,35 +11,46 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "operation_group")
+@Table(
+        name = "operation_group",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_operation_group_system",
+                        columnNames = {"name", "is_system"}
+                ),
+                @UniqueConstraint(
+                        name = "uq_operation_group_user",
+                        columnNames = {"created_by", "name"}
+                )
+        }
+)
 @Getter
 @Setter
 public class OperationGroup {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Setter(AccessLevel.PRIVATE)
+    @Column(nullable = false, updatable = false)
     private UUID id;
 
-    @Column(nullable = false, unique = true, length = 80)
+    @Column(nullable = false, length = 80)
     private String name;
 
-    @Column(nullable = false, name="is_global")
-    private Boolean isGlobal = false;
+    @Column(name = "is_system", nullable = false)
+    private boolean isSystem = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, name = "operation_group_status")
-    private OperationStatus operationStatus = OperationStatus.ACTIVE;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
+    @Column(name ="operation_status")
+    private StatusEntity status = StatusEntity.ACTIVE;
 
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OperationType> operationTypes = new ArrayList<>();
 
-
-    public OperationGroup() {}
+    protected OperationGroup() {}
 
     public OperationGroup(String name, User createdBy) {
         this.name = name;
@@ -50,9 +60,7 @@ public class OperationGroup {
     public OperationGroupResponseDTO toResponse() {
         return new OperationGroupResponseDTO(
                 this.getId(),
-                this.getName(),
-                this.getIsGlobal(),
-                this.getOperationStatus()
+                this.getName()
         );
     }
 }

@@ -1,6 +1,6 @@
 package com.project.financeapi.dto.transaction;
 
-import com.project.financeapi.enums.MovementDirection;
+import com.project.financeapi.enumSystem.MovementDirection;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 

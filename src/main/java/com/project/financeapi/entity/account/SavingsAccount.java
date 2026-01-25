@@ -6,7 +6,8 @@ import com.project.financeapi.dto.account.update.UpdateSavingsAccountRequestDTO;
 import com.project.financeapi.entity.Bank;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
-import com.project.financeapi.enums.AccountType;
+import com.project.financeapi.enumSystem.AccountType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -19,6 +20,8 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class SavingsAccount extends AccountBase {
+
+    @Column(name = "interest_rate")
     private BigDecimal interestRate = BigDecimal.valueOf(0.005);
 
     public SavingsAccount(User accountHolder, String name, BigDecimal initialValue, Bank bank, BigDecimal interestRate) {

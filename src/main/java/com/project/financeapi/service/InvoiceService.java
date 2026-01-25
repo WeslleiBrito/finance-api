@@ -1,6 +1,6 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.Installment.InstallmentDTO;
+import com.project.financeapi.dto.Installments.InstallmentDTO;
 import com.project.financeapi.dto.invoice.CreateInvoiceRequestDTO;
 import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
 import com.project.financeapi.dto.util.JwtPayload;
@@ -55,7 +55,7 @@ public class InvoiceService {
                 ));
 
         OperationType operationType =
-                operationTypeRepository.findByCreatedByAndId(user, dto.operationTypeId())
+                operationTypeRepository.findByUserIdAndId(user.getId(), dto.operationTypeId())
                         .orElseThrow(() -> new BusinessException(
                                 HttpStatus.NOT_FOUND, "Tipo de operação inválido"
                         ));

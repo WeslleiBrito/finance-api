@@ -1,9 +1,8 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.card.creditCard.CreditCardCreateRequestDTO;
-import com.project.financeapi.dto.card.creditCard.CreditCardUpdateRequestDTO;
 import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.service.CreditCardService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +15,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/credit-card")
 @RequiredArgsConstructor
+@Tag(name = "Cartões de Crédito (Consulta)", description = "Endpoints para listagem e detalhamento de cartões de crédito")
 public class CreditCardController {
 
     private final CreditCardService creditCardService;

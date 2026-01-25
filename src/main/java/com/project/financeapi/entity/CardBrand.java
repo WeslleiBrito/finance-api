@@ -1,9 +1,7 @@
 package com.project.financeapi.entity;
 
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
-import com.project.financeapi.dto.card.creditCard.CardResponseDTO;
-import com.project.financeapi.enums.CardBrandStatus;
-import com.project.financeapi.enums.CardStatus;
+import com.project.financeapi.enumSystem.CardBrandStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

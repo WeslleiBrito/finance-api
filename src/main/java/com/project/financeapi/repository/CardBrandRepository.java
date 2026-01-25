@@ -2,7 +2,7 @@ package com.project.financeapi.repository;
 
 import com.project.financeapi.entity.CardBrand;
 import com.project.financeapi.entity.User;
-import com.project.financeapi.enums.CardBrandStatus;
+import com.project.financeapi.enumSystem.CardBrandStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

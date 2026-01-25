@@ -6,7 +6,7 @@ import com.project.financeapi.dto.card.cardBrand.CardBrandUpdateRequestDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.CardBrand;
 import com.project.financeapi.entity.User;
-import com.project.financeapi.enums.CardBrandStatus;
+import com.project.financeapi.enumSystem.CardBrandStatus;
 import com.project.financeapi.exception.AccessBlockedException;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.CardBrandRepository;

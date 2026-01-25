@@ -7,7 +7,7 @@ import com.project.financeapi.dto.phone.PhoneDTO;
 import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.base.PersonBase;
-import com.project.financeapi.enums.PersonType;
+import com.project.financeapi.enumSystem.PersonType;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.LegalEntityRepository;
 import com.project.financeapi.repository.PersonRepository;

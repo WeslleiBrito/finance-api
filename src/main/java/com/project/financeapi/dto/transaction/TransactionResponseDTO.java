@@ -1,7 +1,7 @@
 package com.project.financeapi.dto.transaction;
 
-import com.project.financeapi.enums.MovementDirection;
-import com.project.financeapi.enums.MovementType;
+import com.project.financeapi.enumSystem.MovementDirection;
+import com.project.financeapi.enumSystem.MovementType;
 
 
 import java.math.BigDecimal;

@@ -1,23 +1,25 @@
-CREATE TABLE operation_group (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(80) NOT NULL UNIQUE,
-    created_by UUID,
-    is_global BOOLEAN DEFAULT FALSE,
-    operation_group_status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
-    CONSTRAINT uq_operation_group_user UNIQUE (created_by, name),
-    CONSTRAINT fk_operation_group_user FOREIGN KEY (created_by) REFERENCES users(id)
-);
 
--- Inserções padrão (grupos principais)
-INSERT INTO operation_group (id, name, is_global) VALUES
-    ('00000000-0000-0000-0000-000000000001', 'Moradia', TRUE),
-    ('00000000-0000-0000-0000-000000000002', 'Alimentação', TRUE),
-    ('00000000-0000-0000-0000-000000000003', 'Transporte', TRUE),
-    ('00000000-0000-0000-0000-000000000004', 'Saúde', TRUE),
-    ('00000000-0000-0000-0000-000000000005', 'Educação', TRUE),
-    ('00000000-0000-0000-0000-000000000006', 'Lazer', TRUE),
-    ('00000000-0000-0000-0000-000000000007', 'Investimentos', TRUE),
-    ('00000000-0000-0000-0000-000000000008', 'Impostos e taxas', TRUE),
-    ('00000000-0000-0000-0000-000000000009', 'Renda', TRUE),
-    ('00000000-0000-0000-0000-000000000010', 'Outros', TRUE)
-ON CONFLICT (id) DO NOTHING;
+CREATE TABLE operation_group (
+    id UUID PRIMARY KEY,
+    name VARCHAR(80) NOT NULL,
+    is_system BOOLEAN NOT NULL DEFAULT FALSE,
+    operation_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    created_by UUID
+
+    CONSTRAINT chk_operation_group_origin
+        CHECK (
+            (is_system = TRUE AND created_by IS NULL)
+            OR
+            (is_system = FALSE AND created_by IS NOT NULL)
+        ),
+
+    CONSTRAINT uq_operation_group_system
+        UNIQUE (name, is_system),
+
+    CONSTRAINT uq_operation_group_user
+        UNIQUE (created_by, name),
+
+    CONSTRAINT fk_operation_group_user
+        FOREIGN KEY (created_by)
+        REFERENCES users(id)
+);

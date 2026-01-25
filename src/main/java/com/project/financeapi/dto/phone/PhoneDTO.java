@@ -1,6 +1,6 @@
 package com.project.financeapi.dto.phone;
 
-import com.project.financeapi.enums.PhoneType;
+import com.project.financeapi.enumSystem.PhoneType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;

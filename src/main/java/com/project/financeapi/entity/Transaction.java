@@ -4,8 +4,8 @@ import com.project.financeapi.dto.transaction.TransactionResponseDTO;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
 
 import com.project.financeapi.entity.base.AccountBase;
-import com.project.financeapi.enums.MovementDirection;
-import com.project.financeapi.enums.MovementType;
+import com.project.financeapi.enumSystem.MovementDirection;
+import com.project.financeapi.enumSystem.MovementType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

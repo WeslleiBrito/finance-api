@@ -4,8 +4,8 @@ import com.project.financeapi.dto.OperationType.OperationTypeRequestCreateDTO;
 import com.project.financeapi.dto.OperationType.OperationTypeRequestUpdateDTO;
 import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
 import com.project.financeapi.dto.ResponseDefaultDTO;
-import com.project.financeapi.enums.OperationStatus;
 import com.project.financeapi.service.OperationTypeService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/operation-type")
+@Tag(name = "Tipos de Operação", description = "Gerenciamento das categorias e tipos de operações financeiras")
 public class OperationTypeController {
 
     private final OperationTypeService operationTypeService;
@@ -72,8 +73,8 @@ public class OperationTypeController {
     @GetMapping("/operation-status/{status}")
     public ResponseEntity<List<OperationTypeResponseDTO>> findAllOperationStatus(
             @RequestHeader("X-Auth-Token") String token,
-            @Valid @PathVariable OperationStatus status
+            @Valid @PathVariable boolean isEnabled
     ){
-        return ResponseEntity.status(HttpStatus.OK).body(operationTypeService.findAllOperationStatus(token, status));
+        return ResponseEntity.status(HttpStatus.OK).body(operationTypeService.findAllOperationStatus(token, isEnabled));
     }
 }
