@@ -52,6 +52,9 @@ public abstract class PaymentInstrumentBase implements PaymentInstrument {
     @Column(nullable = false)
     private InstrumentStatus status = InstrumentStatus.ACTIVE;
 
+    @Column(name = "is_system", nullable = false)
+    private boolean isSystem = false;
+
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
