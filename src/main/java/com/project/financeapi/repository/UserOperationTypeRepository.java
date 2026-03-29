@@ -21,7 +21,7 @@ public interface UserOperationTypeRepository
         AND uot.enabled = :enabled
     """)
     List<OperationType> findAllByUserIdEnabled(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("enabled") boolean enabled
     );
 
@@ -32,12 +32,12 @@ public interface UserOperationTypeRepository
           and uot.operationType.group.id = :groupId
     """)
     List<OperationType> findVisibleTypesForUserAndGroup(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("groupId") UUID groupId
     );
 
     Optional<UserOperationType> findByUserIdAndOperationTypeId(
-            UUID userId,
+            String userId,
             UUID operationTypeId
     );
 }

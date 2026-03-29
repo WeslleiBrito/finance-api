@@ -4,7 +4,7 @@ CREATE TABLE operation_group (
     name VARCHAR(80) NOT NULL,
     is_system BOOLEAN NOT NULL DEFAULT FALSE,
     operation_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    created_by UUID
+    created_by VARCHAR(128)
 
     CONSTRAINT chk_operation_group_origin
         CHECK (

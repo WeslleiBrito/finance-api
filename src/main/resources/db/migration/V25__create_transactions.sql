@@ -11,7 +11,7 @@ CREATE TABLE transactions (
     movement_direction VARCHAR(10) NOT NULL,
     movement_type VARCHAR(30) NOT NULL DEFAULT 'PAYMENT',
     reversal_of_transaction_id UUID,
-    created_by UUID NOT NULL,
+    created_by VARCHAR(128) NOT NULL,
     account_id UUID NOT NULL,
     payment_instrument_id UUID,
     instrument_type VARCHAR(30) NOT NULL DEFAULT 'GENERIC', -- CARD | PAYMENT_INSTRUMENT

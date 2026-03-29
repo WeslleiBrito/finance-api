@@ -7,7 +7,7 @@ CREATE TABLE installments (
     movement_type VARCHAR(50) NOT NULL,
     created_at DATE NOT NULL DEFAULT NOW(),
     parcel_number INTEGER NOT NULL,
-    created_by UUID NOT NULL,
+    created_by VARCHAR(128) NOT NULL,
     invoice_id UUID NOT NULL,
     payment_instrument UUID NULL,
     CONSTRAINT fk_installment_created_by

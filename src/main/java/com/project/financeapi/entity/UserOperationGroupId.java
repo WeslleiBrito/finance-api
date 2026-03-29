@@ -16,6 +16,6 @@ import java.util.UUID;
 @NoArgsConstructor
 public class UserOperationGroupId implements Serializable {
 
-    private UUID userId;
+    private String userId;
     private UUID operationGroupId;
 }

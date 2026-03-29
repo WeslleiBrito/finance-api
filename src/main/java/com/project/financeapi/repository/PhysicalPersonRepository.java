@@ -16,7 +16,7 @@ public interface PhysicalPersonRepository extends JpaRepository<PhysicalPerson, 
             """
     )
     Optional<PhysicalPerson> findByCreatedBy_IdAndCPF(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("cpf") String cpf
     );
 
@@ -28,7 +28,7 @@ public interface PhysicalPersonRepository extends JpaRepository<PhysicalPerson, 
           AND p.cpf = :cpf
     """)
         boolean existsByCreatedBy_IdAndCpf(
-                @Param("userId") UUID userId,
+                @Param("userId") String userId,
                 @Param("cpf") String cpf
         );
 

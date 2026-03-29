@@ -3,15 +3,12 @@ package com.project.financeapi.service;
 import com.project.financeapi.dto.card.cardBrand.CardBrandCreateRequestDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandUpdateRequestDTO;
-import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.CardBrand;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.enumSystem.CardBrandStatus;
 import com.project.financeapi.exception.AccessBlockedException;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.CardBrandRepository;
-import com.project.financeapi.repository.UserRepository;
-import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -26,13 +23,12 @@ import java.util.UUID;
 public class CardBrandService {
 
     private final CardBrandRepository cardBrandRepository;
-    private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
+    private final UserContextService userContextService;
 
     @Transactional
     public CardBrandResponseDTO create(String token, @NotNull CardBrandCreateRequestDTO dto) {
 
-        User user = getUser(token);
+        User user = userContextService.getAuthenticatedUser();
 
         if(cardBrandRepository.nameExitsByCreatedBy(user, dto.name())){
             throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma bandeira de cartão com este nome.");
@@ -45,9 +41,9 @@ public class CardBrandService {
     }
 
     @Transactional
-    public CardBrandResponseDTO update(String token, @NotNull CardBrandUpdateRequestDTO dto, UUID id) {
+    public CardBrandResponseDTO update(@NotNull CardBrandUpdateRequestDTO dto, UUID id) {
 
-        User user = getUser(token);
+        User user = userContextService.getAuthenticatedUser();
 
         CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), id)
                 .orElseThrow(
@@ -70,9 +66,9 @@ public class CardBrandService {
     }
 
     @Transactional
-    public void updateStatus(String token, UUID id){
+    public void updateStatus(UUID id){
 
-        User user = getUser(token);
+        User user = userContextService.getAuthenticatedUser();
 
         CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), id).orElseThrow(
                 () -> new BusinessException(HttpStatus.NOT_FOUND, "Banco não encontrado.")
@@ -88,18 +84,18 @@ public class CardBrandService {
 
     }
 
-    public List<CardBrandResponseDTO> findAll(String token) {
+    public List<CardBrandResponseDTO> findAll() {
 
-        User user = getUser(token);
+        User user = userContextService.getAuthenticatedUser();
 
         List<CardBrand> cardBrands = cardBrandRepository.findAllByCreatedBy(user.getId());
 
         return cardBrands.stream().map(CardBrand::toResponse).toList();
     }
 
-    public CardBrandResponseDTO findById(String token, UUID id) {
+    public CardBrandResponseDTO findById(UUID id) {
 
-        User user = getUser(token);
+        User user = userContextService.getAuthenticatedUser();
 
         CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bandeira de cartão não encontrada."));
@@ -107,18 +103,13 @@ public class CardBrandService {
         return cardBrand.toResponse();
     }
 
-    public List<CardBrandResponseDTO> findAllCardBrandStatus(String token, CardBrandStatus cardBrandStatus) {
+    public List<CardBrandResponseDTO> findAllCardBrandStatus(CardBrandStatus cardBrandStatus) {
 
-        User user = getUser(token);
+        User user = userContextService.getAuthenticatedUser();
 
         return cardBrandRepository.findAllByUserCardBrandStatus(user, cardBrandStatus).stream()
                 .map(CardBrand::toResponse).toList();
     }
 
-    private User getUser(String token) {
-        JwtPayload payload = jwtUtil.extractPayload(token);
 
-        return userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
-    }
 }

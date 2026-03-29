@@ -1,6 +1,6 @@
 
 CREATE TABLE user_operation_type (
-    user_id UUID NOT NULL,
+    user_id VARCHAR(128) NOT NULL,
     operation_type_id UUID NOT NULL,
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
 

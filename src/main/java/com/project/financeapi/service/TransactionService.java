@@ -3,7 +3,6 @@ package com.project.financeapi.service;
 import com.project.financeapi.dto.transaction.CreateTransactionDTO;
 import com.project.financeapi.dto.transaction.CreateTransactionRequestDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
-import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.account.CheckingAccount;
 import com.project.financeapi.entity.base.AccountBase;
@@ -14,7 +13,6 @@ import com.project.financeapi.enumSystem.MovementType;
 import com.project.financeapi.enumSystem.PaymentType;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.*;
-import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,25 +26,18 @@ import java.util.*;
 @RequiredArgsConstructor
 public class TransactionService {
 
-    private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
     private final AccountRepository accountRepository;
     private final InstallmentRepository installmentRepository;
     private final PaymentInstrumentRepository paymentInstrumentRepository;
     private final TransactionRepository transactionRepository;
+    private final UserContextService userContextService;
 
     @Transactional
     public List<TransactionResponseDTO> createCommonTransactions(
-            String token,
             CreateTransactionRequestDTO request
     ) {
 
-        // 🔐 Usuário
-        JwtPayload payload = jwtUtil.extractPayload(token);
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() ->
-                        new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado.")
-                );
+        User user = userContextService.getAuthenticatedUser();
 
         // 📊 Acumuladores
         Map<UUID, BigDecimal> installmentTotals = new HashMap<>();

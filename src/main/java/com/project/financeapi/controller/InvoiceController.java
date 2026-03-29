@@ -25,27 +25,26 @@ public class InvoiceController {
 
     @PostMapping("/create")
     public ResponseEntity<InvoiceResponseDTO> create(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CreateInvoiceRequestDTO dto) {
-        InvoiceResponseDTO invoice = invoiceService.create(token, dto);
+        InvoiceResponseDTO invoice = invoiceService.create(dto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(invoice);
     }
 
     @GetMapping()
     public ResponseEntity<List<InvoiceResponseDTO>> findAll(
-            @RequestHeader("X-Auth-Token") String token) {
-        List<InvoiceResponseDTO> invoice = invoiceService.findAll(token);
+    ) {
+        List<InvoiceResponseDTO> invoice = invoiceService.findAll();
 
         return ResponseEntity.status(HttpStatus.OK).body(invoice);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<InvoiceResponseDTO> findById(
-            @RequestHeader("X-Auth-Token") String token,
-            @Valid @PathVariable UUID id) {
+            @Valid @PathVariable UUID id
+    ) {
 
-        InvoiceResponseDTO invoice = invoiceService.findById(token, id);
+        InvoiceResponseDTO invoice = invoiceService.findById(id);
 
         return ResponseEntity.status(HttpStatus.OK).body(invoice);
     }

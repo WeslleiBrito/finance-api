@@ -1,6 +1,6 @@
 
 CREATE TABLE user_operation_group (
-    user_id UUID NOT NULL,
+    user_id VARCHAR(128) NOT NULL,
     operation_group_id UUID NOT NULL,
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
 

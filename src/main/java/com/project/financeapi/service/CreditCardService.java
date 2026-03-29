@@ -1,12 +1,10 @@
 package com.project.financeapi.service;
 
 import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
-import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.CreditCard;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.*;
-import com.project.financeapi.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,18 +22,15 @@ public class CreditCardService {
 
 
     private final CreditCardRepository creditCardRepository;
-    private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
+    private final UserContextService userContextService;
     private static final Logger logger = LoggerFactory.getLogger(CreditCardService.class);
 
 
     public List<CreditCardDetailsDTO> getAll(String token){
 
         try {
-            JwtPayload payload = jwtUtil.extractPayload(token);
 
-            User user = userRepository.findById(payload.id())
-                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+            User user = userContextService.getAuthenticatedUser();
 
             List<CreditCard> creditCards = creditCardRepository.findAllByCreatedBy_Id(user.getId());
 
@@ -51,10 +46,7 @@ public class CreditCardService {
 
     public CreditCardDetailsDTO getById(String token, UUID id) {
 
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+        User user = userContextService.getAuthenticatedUser();
 
         CreditCard creditCard = creditCardRepository.findByCreatedByAndId(user.getId(), id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Cartão não encontrado."));

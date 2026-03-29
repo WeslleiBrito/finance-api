@@ -36,51 +36,46 @@ public class CardBrandController {
 
     @PutMapping("/{id}")
     public ResponseEntity<CardBrandResponseDTO> update(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CardBrandUpdateRequestDTO dto,
             @Valid @PathVariable UUID id
     ) {
 
-        CardBrandResponseDTO cardBrand = cardBrandService.update(token, dto, id);
+        CardBrandResponseDTO cardBrand = cardBrandService.update(dto, id);
 
         return ResponseEntity.status(HttpStatus.OK).body(cardBrand);
     }
 
     @PatchMapping("/update-status/{id}")
     public ResponseEntity<HttpStatus> updateStatus(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable UUID id
     ){
-        cardBrandService.updateStatus(token, id);
+        cardBrandService.updateStatus(id);
 
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping
     public ResponseEntity<List<CardBrandResponseDTO>> getAll(
-            @RequestHeader("X-Auth-Token") String token
     ) {
 
-        List<CardBrandResponseDTO> cardBrands = cardBrandService.findAll(token);
+        List<CardBrandResponseDTO> cardBrands = cardBrandService.findAll();
 
         return ResponseEntity.status(HttpStatus.OK).body(cardBrands);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CardBrandResponseDTO> findById(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable UUID id
     ) {
-        CardBrandResponseDTO cardBrand = cardBrandService.findById(token, id);
+        CardBrandResponseDTO cardBrand = cardBrandService.findById(id);
 
         return ResponseEntity.status(HttpStatus.OK).body(cardBrand);
     }
 
     @GetMapping("/card-brand-status/{status}")
     public ResponseEntity<List<CardBrandResponseDTO>> findAllStatus(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable CardBrandStatus status
     ){
-      return ResponseEntity.status(HttpStatus.OK).body(cardBrandService.findAllCardBrandStatus(token, status));
+      return ResponseEntity.status(HttpStatus.OK).body(cardBrandService.findAllCardBrandStatus(status));
     }
 }

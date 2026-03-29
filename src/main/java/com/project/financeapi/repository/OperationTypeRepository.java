@@ -21,7 +21,7 @@ public interface OperationTypeRepository
                   AND t.group.id = :groupId
             """)
     Optional<OperationType> findAccessibleByName(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("groupId") UUID groupId,
             @Param("name") String name
     );
@@ -32,7 +32,7 @@ public interface OperationTypeRepository
                 WHERE t.id = :id AND (t.createdBy.id = :userId or t.isSystem is true)
             """)
     Optional<OperationType> findByUserIdAndId(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("id") UUID id
     );
 
@@ -42,7 +42,7 @@ public interface OperationTypeRepository
                 WHERE t.isSystem = true OR t.createdBy.id = :userId
             """)
     List<OperationType> findAllOperationTypeUserId(
-            @Param("userId") UUID userId
+            @Param("userId") String userId
     );
 }
 

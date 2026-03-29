@@ -4,7 +4,6 @@ import com.project.financeapi.dto.address.AddressDTO;
 import com.project.financeapi.dto.email.EmailDTO;
 import com.project.financeapi.dto.person.*;
 import com.project.financeapi.dto.phone.PhoneDTO;
-import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enumSystem.PersonType;
@@ -12,8 +11,6 @@ import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.LegalEntityRepository;
 import com.project.financeapi.repository.PersonRepository;
 import com.project.financeapi.repository.PhysicalPersonRepository;
-import com.project.financeapi.repository.UserRepository;
-import com.project.financeapi.util.JwtUtil;
 import com.project.financeapi.validation.ValidateCNPJ;
 import com.project.financeapi.validation.ValidateCPF;
 import jakarta.transaction.Transactional;
@@ -30,16 +27,13 @@ public class PersonService {
     private final PersonRepository personRepository;
     private final PhysicalPersonRepository physicalPersonRepository;
     private final LegalEntityRepository legalEntityRepository;
-    private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
+    private final UserContextService userContextService;
 
 
     @Transactional
-    public PersonResponseDTO createPhysicalPerson(String token, @org.jetbrains.annotations.NotNull PersonCreatePhysicalRequestDTO dto){
-        JwtPayload payload = jwtUtil.extractPayload(token);
+    public PersonResponseDTO createPhysicalPerson(@org.jetbrains.annotations.NotNull PersonCreatePhysicalRequestDTO dto){
 
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+        User user = userContextService.getAuthenticatedUser();
 
         if(!ValidateCPF.isValidCPF(dto.CPF())){
             throw new BusinessException(HttpStatus.BAD_REQUEST, "CPF inválido.");
@@ -63,11 +57,9 @@ public class PersonService {
     }
 
     @Transactional
-    public PersonResponseDTO createLegalPerson(String token, @org.jetbrains.annotations.NotNull PersonCreateLegalRequestDTO dto){
-        JwtPayload payload = jwtUtil.extractPayload(token);
+    public PersonResponseDTO createLegalPerson(@org.jetbrains.annotations.NotNull PersonCreateLegalRequestDTO dto){
 
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+        User user = userContextService.getAuthenticatedUser();
 
         if(!ValidateCNPJ.isValidCNPJ(dto.CNPJ())){
             throw new BusinessException(HttpStatus.BAD_REQUEST, "CNPJ inválido.");
@@ -90,20 +82,13 @@ public class PersonService {
                 .toDTO();
     }
 
+    public List<PersonResponseDTO> findAll(){
 
-    public List<PersonResponseDTO> findAll(String token){
-
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
-
+        User user = userContextService.getAuthenticatedUser();
 
         return personRepository.findByCreatedBy(user)
                 .stream()
                 .map(PersonBase::toDTO).toList();
-
-
     }
 
     private PersonBase setPerson(

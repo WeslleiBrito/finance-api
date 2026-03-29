@@ -18,7 +18,7 @@ public interface UserOperationGroupRepository
     @Query("""
         select uog.operationGroup
         from UserOperationGroup uog
-        where (uog.user.id = :userId or uog.operationGroup.isSystem is true) 
+        where (uog.user.id = :userId or uog.operationGroup.isSystem is true)
         and uog.enabled = :enabled
     """)
     List<OperationGroup> findAllByUserOperationEnabled(
@@ -35,7 +35,7 @@ public interface UserOperationGroupRepository
         order by uog.operationGroup.name
     """)
     List<OperationGroup> findVisibleGroupsForUserStatus(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("statusEntity") StatusEntity statusEntity
     );
 
@@ -46,17 +46,17 @@ public interface UserOperationGroupRepository
         AND (uog.user.id = :userId or uog.operationGroup.isSystem is true)
     """)
     Optional<OperationGroup> findByUserById(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("id") UUID id
     );
 
     Optional<UserOperationGroup> findByUserIdAndOperationGroupId(
-            UUID userId,
+            String userId,
             UUID operationGroupId
     );
 
     boolean existsByUserIdAndOperationGroupId(
-            UUID userId,
+            String userId,
             UUID operationGroupId
     );
 }

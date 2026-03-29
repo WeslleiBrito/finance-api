@@ -29,48 +29,43 @@ public class PaymentInstrumentController {
 
     @PostMapping("/credit-cards")
     public ResponseEntity<CreditCardDetailsDTO> createCreditCard(
-            @RequestHeader("X-Auth-Token") String token,
             @RequestBody @Valid CreditCardCreateRequestDTO dto
     ) {
         CreditCardDetailsDTO response =
-                paymentInstrumentService.createCreditCard(token, dto);
+                paymentInstrumentService.createCreditCard(dto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PatchMapping("/credit-cards/{id}/update")
     public ResponseEntity<CreditCardDetailsDTO> updateCreditCard(
-            @RequestHeader("X-Auth-Token") String token,
             @PathVariable UUID id,
             @RequestBody @Valid UpdateCreditCardRequestDTO dto
     ) {
         CreditCardDetailsDTO response =
-                paymentInstrumentService.updateCreditCard(token, dto, id);
+                paymentInstrumentService.updateCreditCard(dto, id);
 
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<Void> alterStatus(
-            @RequestHeader("X-Auth-Token") String token,
             @PathVariable UUID id
     ) {
-        paymentInstrumentService.alterStatusInstrument(token, id);
+        paymentInstrumentService.alterStatusInstrument(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping
     public ResponseEntity<List<PaymentMethodDetailsDTO>> findAll(
-            @RequestHeader("X-Auth-Token") String token
     ) {
-        return ResponseEntity.ok(paymentInstrumentService.findAll(token));
+        return ResponseEntity.ok(paymentInstrumentService.findAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<PaymentMethodDetailsDTO> findById(
-            @RequestHeader("X-Auth-Token") String token,
             @PathVariable UUID id
     ) {
-        return ResponseEntity.ok(paymentInstrumentService.findById(token, id));
+        return ResponseEntity.ok(paymentInstrumentService.findById(id));
     }
 }

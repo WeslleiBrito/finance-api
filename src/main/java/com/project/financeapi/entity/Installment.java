@@ -161,7 +161,7 @@ public class Installment {
      */
     public PaymentStatus isPaid() {
 
-        if(getRemainingBalance().compareTo(BigDecimal.ZERO) <= 0) {
+        if(getRemainingBalance().subtract(getTotalDiscount()).compareTo(BigDecimal.ZERO) <= 0) {
             return PaymentStatus.FINALIZED;
         } else if (getRemainingBalance().compareTo(this.amount) == 0) {
             return PaymentStatus.OPEN;

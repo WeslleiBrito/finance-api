@@ -3,7 +3,7 @@ CREATE TABLE invoice (
     total_amount NUMERIC(19, 2) NOT NULL,
     issue_date DATE NOT NULL,
     status VARCHAR(50) NOT NULL,
-    created_by UUID NOT NULL,
+    created_by VARCHAR(128) NOT NULL,
     person_id UUID NOT NULL,
     account_id UUID NOT NULL,
     operation_type_id UUID NOT NULL,

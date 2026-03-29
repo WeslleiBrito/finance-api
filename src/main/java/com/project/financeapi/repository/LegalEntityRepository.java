@@ -17,7 +17,7 @@ public interface LegalEntityRepository extends JpaRepository<LegalEntity, UUID> 
             """
     )
     Optional<LegalEntity> findByCreatedBy_IdAndCNPJ(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("cnpj") String cnpj
     );
 
@@ -28,7 +28,7 @@ public interface LegalEntityRepository extends JpaRepository<LegalEntity, UUID> 
           AND e.cnpj = :cnpj
     """)
     boolean existsByCreatedBy_IdAndCnpj(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("cnpj") String cnpj
     );
 }

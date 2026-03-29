@@ -4,12 +4,10 @@ import com.project.financeapi.dto.card.creditCard.CreditCardCreateRequestDTO;
 import com.project.financeapi.dto.card.creditCard.UpdateCreditCardRequestDTO;
 import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.dto.payment.PaymentMethodDetailsDTO;
-import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.*;
-import com.project.financeapi.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -25,18 +23,14 @@ import java.util.UUID;
 public class PaymentInstrumentService {
     private final PaymentInstrumentRepository paymentInstrumentRepository;
     private final CreditCardRepository creditCardRepository;
-    private final UserRepository userRepository;
     private final CardBrandRepository cardBrandRepository;
     private final BankRepository bankRepository;
-    private final JwtUtil jwtUtil;
+    private final UserContextService userContextService;
 
 
-    public CreditCardDetailsDTO createCreditCard(String token, @NotNull CreditCardCreateRequestDTO dto) {
+    public CreditCardDetailsDTO createCreditCard(@NotNull CreditCardCreateRequestDTO dto) {
 
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+        User user = userContextService.getAuthenticatedUser();
 
         CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), dto.cardBrand())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bandeira de cartão não encontrada."));
@@ -81,11 +75,9 @@ public class PaymentInstrumentService {
         return creditCard.toDTO();
     }
 
-    public CreditCardDetailsDTO updateCreditCard(String token, UpdateCreditCardRequestDTO dto, UUID id) {
-        JwtPayload payload = jwtUtil.extractPayload(token);
+    public CreditCardDetailsDTO updateCreditCard(UpdateCreditCardRequestDTO dto, UUID id) {
 
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+        User user = userContextService.getAuthenticatedUser();
 
         CreditCard creditCard = creditCardRepository.findByCreatedByAndId(user.getId(), id).orElseThrow(
                 () -> new BusinessException(HttpStatus.NOT_FOUND, "Cartão não encontrado")
@@ -166,11 +158,8 @@ public class PaymentInstrumentService {
         return creditCardRepository.save(creditCard).toDTO();
     }
 
-    public void alterStatusInstrument(String token, UUID id) {
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+    public void alterStatusInstrument(UUID id) {
+        User user = userContextService.getAuthenticatedUser();
 
         PaymentInstrumentBase paymentInstrument = paymentInstrumentRepository.findByIdAndUser(id, user.getId())
                 .orElseThrow(
@@ -186,11 +175,8 @@ public class PaymentInstrumentService {
         paymentInstrumentRepository.save(paymentInstrument);
     }
 
-    public List<PaymentMethodDetailsDTO> findAll(String token) {
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+    public List<PaymentMethodDetailsDTO> findAll() {
+        User user = userContextService.getAuthenticatedUser();
 
         return paymentInstrumentRepository.findByCreatedAll(user.getId())
                 .stream()
@@ -198,11 +184,8 @@ public class PaymentInstrumentService {
                 .toList();
     }
 
-    public PaymentMethodDetailsDTO findById(String token, UUID id) {
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+    public PaymentMethodDetailsDTO findById(UUID id) {
+        User user = userContextService.getAuthenticatedUser();
 
         PaymentInstrumentBase instrument = paymentInstrumentRepository.findByIdAndUser(id, user.getId())
                 .orElseThrow(() ->

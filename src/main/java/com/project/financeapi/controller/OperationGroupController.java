@@ -31,48 +31,44 @@ public class OperationGroupController {
             @Valid @RequestBody OperationGroupCreateRequestDTO dto
         )
     {
-        OperationGroupResponseDTO operationGroup = operationGroupService.create(token, dto);
+        OperationGroupResponseDTO operationGroup = operationGroupService.create(dto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(operationGroup);
     }
 
     @GetMapping
     public ResponseEntity<List<OperationGroupResponseDTO>> findAll(
-            @RequestHeader("X-Auth-Token") String token
     ){
-        List<OperationGroupResponseDTO> operationGroups = operationGroupService.findAll(token);
+        List<OperationGroupResponseDTO> operationGroups = operationGroupService.findAll();
 
         return ResponseEntity.status(HttpStatus.OK).body(operationGroups);
     }
 
     @GetMapping("/operation-staus/{status}")
     public ResponseEntity<List<OperationGroupResponseDTO>> findActive(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable StatusEntity status
             ){
-        List<OperationGroupResponseDTO> operationGroups = operationGroupService.findAllOperationStatus(token, status);
+        List<OperationGroupResponseDTO> operationGroups = operationGroupService.findAllOperationStatus(status);
 
         return ResponseEntity.status(HttpStatus.OK).body(operationGroups);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<OperationGroupResponseDTO> findById(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable UUID id
     ) {
-        OperationGroupResponseDTO operationGroup = operationGroupService.findById(token, id);
+        OperationGroupResponseDTO operationGroup = operationGroupService.findById(id);
 
         return ResponseEntity.status(HttpStatus.OK).body(operationGroup);
     }
 
     @PutMapping("/update/{id}")
     public ResponseEntity<OperationGroupResponseDTO> update(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdateRequestOperationGroup dto,
             @Valid @PathVariable UUID id
     ){
 
-        OperationGroupResponseDTO response = operationGroupService.update(token, id, dto);
+        OperationGroupResponseDTO response = operationGroupService.update(id, dto);
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
 
@@ -80,11 +76,10 @@ public class OperationGroupController {
 
     @PatchMapping("/update-status/{id}")
     public ResponseEntity<HttpStatus> updateStatusOperationGroup(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable UUID id
     ){
 
-        operationGroupService.updateStatusOperationGroup(token, id);
+        operationGroupService.updateStatusOperationGroup(id);
 
         return ResponseEntity.noContent().build();
 

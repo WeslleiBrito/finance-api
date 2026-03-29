@@ -7,7 +7,7 @@ CREATE TABLE addresses (
     state VARCHAR(20) NOT NULL,
     zip_code VARCHAR(10) NOT NULL,
     complement VARCHAR(50),
-    created_by UUID NOT NULL,
+    created_by VARCHAR(128) NOT NULL,
     person_id UUID NOT NULL,
     CONSTRAINT fk_address_created_by
         FOREIGN KEY (created_by)

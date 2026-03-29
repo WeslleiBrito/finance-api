@@ -23,31 +23,28 @@ public class PersonController {
 
     @PostMapping("/create/physical")
     public ResponseEntity<PersonResponseDTO> createPhysical(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody PersonCreatePhysicalRequestDTO dto
     )
     {
-        PersonResponseDTO person = personService.createPhysicalPerson(token, dto);
+        PersonResponseDTO person = personService.createPhysicalPerson(dto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(person);
     }
 
     @PostMapping("/create/legal")
     public ResponseEntity<PersonResponseDTO> createLegal(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody PersonCreateLegalRequestDTO dto
     )
     {
-        PersonResponseDTO person = personService.createLegalPerson(token, dto);
+        PersonResponseDTO person = personService.createLegalPerson(dto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(person);
     }
 
     @GetMapping
     public ResponseEntity<List<PersonResponseDTO>> findAll(
-            @RequestHeader("X-Auth-Token") String token
     ){
-        List<PersonResponseDTO> persons = personService.findAll(token);
+        List<PersonResponseDTO> persons = personService.findAll();
 
         return ResponseEntity.status(HttpStatus.OK).body(persons);
     }

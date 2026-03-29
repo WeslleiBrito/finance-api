@@ -3,14 +3,12 @@ package com.project.financeapi.service;
 import com.project.financeapi.dto.Installments.InstallmentDTO;
 import com.project.financeapi.dto.invoice.CreateInvoiceRequestDTO;
 import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
-import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.*;
-import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,27 +22,21 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InvoiceService {
 
-    private final UserRepository userRepository;
     private final PersonRepository personRepository;
     private final InvoiceRepository invoiceRepository;
     private final AccountRepository accountRepository;
     private final InstallmentRepository installmentRepository;
     private final OperationTypeRepository operationTypeRepository;
     private final PaymentInstrumentRepository paymentInstrumentRepository;
-    private final JwtUtil jwtUtil;
+    private final UserContextService userContextService;
 
 
     @Transactional
-    public InvoiceResponseDTO create(String token, CreateInvoiceRequestDTO dto) {
+    public InvoiceResponseDTO create(CreateInvoiceRequestDTO dto) {
 
-        JwtPayload payload = jwtUtil.extractPayload(token);
+        User user = userContextService.getAuthenticatedUser();
 
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(
-                        HttpStatus.NOT_FOUND, "Usuário não encontrado"
-                ));
-
-        PersonBase person = personRepository.findById(dto.personId())
+        PersonBase person = personRepository.findByIdAndCreatedBy(dto.personId(), user)
                 .orElseThrow(() -> new BusinessException(
                         HttpStatus.NOT_FOUND, "Pessoa não encontrada"
                 ));
@@ -131,25 +123,18 @@ public class InvoiceService {
         return invoice.toResponse();
     }
 
-    public List<InvoiceResponseDTO> findAll(String token) {
+    public List<InvoiceResponseDTO> findAll() {
 
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
-
+        User user = userContextService.getAuthenticatedUser();
 
         List<Invoice> invoices = invoiceRepository.findByCreatedBy(user);
 
         return invoices.stream().map(Invoice::toResponse).toList();
     }
 
-    public InvoiceResponseDTO findById(String token, UUID id) {
+    public InvoiceResponseDTO findById(UUID id) {
 
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
+        User user = userContextService.getAuthenticatedUser();
 
         Invoice invoice = invoiceRepository.findByIdAndCreatedBy(id, user).orElseThrow(() -> new RuntimeException(
                 "O documento informado não exite."

@@ -23,7 +23,7 @@ public interface OperationGroupRepository
                   AND (g.isSystem is true OR g.createdBy.id = :userId)
             """)
     Optional<OperationGroup> findAccessibleByName(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("name") String name
     );
 
@@ -33,7 +33,7 @@ public interface OperationGroupRepository
                 WHERE g.id = :id AND (g.createdBy.id = :userId or g.isSystem is true)
             """)
     Optional<OperationGroup> findByUserIdAndId(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("id") UUID id
     );
 
@@ -43,6 +43,6 @@ public interface OperationGroupRepository
                 WHERE g.isSystem = true OR g.createdBy.id = :userId
             """)
     List<OperationGroup> findAllOperationGroupUserId(
-            @Param("userId") UUID userId
+            @Param("userId") String userId
     );
 }

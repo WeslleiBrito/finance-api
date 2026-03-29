@@ -16,6 +16,6 @@ import java.util.UUID;
 @EqualsAndHashCode
 public class UserOperationTypeId implements Serializable {
 
-    private UUID userId;
+    private String userId;
     private UUID operationTypeId;
 }

@@ -8,7 +8,7 @@ CREATE TABLE account_base (
     initial_value NUMERIC(19, 2) NOT NULL,
     creation_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    user_id UUID NOT NULL,
+    user_id VARCHAR(128) NOT NULL,
 
     -- Banco global
     bank_id UUID,

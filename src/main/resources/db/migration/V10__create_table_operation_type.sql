@@ -6,7 +6,7 @@ CREATE TABLE operation_type (
     operation_group_id UUID NOT NULL,
     is_system BOOLEAN NOT NULL DEFAULT FALSE,
     operation_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    created_by UUID
+    created_by VARCHAR(128)
 
     CONSTRAINT chk_operation_type_origin
         CHECK (

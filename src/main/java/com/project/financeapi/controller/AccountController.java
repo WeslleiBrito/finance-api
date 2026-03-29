@@ -25,113 +25,102 @@ public class AccountController {
 
     @PostMapping("/create/checking")
     public ResponseEntity<CreateCheckingAccountResponseDTO> createChecking(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CreateCheckingAccountRequestDTO dto
     ){
-        CreateCheckingAccountResponseDTO account = accountService.create(token, dto);
+        CreateCheckingAccountResponseDTO account = accountService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(account);
     }
 
     @PostMapping("/create/investment")
     public ResponseEntity<CreateInvestmentAccountResponseDTO> createInvestment(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CreateInvestmentAccountRequestDTO dto
     ){
-        CreateInvestmentAccountResponseDTO account = accountService.create(token, dto);
+        CreateInvestmentAccountResponseDTO account = accountService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(account);
     }
 
     @PostMapping("/create/payment")
     public ResponseEntity<CreatePaymentAccountResponseDTO> createPayment(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CreatePaymentAccountRequestDTO dto
     ){
-        CreatePaymentAccountResponseDTO account = accountService.create(token, dto);
+        CreatePaymentAccountResponseDTO account = accountService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(account);
     }
 
     @PostMapping("/create/savings")
     public ResponseEntity<CreateSavingsAccountResponseDTO> createSavings(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CreateSavingsAccountRequestDTO dto
     ){
-        CreateSavingsAccountResponseDTO account = accountService.create(token, dto);
+        CreateSavingsAccountResponseDTO account = accountService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(account);
     }
 
     @PostMapping("/create/wallet")
     public ResponseEntity<CreateWalletAccountResponseDTO> createWallet(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CreateWalletAccountRequestDTO dto
     ){
-        CreateWalletAccountResponseDTO account = accountService.create(token, dto);
+        CreateWalletAccountResponseDTO account = accountService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(account);
     }
 
     @GetMapping
     public  ResponseEntity<List<AccountResponseDTO>> findAll(
-            @RequestHeader("X-Auth-Token") String token
     ){
-        List<AccountResponseDTO> accounts = accountService.findAll(token);
+        List<AccountResponseDTO> accounts = accountService.findAll();
         return ResponseEntity.status(HttpStatus.OK).body(accounts);
     }
 
     @PutMapping("/update/checking/{id}")
     public ResponseEntity<AccountResponseDTO> update(
             @Valid @PathVariable UUID id,
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdateCheckingAccountRequestDTO dto
     ) {
-        AccountResponseDTO account = accountService.update(token, id, dto);
+        AccountResponseDTO account = accountService.update(id, dto);
         return ResponseEntity.status(HttpStatus.OK).body(account);
     }
 
     @PutMapping("/update/investment/{id}")
     public ResponseEntity<AccountResponseDTO> update(
             @Valid @PathVariable UUID id,
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdateInvestmentAccountRequestDTO dto
     ) {
-        AccountResponseDTO account = accountService.update(token, id, dto);
+        AccountResponseDTO account = accountService.update(id, dto);
         return ResponseEntity.status(HttpStatus.OK).body(account);
     }
 
     @PutMapping("/update/payment/{id}")
     public ResponseEntity<AccountResponseDTO> update(
             @Valid @PathVariable UUID id,
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdatePaymentAccountRequestDTO dto
     ) {
-        AccountResponseDTO account = accountService.update(token, id, dto);
+        AccountResponseDTO account = accountService.update(id, dto);
         return ResponseEntity.status(HttpStatus.OK).body(account);
     }
 
     @PutMapping("/update/savings/{id}")
     public ResponseEntity<AccountResponseDTO> update(
             @Valid @PathVariable UUID id,
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdateSavingsAccountRequestDTO dto
     ) {
-        AccountResponseDTO account = accountService.update(token, id, dto);
+        AccountResponseDTO account = accountService.update(id, dto);
         return ResponseEntity.status(HttpStatus.OK).body(account);
     }
 
     @PutMapping("/update/wallet/{id}")
     public ResponseEntity<AccountResponseDTO> update(
             @Valid @PathVariable UUID id,
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody UpdateWalletAccountRequestDTO dto
     ) {
-        AccountResponseDTO account = accountService.update(token, id, dto);
+        AccountResponseDTO account = accountService.update(id, dto);
         return ResponseEntity.status(HttpStatus.OK).body(account);
     }
 
     @PatchMapping("/update-status/{id}")
     public ResponseEntity<HttpStatus> updateStatus(
-            @Valid @PathVariable UUID id,
-            @RequestHeader("X-Auth-Token") String token
+            @Valid @PathVariable UUID id
+
     ){
-        accountService.updateStatus(token, id);
+        accountService.updateStatus(id);
 
         return ResponseEntity.noContent().build();
     }
@@ -139,10 +128,9 @@ public class AccountController {
 
     @GetMapping("/{id}")
     public ResponseEntity<AccountResponseDTO> getById(
-            @Valid @PathVariable UUID id,
-            @RequestHeader("X-Auth-Token") String token
+            @Valid @PathVariable UUID id
     ){
-        AccountResponseDTO account = accountService.findById(token, id);
+        AccountResponseDTO account = accountService.findById(id);
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(account);
     }

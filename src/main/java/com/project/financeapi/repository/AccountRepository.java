@@ -26,6 +26,6 @@ public interface AccountRepository extends JpaRepository<AccountBase, UUID> {
     )
     boolean nameExitsByAccountHolderId(
             @Param("name") String name,
-            @Param("userId") UUID userId
+            @Param("userId") String userId
     );
 }

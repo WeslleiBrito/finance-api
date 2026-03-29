@@ -3,7 +3,6 @@ package com.project.financeapi.service;
 import com.project.financeapi.dto.operationGroup_.OperationGroupCreateRequestDTO;
 import com.project.financeapi.dto.operationGroup_.OperationGroupResponseDTO;
 import com.project.financeapi.dto.operationGroup_.UpdateRequestOperationGroup;
-import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.OperationGroup;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.UserOperationGroup;
@@ -11,8 +10,6 @@ import com.project.financeapi.enumSystem.StatusEntity;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.OperationGroupRepository;
 import com.project.financeapi.repository.UserOperationGroupRepository;
-import com.project.financeapi.repository.UserRepository;
-import com.project.financeapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -29,16 +26,14 @@ public class OperationGroupService {
 
     private final OperationGroupRepository operationGroupRepository;
     private final UserOperationGroupRepository userOperationGroupRepository;
-    private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
+    private final UserContextService userContextService;
 
 
     @Transactional
     public OperationGroupResponseDTO create(
-            String token,
             @NotNull OperationGroupCreateRequestDTO dto
     ) {
-        User user = getUser(token);
+        User user = userContextService.getAuthenticatedUser();
 
         validateGroupName(user.getId(), dto.name(), false);
         // 1️⃣ Cria o grupo (definição)
@@ -62,9 +57,9 @@ public class OperationGroupService {
 
 
     @Transactional
-    public OperationGroupResponseDTO update(String token, UUID id, @NotNull UpdateRequestOperationGroup dto) {
+    public OperationGroupResponseDTO update(UUID id, @NotNull UpdateRequestOperationGroup dto) {
 
-        User user = getUser(token);
+        User user = userContextService.getAuthenticatedUser();
 
         OperationGroup operationGroup = validateGroupAccess(user.getId(), id);
 
@@ -82,9 +77,9 @@ public class OperationGroupService {
     }
 
     @Transactional
-    public void updateStatusOperationGroup(String token, UUID id) {
+    public void updateStatusOperationGroup(UUID id) {
 
-        User user = getUser(token);
+        User user = userContextService.getAuthenticatedUser();
 
         UserOperationGroup userOperationGroup = userOperationGroupRepository.findByUserIdAndOperationGroupId(user.getId(), id)
                 .orElseThrow(() -> new BusinessException(
@@ -97,24 +92,28 @@ public class OperationGroupService {
 
     }
 
-    public List<OperationGroupResponseDTO> findAll(String token) {
+    public List<OperationGroupResponseDTO> findAll() {
 
-        return operationGroupRepository.findAllOperationGroupUserId(getUser(token).getId())
+        User user = userContextService.getAuthenticatedUser();
+
+        return operationGroupRepository.findAllOperationGroupUserId(user.getId())
                 .stream()
                 .map(OperationGroup::toResponse)
                 .toList();
 
     }
 
-    public List<OperationGroupResponseDTO> findAllOperationStatus(String token, StatusEntity statusEntity) {
+    public List<OperationGroupResponseDTO> findAllOperationStatus(StatusEntity statusEntity) {
 
-        return userOperationGroupRepository.findVisibleGroupsForUserStatus(getUser(token).getId(), statusEntity)
+        User user = userContextService.getAuthenticatedUser();
+
+        return userOperationGroupRepository.findVisibleGroupsForUserStatus(user.getId(), statusEntity)
                 .stream().map(OperationGroup::toResponse).toList();
     }
 
-    public OperationGroupResponseDTO findById(String token, UUID id) {
+    public OperationGroupResponseDTO findById(UUID id) {
 
-        User user = getUser(token);
+        User user = userContextService.getAuthenticatedUser();
 
         OperationGroup operationGroup = userOperationGroupRepository.findByUserById(user.getId(), id).orElseThrow(
                 () -> new BusinessException(
@@ -125,15 +124,8 @@ public class OperationGroupService {
         return operationGroup.toResponse();
     }
 
-    private User getUser(String token) {
-        JwtPayload payload = jwtUtil.extractPayload(token);
 
-        return userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "O usuário informado não existe"));
-    }
-
-
-    private OperationGroup validateGroupAccess(UUID userId, UUID groupId)
+    private OperationGroup validateGroupAccess(String userId, UUID groupId)
     {
         OperationGroup group = operationGroupRepository
                 .findByIdAndStatus(groupId, StatusEntity.ACTIVE)
@@ -148,7 +140,7 @@ public class OperationGroupService {
         return group;
     }
 
-    private void validateGroupName(UUID userId, String name, boolean edition) {
+    private void validateGroupName(String userId, String name, boolean edition) {
 
         Optional<OperationGroup> existsName = operationGroupRepository.findAccessibleByName(userId, name);
 

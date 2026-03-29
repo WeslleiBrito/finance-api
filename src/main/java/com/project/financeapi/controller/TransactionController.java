@@ -24,10 +24,9 @@ public class TransactionController {
 
     @PostMapping("/create")
     public ResponseEntity<List<TransactionResponseDTO>> create(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CreateTransactionRequestDTO transactions
     ) {
-        List<TransactionResponseDTO> responses = transactionService.createCommonTransactions(token, transactions);
+        List<TransactionResponseDTO> responses = transactionService.createCommonTransactions(transactions);
         return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 }

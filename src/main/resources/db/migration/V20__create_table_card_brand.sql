@@ -8,7 +8,7 @@ CREATE TABLE card_brand (
     name VARCHAR(100) NOT NULL UNIQUE,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     is_global BOOLEAN NOT NULL DEFAULT FALSE,
-    created_by UUID,
+    created_by VARCHAR(128),
     created_at DATE NOT NULL DEFAULT CURRENT_DATE,
 
     CONSTRAINT fk_card_flag_user FOREIGN KEY (created_by)
