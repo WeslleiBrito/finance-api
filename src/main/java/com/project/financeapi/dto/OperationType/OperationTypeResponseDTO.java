@@ -11,6 +11,7 @@ public record OperationTypeResponseDTO(
         String name,
         MovementType movementType,
         StatusEntity statusEntity,
+        Boolean isSystem,
         OperationGroupResponseDTO operationGroup
 ) {
 }

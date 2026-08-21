@@ -131,7 +131,8 @@ public class CreditCard extends PaymentInstrumentBase {
                 new BankResponseDTO(
                         this.getBank().getId(),
                         this.getBank().getName(),
-                        this.getBank().getCode()
+                        this.getBank().getCode(),
+                        this.getBank().getStatus()
                 )
         );
     }

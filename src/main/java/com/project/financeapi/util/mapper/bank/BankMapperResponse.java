@@ -10,7 +10,8 @@ public class BankMapperResponse {
         return new BankResponseDTO(
                 bank.getId(),
                 bank.getName(),
-                bank.getCode()
+                bank.getCode(),
+                bank.getStatus()
         );
     }
 

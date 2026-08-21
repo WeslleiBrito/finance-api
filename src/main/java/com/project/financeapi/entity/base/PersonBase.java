@@ -71,4 +71,32 @@ public abstract class PersonBase {
 
     public abstract PersonResponseDTO toDTO();
 
+    // ... seus atributos e construtores existentes ...
+
+    public void updateCommonData(String name) {
+        if (name != null) this.setName(name);
+    }
+
+    public void updateContactsAndAddresses(List<Phone> newPhones, List<Email> newEmails, List<Address> newAddresses) {
+        // Atualiza Telefones de forma segura para o Hibernate
+        this.phones.clear();
+        if (newPhones != null) {
+            newPhones.forEach(p -> { p.setPerson(this); p.setCreatedBy(this.getCreatedBy()); });
+            this.phones.addAll(newPhones);
+        }
+
+        // Atualiza E-mails
+        this.emails.clear();
+        if (newEmails != null) {
+            newEmails.forEach(e -> { e.setPerson(this); e.setCreatedBy(this.getCreatedBy()); });
+            this.emails.addAll(newEmails);
+        }
+
+        // Atualiza Endereços
+        this.addresses.clear();
+        if (newAddresses != null) {
+            newAddresses.forEach(a -> { a.setPerson(this); a.setCreatedBy(this.getCreatedBy()); });
+            this.addresses.addAll(newAddresses);
+        }
+    }
 }

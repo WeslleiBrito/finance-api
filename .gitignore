@@ -33,3 +33,5 @@ build/
 .vscode/
 finance-api-2a3f5-firebase-adminsdk-fbsvc-2b51b95afd.json
 index.html
+
+.fake

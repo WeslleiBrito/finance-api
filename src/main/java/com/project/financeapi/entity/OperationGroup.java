@@ -43,10 +43,6 @@ public class OperationGroup {
     @JoinColumn(name = "created_by")
     private User createdBy;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name ="operation_status")
-    private StatusEntity status = StatusEntity.ACTIVE;
-
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OperationType> operationTypes = new ArrayList<>();
 
@@ -57,10 +53,12 @@ public class OperationGroup {
         this.createdBy = createdBy;
     }
 
-    public OperationGroupResponseDTO toResponse() {
+    public OperationGroupResponseDTO toResponse(StatusEntity status) {
         return new OperationGroupResponseDTO(
                 this.getId(),
-                this.getName()
+                this.getName(),
+                this.isSystem,
+                status
         );
     }
 }

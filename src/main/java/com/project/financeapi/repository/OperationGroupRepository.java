@@ -13,8 +13,6 @@ import java.util.UUID;
 public interface OperationGroupRepository
         extends JpaRepository<OperationGroup, UUID> {
 
-    // ===== Acesso seguro =====
-    Optional<OperationGroup> findByIdAndStatus(UUID id, StatusEntity status);
 
     @Query("""
                 SELECT g

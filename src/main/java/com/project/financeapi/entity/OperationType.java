@@ -48,10 +48,6 @@ public class OperationType {
     @JoinColumn(name = "operation_group_id")
     private OperationGroup group;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "operation_status")
-    private StatusEntity status = StatusEntity.ACTIVE;
-
     @Column(name = "is_system")
     private boolean isSystem = false;
 
@@ -65,13 +61,14 @@ public class OperationType {
     public OperationType() {
     }
 
-    public OperationTypeResponseDTO toResponse() {
+    public OperationTypeResponseDTO toResponse(StatusEntity typeStatus, StatusEntity groupStatus) {
         return new OperationTypeResponseDTO(
                 this.getId(),
                 this.getName(),
                 this.getMovementType(),
-                this.getStatus(),
-                this.getGroup().toResponse()
+                typeStatus,
+                this.isSystem(),
+                this.getGroup().toResponse(groupStatus) // Repassa o status calculado para o Grupo
         );
     }
 }

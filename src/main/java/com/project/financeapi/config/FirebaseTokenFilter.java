@@ -30,16 +30,27 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
     private static final String USER_SYNC_ENDPOINT = "/api/users/sync";
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return request.getMethod().equalsIgnoreCase("OPTIONS") ||
+                path.startsWith("/swagger-ui") ||
+                path.startsWith("/v3/api-docs") ||
+                path.startsWith("/swagger-resources");
+    }
+
+    @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             @NotNull HttpServletResponse response,
             @NotNull FilterChain filterChain
     ) throws ServletException, IOException {
 
+        System.out.println("\n>>> 1. REQUISIÇÃO RECEBIDA NA ROTA: " + request.getRequestURI());
+
         String header = request.getHeader(AUTH_HEADER);
 
-        // 🔹 Se não tem token → deixa o Spring decidir (vai bloquear depois)
         if (header == null || !header.startsWith(BEARER_PREFIX)) {
+            System.out.println(">>> 2. BLOQUEIO: Cabeçalho 'Authorization' ausente ou não começa com 'Bearer '.");
             filterChain.doFilter(request, response);
             return;
         }
@@ -49,41 +60,37 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
         try {
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
             String uid = decodedToken.getUid();
+            System.out.println(">>> 2. SUCESSO: Token válido no Firebase! UID: " + uid);
 
             Optional<User> userOptional = userRepository.findById(uid);
 
-            // 🔴 Usuário não existe no banco
             if (userOptional.isEmpty()) {
-
-                // Permite apenas endpoint de cadastro
                 if (request.getRequestURI().equals(USER_SYNC_ENDPOINT)) {
+                    System.out.println(">>> 3. INFO: Usuário novo detectado. Liberando rota de sincronização...");
                     filterChain.doFilter(request, response);
                     return;
                 }
 
+                System.out.println(">>> 3. BLOQUEIO: Usuário não existe no banco de dados local (PostgreSQL).");
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Usuário não cadastrado");
                 return;
             }
 
             User user = userOptional.get();
 
-            // 🔴 Usuário inativo
             if (!user.getUserStatus().name().equals("ACTIVATED")) {
+                System.out.println(">>> 3. BLOQUEIO: Usuário está inativo no banco de dados local.");
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Usuário inativo");
                 return;
             }
 
-            // ✅ Usuário válido → autentica
+            System.out.println(">>> 3. SUCESSO: Usuário encontrado e ativado! Liberando acesso ao Controller...");
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            user,
-                            null,
-                            Collections.emptyList()
-                    );
-
+                    new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (Exception e) {
+            System.out.println(">>> 2. ERRO FATAL DO FIREBASE: Falha ao validar o token. Motivo: " + e.getMessage());
             SecurityContextHolder.clearContext();
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido ou expirado");
             return;
@@ -91,4 +98,5 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
 }

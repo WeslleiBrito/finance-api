@@ -1,10 +1,13 @@
 package com.project.financeapi.dto.bank;
 
+import com.project.financeapi.enumSystem.StatusEntity;
+
 import java.util.UUID;
 
 public record BankResponseDTO(
         UUID id,
         String name,
-        String code
+        String code,
+        StatusEntity status
 ) {
 }

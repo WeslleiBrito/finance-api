@@ -19,7 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -81,6 +83,75 @@ public class PersonService {
                 .save(setPerson(user, legalEntity, dto.phoneList(), dto.emailList(), dto.addressesList()))
                 .toDTO();
     }
+
+    @Transactional
+    public PersonResponseDTO updatePhysicalPerson(UUID id, PersonCreatePhysicalRequestDTO dto) {
+        User user = userContextService.getAuthenticatedUser();
+
+        // 1. Busca a pessoa física
+        PhysicalPerson person = physicalPersonRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Pessoa física não encontrada."));
+
+        // Segurança: garante que é o dono
+        if (!person.getCreatedBy().getId().equals(user.getId())) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar este cadastro.");
+        }
+
+        // Validação do novo CPF (se mudou)
+        if (!dto.CPF().equals(person.getCpf())) {
+            if (!ValidateCPF.isValidCPF(dto.CPF())) throw new BusinessException(HttpStatus.BAD_REQUEST, "CPF inválido.");
+            if (physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())) {
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CPF");
+            }
+        }
+
+        // 2. Transforma as listas de DTOs em Entidades (reaproveitando sua lógica atual)
+        List<Phone> mappedPhones = dto.phoneList() != null ? dto.phoneList().stream().map(p -> new Phone(user, person, p.number(), p.type())).toList() : new ArrayList<>();
+        List<Email> mappedEmails = dto.emailList() != null ? dto.emailList().stream().map(e -> new Email(e.email(), user, person)).toList() : new ArrayList<>();
+        List<Address> mappedAddresses = dto.addressesList() != null ? dto.addressesList().stream().map(a -> new Address(user, person, a.street(), a.number(), a.neighborhood(), a.complement(), a.city(), a.state(), a.zipCode())).toList() : new ArrayList<>();
+
+        // 3. A própria entidade faz a atualização
+        person.updateCommonData(dto.name());
+        person.updatePhysicalData(dto.CPF(), dto.nickname());
+        person.updateContactsAndAddresses(mappedPhones, mappedEmails, mappedAddresses);
+
+        return personRepository.save(person).toDTO();
+    }
+
+    @Transactional
+    public PersonResponseDTO updateLegalPerson(UUID id, PersonCreateLegalRequestDTO dto) {
+        User user = userContextService.getAuthenticatedUser();
+
+        // 1. Busca a pessoa jurídica
+        LegalEntity person = legalEntityRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Pessoa jurídica não encontrada."));
+
+        // Segurança: garante que é o dono
+        if (!person.getCreatedBy().getId().equals(user.getId())) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar este cadastro.");
+        }
+
+        // Validação do novo CNPJ (se mudou)
+        if (!dto.CNPJ().equals(person.getCnpj())) {
+            if (!ValidateCNPJ.isValidCNPJ(dto.CNPJ())) throw new BusinessException(HttpStatus.BAD_REQUEST, "CNPJ inválido.");
+            if (physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CNPJ())) {
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CNPJ");
+            }
+        }
+
+        // 2. Transforma as listas de DTOs em Entidades (reaproveitando sua lógica atual)
+        List<Phone> mappedPhones = dto.phoneList() != null ? dto.phoneList().stream().map(p -> new Phone(user, person, p.number(), p.type())).toList() : new ArrayList<>();
+        List<Email> mappedEmails = dto.emailList() != null ? dto.emailList().stream().map(e -> new Email(e.email(), user, person)).toList() : new ArrayList<>();
+        List<Address> mappedAddresses = dto.addressesList() != null ? dto.addressesList().stream().map(a -> new Address(user, person, a.street(), a.number(), a.neighborhood(), a.complement(), a.city(), a.state(), a.zipCode())).toList() : new ArrayList<>();
+
+        // 3. A própria entidade faz a atualização
+        person.updateCommonData(dto.name());
+        person.updateLegalData(dto.CNPJ(), dto.tradeName());
+        person.updateContactsAndAddresses(mappedPhones, mappedEmails, mappedAddresses);
+
+        return personRepository.save(person).toDTO();
+    }
+
 
     public List<PersonResponseDTO> findAll(){
 

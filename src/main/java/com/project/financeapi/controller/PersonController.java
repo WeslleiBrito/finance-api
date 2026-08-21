@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/person")
@@ -27,7 +28,6 @@ public class PersonController {
     )
     {
         PersonResponseDTO person = personService.createPhysicalPerson(dto);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(person);
     }
 
@@ -37,7 +37,6 @@ public class PersonController {
     )
     {
         PersonResponseDTO person = personService.createLegalPerson(dto);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(person);
     }
 
@@ -45,7 +44,30 @@ public class PersonController {
     public ResponseEntity<List<PersonResponseDTO>> findAll(
     ){
         List<PersonResponseDTO> persons = personService.findAll();
-
         return ResponseEntity.status(HttpStatus.OK).body(persons);
+    }
+
+    // ==========================================
+    // NOVOS ENDPOINTS: ATUALIZAÇÃO (PUT)
+    // ==========================================
+
+    @PutMapping("/update/physical/{id}")
+    public ResponseEntity<PersonResponseDTO> updatePhysical(
+            @PathVariable UUID id,
+            @Valid @RequestBody PersonCreatePhysicalRequestDTO dto
+    ) {
+        // Chama o método que criamos no PersonService
+        PersonResponseDTO person = personService.updatePhysicalPerson(id, dto);
+        return ResponseEntity.status(HttpStatus.OK).body(person);
+    }
+
+    @PutMapping("/update/legal/{id}")
+    public ResponseEntity<PersonResponseDTO> updateLegal(
+            @PathVariable UUID id,
+            @Valid @RequestBody PersonCreateLegalRequestDTO dto
+    ) {
+        // Chama o método que criamos no PersonService
+        PersonResponseDTO person = personService.updateLegalPerson(id, dto);
+        return ResponseEntity.status(HttpStatus.OK).body(person);
     }
 }

@@ -31,6 +31,11 @@ public class PhysicalPerson extends PersonBase {
     public PhysicalPerson() {
     }
 
+    public void updatePhysicalData(String cpf, String nickname) {
+        if (cpf != null) this.setCpf(cpf);
+        if (nickname != null) this.setNickname(nickname);
+    }
+
     @Override
     public PhysicalPersonResponseDTO toDTO() {
 

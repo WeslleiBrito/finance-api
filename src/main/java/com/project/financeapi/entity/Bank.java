@@ -49,7 +49,8 @@ public class Bank {
         return new BankResponseDTO(
                 this.getId(),
                 this.getName(),
-                this.getCode()
+                this.getCode(),
+                this.getStatus()
         );
     }
 }

@@ -180,6 +180,56 @@ public class TransactionService {
         ).toList();
     }
 
+    // ==========================================
+    // MÉTODOS NOVOS: BUSCA E ESTORNO
+    // ==========================================
+
+    public List<TransactionResponseDTO> findAllByUser() {
+        User user = userContextService.getAuthenticatedUser();
+
+        return transactionRepository.findAllByUserIdOrderByPaymentDateDesc(user.getId())
+                .stream()
+                .map(Transaction::toResponse)
+                .toList();
+    }
+
+    @Transactional
+    public TransactionResponseDTO reverseTransaction(UUID transactionId) {
+        User user = userContextService.getAuthenticatedUser();
+
+        // 1. Busca a transação original
+        Transaction original = transactionRepository.findByIdAndUserId(transactionId, user.getId())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Transação não encontrada."));
+
+        // (Opcional) Regra de negócio para não estornar duas vezes
+        if (original.getMovementType() == MovementType.REVERSAL) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Esta transação já é um estorno.");
+        }
+
+        // 2. Cria a transação reversa (Estorno)
+        Transaction reversal = new Transaction(
+                original.getAmount(),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                original.getMovementDirection() == MovementDirection.INFLOW ? MovementDirection.OUTFLOW : MovementDirection.INFLOW,
+                MovementType.REVERSAL, // 🌟 É AQUI QUE A MÁGICA ACONTECE!
+                LocalDate.now(),
+                user,
+                original.getAccount(),
+                original.getInstallment(),
+                null,
+                original.getPaymentInstrument(),
+                "Estorno da transação " + original.getId()
+        );
+
+        // 3. Salva a nova transação
+        // Como AccountBase e Installment são calculados dinamicamente,
+        // apenas salvar o estorno já regulariza o saldo da conta e o status da parcela!
+        Transaction savedReversal = transactionRepository.save(reversal);
+
+        return savedReversal.toResponse();
+    }
     private BigDecimal defaultZero(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
     }
@@ -207,5 +257,6 @@ public class TransactionService {
             }
         }
     }
+
 
 }

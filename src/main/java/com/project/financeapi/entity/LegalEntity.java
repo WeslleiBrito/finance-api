@@ -1,5 +1,6 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.dto.person.LegalEntityPersonResponseDTO;
 import com.project.financeapi.dto.person.PhysicalPersonResponseDTO;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enumSystem.PersonType;
@@ -31,10 +32,15 @@ public class LegalEntity extends PersonBase {
     public LegalEntity() {
     }
 
-    @Override
-    public PhysicalPersonResponseDTO toDTO() {
+    public void updateLegalData(String cnpj, String tradeName) {
+        if (cnpj != null) this.setCnpj(cnpj);
+        if (tradeName != null) this.setTradeName(tradeName);
+    }
 
-        return new PhysicalPersonResponseDTO(
+    @Override
+    public LegalEntityPersonResponseDTO toDTO() {
+
+        return new LegalEntityPersonResponseDTO(
                 this.getId(),
                 this.getName(),
                 this.getTradeName(),
