@@ -6,6 +6,7 @@ import com.project.financeapi.dto.Installments.InstallmentDTO;
 import com.project.financeapi.dto.payment.PaymentMethodDetailsDTO;
 import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
+import com.project.financeapi.enumSystem.CardBrandStatus;
 import com.project.financeapi.enumSystem.InstrumentNature;
 import com.project.financeapi.enumSystem.InstrumentStatus;
 import com.project.financeapi.enumSystem.PaymentType;

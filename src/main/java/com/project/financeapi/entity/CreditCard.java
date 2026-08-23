@@ -5,6 +5,7 @@ import com.project.financeapi.dto.bank.*;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
+import com.project.financeapi.enumSystem.CardBrandStatus;
 import com.project.financeapi.enumSystem.InstrumentNature;
 import com.project.financeapi.enumSystem.PaymentType;
 import com.project.financeapi.exception.BusinessException;
@@ -106,7 +107,6 @@ public class CreditCard extends PaymentInstrumentBase {
 
     @Override
     public CreditCardDetailsDTO toDTO(){
-
         return new CreditCardDetailsDTO(
                 this.getId(),
                 this.getPaymentType(),
@@ -121,13 +121,10 @@ public class CreditCard extends PaymentInstrumentBase {
                 this.revolvingInterest,
                 this.fine,
                 this.getStatus(),
-                new CardBrandResponseDTO(
-                        this.getCardBrand().getId(),
-                        this.getCardBrand().getName(),
-                        this.getCardBrand().getStatus(),
-                        this.getCardBrand().isGlobal(),
-                        this.getCardBrand().getCreatedAt()
-                ),
+
+                // ✅ A SOLUÇÃO ESTÁ AQUI: Usamos o toResponse injetando ACTIVE
+                this.getCardBrand().toResponse(com.project.financeapi.enumSystem.CardBrandStatus.ACTIVE),
+
                 new BankResponseDTO(
                         this.getBank().getId(),
                         this.getBank().getName(),
@@ -183,7 +180,8 @@ public class CreditCard extends PaymentInstrumentBase {
                     dto.amount(),
                     dto.parcelNumber(),
                     dueDate,
-                    dto.instrument()
+                    dto.instrument(),
+                    dto.accountId()
             ));
         }
 

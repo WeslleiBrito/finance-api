@@ -21,9 +21,6 @@ public record CreateInvoiceRequestDTO(
         @NotNull(message = "A pessoa beneficiária/fornecedora não foi informada.")
         UUID personId,
 
-        @NotNull(message = "A conta não foi informada.")
-        UUID accountId,
-
         @NotNull(message = "As parcelas devem ser informadas")
         List<@Valid InstallmentDTO> installments
 ) {

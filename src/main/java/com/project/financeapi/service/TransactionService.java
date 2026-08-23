@@ -1,8 +1,6 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.transaction.CreateTransactionDTO;
-import com.project.financeapi.dto.transaction.CreateTransactionRequestDTO;
-import com.project.financeapi.dto.transaction.TransactionResponseDTO;
+import com.project.financeapi.dto.transaction.*;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.account.CheckingAccount;
 import com.project.financeapi.entity.base.AccountBase;
@@ -232,6 +230,92 @@ public class TransactionService {
     }
     private BigDecimal defaultZero(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
+    }
+
+    @Transactional
+    public List<TransactionResponseDTO> createManualAdjustments(CreateManualAdjustmentTransactionRequestDTO request) {
+        User user = userContextService.getAuthenticatedUser();
+
+        // 📊 Acumulador de impacto financeiro por conta para validação de saldo
+        Map<UUID, BigDecimal> accountBalanceImpact = new HashMap<>();
+        List<Transaction> transactions = new ArrayList<>();
+
+        for (CreateManualAdjustmentTransactionDTO dto : request.dto()) {
+
+            // 1. Validar a Conta
+            AccountBase account = accountRepository.findById(dto.accountId())
+                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada."));
+
+            if (!account.getAccountHolder().getId().equals(user.getId())) {
+                throw new BusinessException(HttpStatus.FORBIDDEN, "A conta não pertence ao usuário.");
+            }
+
+            // 2. Validar o Instrumento de Pagamento (se houver)
+            PaymentInstrumentBase instrument = null;
+            if (dto.paymentInstrumentId() != null) {
+                instrument = paymentInstrumentRepository.findByIdAndUser(dto.paymentInstrumentId(), user.getId())
+                        .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Instrumento não encontrado."));
+            }
+
+            validateAccountAndInstrumentCompatibility(account, instrument);
+
+            // 3. Validação de Data
+            if(LocalDate.now().isBefore(dto.paymentDate())){
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "A data do ajuste não pode ser maior que a data atual.");
+            }
+
+            // 4. Calcular o impacto da transação no saldo (- se saída, + se entrada)
+            BigDecimal impact = dto.direction() == MovementDirection.OUTFLOW
+                    ? dto.amount().negate()
+                    : dto.amount();
+
+            accountBalanceImpact.merge(account.getId(), impact, BigDecimal::add);
+
+            // 5. Instanciar a Transação Avulsa (Ajuste)
+            Transaction transaction = new Transaction(
+                    dto.amount(),
+                    BigDecimal.ZERO, // Sem juros
+                    BigDecimal.ZERO, // Sem multas
+                    BigDecimal.ZERO, // Sem descontos
+                    dto.direction(),
+
+                    // 🌟 DICA DE DOMÍNIO: Se você tiver "ADJUSTMENT" no enum MovementType, use-o.
+                    // Caso contrário, deduzimos pela direção:
+                    dto.direction() == MovementDirection.OUTFLOW ? MovementType.PAYMENT : MovementType.RECEIPT,
+
+                    dto.paymentDate(),
+                    user,
+                    account,
+                    null, // 🌟 Aqui está o pulo do gato: Installment é NULL!
+                    null, // ReversalOf é NULL
+                    instrument,
+                    dto.reason() // Salvamos o motivo no campo observations
+            );
+
+            transactions.add(transaction);
+        }
+
+        // 6. Validar limite de saque para contas correntes (Check de Saldo)
+        for (Map.Entry<UUID, BigDecimal> entry : accountBalanceImpact.entrySet()) {
+            if (entry.getValue().signum() < 0) { // Se o saldo final do lote for negativo (saída)
+                AccountBase account = accountRepository.findById(entry.getKey()).orElseThrow();
+                BigDecimal availableBalance = account.getBalance();
+
+                if (account.getType() == AccountType.CHECKING) {
+                    availableBalance = availableBalance.add(((CheckingAccount) account).getOverdraftLimit());
+                }
+
+                // Subtrai (soma o impacto que já está negativo) e verifica se "estourou" o limite
+                if (availableBalance.add(entry.getValue()).compareTo(BigDecimal.ZERO) < 0) {
+                    throw new BusinessException(HttpStatus.BAD_REQUEST, "Saldo insuficiente para realizar o ajuste de saída na conta.");
+                }
+            }
+        }
+
+        // 7. Persistir os ajustes
+        return transactionRepository.saveAll(transactions).stream()
+                .map(Transaction::toResponse)
+                .toList();
     }
 
     private void validateAccountAndInstrumentCompatibility(

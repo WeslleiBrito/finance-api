@@ -2,6 +2,7 @@ package com.project.financeapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.project.financeapi.dto.Installments.InstallmentResponseDTO;
+import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.enumSystem.MovementType;
 import com.project.financeapi.enumSystem.PaymentStatus;
@@ -48,6 +49,11 @@ public class Installment {
     private User createdBy;
 
     @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id")
+    private AccountBase account;
+
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "invoice_id", nullable = false)
     private Invoice invoice;
@@ -72,9 +78,9 @@ public class Installment {
             Integer parcelNumber,
             User createdBy,
             Invoice invoice,
-            PaymentInstrumentBase paymentInstrument
-    )
-    {
+            PaymentInstrumentBase paymentInstrument,
+            AccountBase account
+    ) {
         this.amount = amount;
         this.dueDate = dueDate;
         this.movementType = movementType;
@@ -82,8 +88,8 @@ public class Installment {
         this.createdBy = createdBy;
         this.invoice = invoice;
         this.paymentInstrument = paymentInstrument;
+        this.account = account;
     }
-
 
     /**
      * Retorna o total já pago/recebido nesta parcela.
@@ -174,6 +180,7 @@ public class Installment {
         return new InstallmentResponseDTO(
                 this.getId(),
                 this.getInvoice().getId(),
+                this.getAccount().getId(),
                 this.getParcelNumber(),
                 this.getAmount(),
                 this.getTotalPaid(),

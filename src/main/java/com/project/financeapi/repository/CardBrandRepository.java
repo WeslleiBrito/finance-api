@@ -39,13 +39,4 @@ public interface CardBrandRepository extends JpaRepository<CardBrand, UUID> {
             @Param("name") String name
     );
 
-    @Query(
-            """
-                SELECT c FROM CardBrand c
-                WHERE c.status = :cardBrandStatus AND (c.createdBy IS NULL OR c.createdBy = :user)
-            """
-    )
-    List<CardBrand> findAllByUserCardBrandStatus(
-            @Param("user") User user,
-            @Param("bankStatus") CardBrandStatus cardBrandStatus);
 }

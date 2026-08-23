@@ -37,8 +37,14 @@ public class PersonService {
 
         User user = userContextService.getAuthenticatedUser();
 
-        if(!ValidateCPF.isValidCPF(dto.CPF())){
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "CPF inválido.");
+        if (dto.CPF() != null && !dto.CPF().isBlank()) {
+            if(!ValidateCPF.isValidCPF(dto.CPF())){
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "CPF inválido.");
+            }
+
+            if(physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())){
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CPF");
+            }
         }
 
         if(physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())){
@@ -63,13 +69,16 @@ public class PersonService {
 
         User user = userContextService.getAuthenticatedUser();
 
-        if(!ValidateCNPJ.isValidCNPJ(dto.CNPJ())){
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "CNPJ inválido.");
+        if (dto.CNPJ() != null && !dto.CNPJ().isBlank()) {
+            if (!ValidateCNPJ.isValidCNPJ(dto.CNPJ())) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "CNPJ inválido.");
+            }
+
+            if(legalEntityRepository.existsByCreatedBy_IdAndCnpj(user.getId(), dto.CNPJ())){
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CNPJ");
+            }
         }
 
-        if(legalEntityRepository.existsByCreatedBy_IdAndCnpj(user.getId(), dto.CNPJ())){
-            throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CNPJ");
-        }
 
         LegalEntity legalEntity = new LegalEntity();
 
@@ -97,8 +106,10 @@ public class PersonService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar este cadastro.");
         }
 
+        boolean isNewCpf = dto.CPF() != null && !dto.CPF().isBlank() && !dto.CPF().equals(person.getCpf());
+
         // Validação do novo CPF (se mudou)
-        if (!dto.CPF().equals(person.getCpf())) {
+        if (isNewCpf) {
             if (!ValidateCPF.isValidCPF(dto.CPF())) throw new BusinessException(HttpStatus.BAD_REQUEST, "CPF inválido.");
             if (physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())) {
                 throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CPF");
@@ -131,8 +142,11 @@ public class PersonService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar este cadastro.");
         }
 
+        boolean isNewCNPJ = dto.CNPJ() != null && !dto.CNPJ().isBlank() && !dto.CNPJ().equals(person.getCnpj());
+
         // Validação do novo CNPJ (se mudou)
-        if (!dto.CNPJ().equals(person.getCnpj())) {
+
+        if (isNewCNPJ) {
             if (!ValidateCNPJ.isValidCNPJ(dto.CNPJ())) throw new BusinessException(HttpStatus.BAD_REQUEST, "CNPJ inválido.");
             if (physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CNPJ())) {
                 throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CNPJ");
@@ -151,7 +165,6 @@ public class PersonService {
 
         return personRepository.save(person).toDTO();
     }
-
 
     public List<PersonResponseDTO> findAll(){
 

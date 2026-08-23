@@ -1,6 +1,5 @@
 package com.project.financeapi.dto.Installments;
 
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -18,8 +17,11 @@ public record InstallmentDTO (
         @Positive(message = "O número da parcela precisa ser maior que zero.")
         Integer parcelNumber,
 
-        @Future(message = "A data informada é inválida.")
+        @NotNull(message = "A data deve ser informada.")
         LocalDate dueDate,
+
+        @NotNull(message = "A conta provisão deve ser informada na parcela.")
+        UUID accountId,
 
         @NotNull(message = "O instrumento de pagamento deve ser informado.")
         UUID instrument

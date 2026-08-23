@@ -1,5 +1,6 @@
 package com.project.financeapi.controller;
 
+import com.project.financeapi.dto.transaction.CreateManualAdjustmentTransactionRequestDTO;
 import com.project.financeapi.dto.transaction.CreateTransactionRequestDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
 import com.project.financeapi.service.TransactionService;
@@ -49,5 +50,14 @@ public class TransactionController {
     ) {
         TransactionResponseDTO response = transactionService.reverseTransaction(id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PostMapping("/adjustments")
+    @Operation(summary = "Cria lançamentos/ajustes manuais", description = "Cria transações avulsas que afetam diretamente o saldo da conta, sem vinculação com faturas.")
+    public ResponseEntity<List<TransactionResponseDTO>> createAdjustments(
+            @Valid @RequestBody CreateManualAdjustmentTransactionRequestDTO request
+    ) {
+        List<TransactionResponseDTO> responses = transactionService.createManualAdjustments(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 }

@@ -13,7 +13,6 @@ public record PersonCreatePhysicalRequestDTO(
         @NotNull(message = "O nome precisa ser informado.")
         @Size(min = 3, message = "O nome precisa ter pelo menos 3 caracteres.")
         String name,
-        @NotNull(message = "CPF não informado")
         String CPF,
         String nickname,
         List<@Valid AddressDTO> addressesList,

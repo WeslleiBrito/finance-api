@@ -29,7 +29,8 @@ public class InvoiceService {
     private final OperationTypeRepository operationTypeRepository;
     private final PaymentInstrumentRepository paymentInstrumentRepository;
     private final UserContextService userContextService;
-
+    private final DeactivatedOperationTypeRepository deactivatedTypeRepo;
+    private final DeactivatedOperationGroupRepository deactivatedGroupRepo;
 
     @Transactional
     public InvoiceResponseDTO create(CreateInvoiceRequestDTO dto) {
@@ -41,16 +42,18 @@ public class InvoiceService {
                         HttpStatus.NOT_FOUND, "Pessoa não encontrada"
                 ));
 
-        AccountBase account = accountRepository.findById(dto.accountId())
-                .orElseThrow(() -> new BusinessException(
-                        HttpStatus.NOT_FOUND, "Conta não encontrada"
-                ));
-
         OperationType operationType =
                 operationTypeRepository.findByUserIdAndId(user.getId(), dto.operationTypeId())
                         .orElseThrow(() -> new BusinessException(
                                 HttpStatus.NOT_FOUND, "Tipo de operação inválido"
                         ));
+
+        boolean isTypeDeactivated = deactivatedTypeRepo.findByUserIdAndOperationTypeId(user.getId(), operationType.getId()).isPresent();
+        boolean isGroupDeactivated = deactivatedGroupRepo.findByUserIdAndOperationGroupId(user.getId(), operationType.getGroup().getId()).isPresent();
+
+        if (isTypeDeactivated || isGroupDeactivated) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Não é possível usar um Tipo ou Grupo de Operação inativado para criar uma fatura.");
+        }
 
         BigDecimal sumInstallments = dto.installments().stream()
                 .map(InstallmentDTO::amount)
@@ -67,7 +70,6 @@ public class InvoiceService {
                 dto.totalAmount(),
                 user,
                 person,
-                account,
                 operationType
         ));
 
@@ -103,21 +105,25 @@ public class InvoiceService {
             processedInstallments.addAll(processed);
         }
 
-        // 🔹 Cria entidades
         List<Installment> installments = processedInstallments.stream()
-                .map(dtoItem -> new Installment(
-                        dtoItem.amount(),
-                        dtoItem.dueDate(),
-                        operationType.getMovementType(),
-                        dtoItem.parcelNumber(),
-                        user,
-                        invoice,
-                        paymentInstrumentRepository.getReferenceById(dtoItem.instrument())
-                ))
+                .map(dtoItem -> {
+                    AccountBase installmentAccount = accountRepository.findById(dtoItem.accountId())
+                            .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada para a parcela " + dtoItem.parcelNumber()));
+
+                    return new Installment(
+                            dtoItem.amount(),
+                            dtoItem.dueDate(),
+                            operationType.getMovementType(),
+                            dtoItem.parcelNumber(),
+                            user,
+                            invoice,
+                            paymentInstrumentRepository.getReferenceById(dtoItem.instrument()),
+                            installmentAccount // 🌟 Passando a conta!
+                    );
+                })
                 .toList();
 
         installmentRepository.saveAll(installments);
-
         invoice.setInstallments(installments);
 
         return invoice.toResponse();
@@ -133,15 +139,11 @@ public class InvoiceService {
     }
 
     public InvoiceResponseDTO findById(UUID id) {
-
         User user = userContextService.getAuthenticatedUser();
-
-        Invoice invoice = invoiceRepository.findByIdAndCreatedBy(id, user).orElseThrow(() -> new RuntimeException(
-                "O documento informado não exite."
-        ));
-
+        Invoice invoice = invoiceRepository.findByIdAndCreatedBy(id, user).orElseThrow(() ->
+                new BusinessException(HttpStatus.NOT_FOUND, "O documento informado não existe.")
+        );
         return invoice.toResponse();
-
     }
 
 }

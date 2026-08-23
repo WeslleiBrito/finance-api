@@ -20,7 +20,7 @@ public class LegalEntity extends PersonBase {
     @Column(name = "trade_name", nullable = false)
     private String tradeName;
 
-    @Column(name = "cnpj", nullable = false)
+    @Column(name = "cnpj")
     private String cnpj;
 
     public LegalEntity(User createdBy, String cnpj,  String name, String tradeName, List<Phone> phones, List<Email> emails, List<Address> addresses) {

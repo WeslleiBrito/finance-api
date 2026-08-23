@@ -12,6 +12,7 @@ import java.util.UUID;
 public record InstallmentResponseDTO(
         UUID id,
         UUID invoiceId,
+        UUID accountId,
         Integer parcelNumber,
         BigDecimal amount,
         BigDecimal totalPaid,

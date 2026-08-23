@@ -2,6 +2,7 @@ package com.project.financeapi.dto.account.create;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -11,7 +12,7 @@ public record CreateWalletAccountRequestDTO(
         @Size(max = 30, message = "O nome da conta deve ter no máximo 30 caracteres")
         String name,
 
-        @Positive(message = "O valor inicial da conta precisa ser maior que zero.")
+        @PositiveOrZero(message = "O valor inicial da carteira não pode ser negativo.")
         BigDecimal initialValue
 ) {
 }

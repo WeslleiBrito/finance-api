@@ -3,6 +3,7 @@ package com.project.financeapi.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
+import com.project.financeapi.dto.person.PersonResponseCompactDTO;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enumSystem.DocumentStatus;
@@ -43,11 +44,6 @@ public class Invoice {
     }
 
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private DocumentStatus status = DocumentStatus.OPEN;
-
-
     @JsonManagedReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
@@ -60,11 +56,6 @@ public class Invoice {
     @JsonBackReference
     private PersonBase person; // pode ser cliente ou fornecedor
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "account_id", nullable = false)
-    private AccountBase account;
-
-
     // Parcelas deste documento
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Installment> installments = new ArrayList<>();
@@ -75,13 +66,11 @@ public class Invoice {
             BigDecimal totalAmount,
             User createdBy,
             PersonBase person,
-            AccountBase account,
-            OperationType operationType
+            OperationType operationType // Sem o account aqui!
     ) {
         this.totalAmount = totalAmount;
         this.createdBy = createdBy;
         this.person = person;
-        this.account = account;
         this.operationType = operationType;
     }
 
@@ -124,8 +113,11 @@ public class Invoice {
     public InvoiceResponseDTO toResponse() {
         return new InvoiceResponseDTO(
                 this.getId(),
-                this.getAccount().getId(),
                 this.getOperationType().getId(),
+                new PersonResponseCompactDTO(
+                        this.person.getId(),
+                        this.person.getName()
+                ),
                 this.getIssueDate(),
                 this.getPaymentStatus(),
                 this.getQuantityInstallments(),

@@ -19,7 +19,7 @@ public class PhysicalPerson extends PersonBase {
     @Column(name = "nick_name", nullable = false)
     private String nickname;
 
-    @Column(name = "cpf", nullable = false)
+    @Column(name = "cpf")
     private String cpf;
 
     public PhysicalPerson(User createdBy, String cpf, String name, String nickname, List<Phone> phones, List<Email> emails, List<Address> addresses) {
