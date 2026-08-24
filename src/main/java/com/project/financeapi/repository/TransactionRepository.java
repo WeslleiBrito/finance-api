@@ -15,6 +15,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     @Query("SELECT t FROM Transaction t WHERE t.account.accountHolder.id = :userId ORDER BY t.paymentDate DESC")
     List<Transaction> findAllByUserIdOrderByPaymentDateDesc(@Param("userId") String userId);
 
+    boolean existsByReversalOfId(UUID originalTransactionId);
+
     // 🌟 CORREÇÃO: Aplicando a mesma regra na busca por ID para o estorno
     @Query("SELECT t FROM Transaction t WHERE t.id = :id AND t.account.accountHolder.id = :userId")
     Optional<Transaction> findByIdAndUserId(@Param("id") UUID id, @Param("userId") String userId);

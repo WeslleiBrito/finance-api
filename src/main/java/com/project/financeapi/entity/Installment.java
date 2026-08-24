@@ -92,14 +92,13 @@ public class Installment {
     }
 
     /**
-     * Retorna o total já pago/recebido nesta parcela.
+     * Retorna o total já amortizado nesta parcela (Apenas o Principal).
      */
     public BigDecimal getTotalPaid() {
-
         return transactions.stream()
-                .filter(t -> t.getEffectiveAmount() != null)
+                .filter(t -> t.getAmount() != null) // 🌟 Usando o getAmount() (Principal)
                 .map(t -> {
-                    BigDecimal value = t.getEffectiveAmount();
+                    BigDecimal value = t.getAmount();
 
                     return t.getMovementType() == MovementType.REVERSAL
                             ? value.negate()
@@ -107,6 +106,28 @@ public class Installment {
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    /**
+     * Retorna o saldo em aberto da parcela.
+     */
+    public BigDecimal getRemainingBalance() {
+        // 🌟 Como o getTotalPaid() agora é a amortização pura, basta subtrair!
+        return this.amount.subtract(getTotalPaid());
+    }
+
+    /**
+     * Verifica se a parcela está quitada.
+     */
+    public PaymentStatus isPaid() {
+        // 🌟 Limpamos a gambiarra do desconto duplo
+        if (getRemainingBalance().compareTo(BigDecimal.ZERO) <= 0) {
+            return PaymentStatus.FINALIZED;
+        } else if (getRemainingBalance().compareTo(this.amount) == 0) {
+            return PaymentStatus.OPEN;
+        }
+        return PaymentStatus.PARTIALLY_PAID;
+    }
+
 
     public BigDecimal getTotalDiscount() {
         return transactions.stream()
@@ -153,34 +174,14 @@ public class Installment {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    /**
-     * Retorna o saldo em aberto da parcela.
-     */
-    public BigDecimal getRemainingBalance() {
 
-            return this.amount.subtract(
-                    getTotalPaid());
-    }
-
-    /**
-     * Verifica se a parcela está quitada.
-     */
-    public PaymentStatus isPaid() {
-
-        if(getRemainingBalance().subtract(getTotalDiscount()).compareTo(BigDecimal.ZERO) <= 0) {
-            return PaymentStatus.FINALIZED;
-        } else if (getRemainingBalance().compareTo(this.amount) == 0) {
-            return PaymentStatus.OPEN;
-        }
-
-        return PaymentStatus.PARTIALLY_PAID;
-    }
 
     public InstallmentResponseDTO toResponse(){
         return new InstallmentResponseDTO(
                 this.getId(),
                 this.getInvoice().getId(),
                 this.getAccount().getId(),
+                this.getPaymentInstrument().getId(),
                 this.getParcelNumber(),
                 this.getAmount(),
                 this.getTotalPaid(),

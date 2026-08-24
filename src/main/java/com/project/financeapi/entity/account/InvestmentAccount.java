@@ -4,6 +4,7 @@ import com.project.financeapi.dto.account.AccountUpdateDTO;
 import com.project.financeapi.dto.account.response.CreateInvestmentAccountResponseDTO;
 import com.project.financeapi.dto.account.update.UpdateInvestmentAccountRequestDTO;
 import com.project.financeapi.entity.Bank;
+import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.enumSystem.AccountType;
@@ -38,7 +39,10 @@ public class InvestmentAccount extends AccountBase {
                 this.getType(),
                 this.getBalance(),
                 this.getStatus(),
-                this.riskLevel
+                this.riskLevel,
+                this.getTransactions().stream().map(
+                        Transaction::toResponse
+                ).toList()
         );
     }
 

@@ -1,5 +1,6 @@
 package com.project.financeapi.controller;
 
+import com.project.financeapi.dto.Installments.InstallmentResponseDTO;
 import com.project.financeapi.dto.invoice.CreateInvoiceRequestDTO;
 import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
 import com.project.financeapi.service.InvoiceService;
@@ -47,5 +48,29 @@ public class InvoiceController {
         InvoiceResponseDTO invoice = invoiceService.findById(id);
 
         return ResponseEntity.status(HttpStatus.OK).body(invoice);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteInvoice(
+            @PathVariable UUID id
+    ) {
+        invoiceService.deleteInvoice(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/installment/{installmentId}")
+    public ResponseEntity<Void> deleteInstallment(
+            @PathVariable UUID installmentId
+    ) {
+        invoiceService.deleteInstallment(installmentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/installment/{installmentId}")
+    public ResponseEntity<InstallmentResponseDTO> updateInstallment(
+            @PathVariable UUID installmentId,
+            @Valid @RequestBody com.project.financeapi.dto.Installments.UpdateInstallmentRequestDTO dto
+    ) {
+        return ResponseEntity.ok(invoiceService.updateInstallment(installmentId, dto));
     }
 }

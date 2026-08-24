@@ -32,10 +32,6 @@ public class Invoice {
     @JoinColumn(name = "operation_type_id", nullable = false)
     private OperationType operationType;
 
-
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal totalAmount = BigDecimal.ZERO;
-
     @Column(nullable = false)
     private LocalDate issueDate = LocalDate.now();
 
@@ -63,15 +59,24 @@ public class Invoice {
     public Invoice() {}
 
     public Invoice(
-            BigDecimal totalAmount,
             User createdBy,
             PersonBase person,
             OperationType operationType // Sem o account aqui!
     ) {
-        this.totalAmount = totalAmount;
         this.createdBy = createdBy;
         this.person = person;
         this.operationType = operationType;
+    }
+
+    /**
+     * O Total da Fatura é a soma nominal de todas as suas parcelas.
+     */
+    public BigDecimal getTotalAmount() {
+        if (installments == null || installments.isEmpty()) return BigDecimal.ZERO;
+
+        return installments.stream()
+                .map(Installment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /**
@@ -104,12 +109,13 @@ public class Invoice {
     }
 
     /**
-     * Retorna o saldo restante.
+     * Retorna o saldo restante da fatura inteira.
      */
     public BigDecimal getRemainingBalance() {
-        return totalAmount.subtract(getTotalPaid().add(getTotalDiscount()));
+        // 🌟 O getTotalPaid() das parcelas já reflete a amortização total.
+        // Removido o ".add(getTotalDiscount())" que duplicava a dedução.
+        return getTotalAmount().subtract(getTotalPaid());
     }
-
     public InvoiceResponseDTO toResponse() {
         return new InvoiceResponseDTO(
                 this.getId(),

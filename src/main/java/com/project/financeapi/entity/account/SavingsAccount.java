@@ -4,6 +4,7 @@ import com.project.financeapi.dto.account.AccountUpdateDTO;
 import com.project.financeapi.dto.account.response.CreateSavingsAccountResponseDTO;
 import com.project.financeapi.dto.account.update.UpdateSavingsAccountRequestDTO;
 import com.project.financeapi.entity.Bank;
+import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.enumSystem.AccountType;
@@ -40,7 +41,10 @@ public class SavingsAccount extends AccountBase {
                 this.getType(),
                 this.getBalance(),
                 this.getStatus(),
-                this.getInterestRate()
+                this.getInterestRate(),
+                this.getTransactions().stream().map(
+                        Transaction::toResponse
+                ).toList()
         );
     }
 

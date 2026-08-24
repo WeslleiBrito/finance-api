@@ -3,6 +3,7 @@ package com.project.financeapi.entity.account;
 import com.project.financeapi.dto.account.AccountUpdateDTO;
 import com.project.financeapi.dto.account.response.CreateWalletAccountResponseDTO;
 import com.project.financeapi.dto.account.update.UpdateWalletAccountRequestDTO;
+import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.enumSystem.AccountType;
@@ -29,7 +30,10 @@ public class WalletAccount extends AccountBase {
                 this.getName(),
                 this.getType(),
                 this.getBalance(),
-                this.getStatus()
+                this.getStatus(),
+                this.getTransactions().stream().map(
+                        Transaction::toResponse
+                ).toList()
         );
     }
 

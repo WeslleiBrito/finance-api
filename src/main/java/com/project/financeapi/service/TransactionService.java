@@ -5,10 +5,7 @@ import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.account.CheckingAccount;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
-import com.project.financeapi.enumSystem.AccountType;
-import com.project.financeapi.enumSystem.MovementDirection;
-import com.project.financeapi.enumSystem.MovementType;
-import com.project.financeapi.enumSystem.PaymentType;
+import com.project.financeapi.enumSystem.*;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.*;
 import jakarta.transaction.Transactional;
@@ -31,100 +28,75 @@ public class TransactionService {
     private final UserContextService userContextService;
 
     @Transactional
-    public List<TransactionResponseDTO> createCommonTransactions(
-            CreateTransactionRequestDTO request
-    ) {
+    public List<TransactionResponseDTO> createCommonTransactions(CreateTransactionRequestDTO request) {
 
         User user = userContextService.getAuthenticatedUser();
 
-        // 📊 Acumuladores
-        Map<UUID, BigDecimal> installmentTotals = new HashMap<>();
-        Map<UUID, BigDecimal> accountTotals = new HashMap<>();
+        // 📊 Acumuladores de impacto para validação em lote
+        Map<UUID, BigDecimal> principalAmortizationTotals = new HashMap<>(); // Apenas o valor principal amortiza a parcela
+        Map<UUID, BigDecimal> accountTotals = new HashMap<>(); // Impacto total (efetivo) na conta
 
         List<Transaction> transactions = new ArrayList<>();
 
         for (CreateTransactionDTO dto : request.transactions()) {
 
-            // 📦 Parcela
-            Installment installment = installmentRepository.findById(dto.installmentId())
-                    .orElseThrow(() ->
-                            new BusinessException(HttpStatus.NOT_FOUND, "Parcela não encontrada.")
-                    );
+            // 1. Busca da Parcela com LOCK PESSIMISTA
+            Installment installment = installmentRepository.findByIdForUpdate(dto.installmentId())
+                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Parcela não encontrada."));
 
             if (!installment.getInvoice().getCreatedBy().getId().equals(user.getId())) {
                 throw new BusinessException(HttpStatus.FORBIDDEN, "Parcela não pertence ao usuário.");
             }
 
-            // 🏦 Conta
-            AccountBase account = accountRepository.findById(dto.accountId())
-                    .orElseThrow(() ->
-                            new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada.")
-                    );
+            // 2. Busca da Conta com LOCK PESSIMISTA
+            AccountBase account = accountRepository.findByIdForUpdate(dto.accountId())
+                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada."));
 
             if (!account.getAccountHolder().getId().equals(user.getId())) {
                 throw new BusinessException(HttpStatus.FORBIDDEN, "Conta não pertence ao usuário.");
             }
 
-            // 💳 Instrumento (opcional)
+            // 3. Busca do Instrumento
             PaymentInstrumentBase instrument = null;
             if (dto.paymentInstrumentId() != null) {
                 instrument = paymentInstrumentRepository
                         .findByIdAndUser(dto.paymentInstrumentId(), user.getId())
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        HttpStatus.NOT_FOUND,
-                                        "Instrumento de pagamento não encontrado."
-                                )
-                        );
+                        .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Instrumento de pagamento não encontrado."));
             }
 
             validateAccountAndInstrumentCompatibility(account, instrument);
 
-            if(LocalDate.now().isBefore(dto.paymentDate())){
-                throw new BusinessException(
-                        HttpStatus.BAD_REQUEST,
-                        "A data informada não pode ser mair que a data atual."
-                );
+            // 4. Validação da Data (Adicionado isEqual indiretamente usando apenas isBefore)
+            if (LocalDate.now().isBefore(dto.paymentDate())) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "A data informada não pode ser futura à data atual.");
             }
-            // 💰 Valores
+
+            // 5. Cálculos Financeiros
             BigDecimal interest = defaultZero(dto.interest());
             BigDecimal fine = defaultZero(dto.fine());
-            BigDecimal discount =  defaultZero(dto.discount());
+            BigDecimal discount = defaultZero(dto.discount());
+            BigDecimal principalAmount = dto.amount(); // O valor nominal que amortiza a dívida
 
-            BigDecimal effectiveAmount = dto.amount()
-                    .add(interest)
-                    .add(fine)
-                    .subtract(discount);
+            // O valor que sai da conta (Efetivo) = Principal + Juros + Multas - Descontos
+            BigDecimal effectiveAmount = principalAmount.add(interest).add(fine).subtract(discount);
 
             if (effectiveAmount.signum() <= 0) {
-                throw new BusinessException(
-                        HttpStatus.BAD_REQUEST,
-                        "Valor efetivo da transação deve ser maior que zero."
-                );
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "Valor efetivo da transação deve ser maior que zero.");
             }
 
-            // 📊 Acúmulo
-            installmentTotals.merge(
-                    installment.getId(),
-                    effectiveAmount,
-                    BigDecimal::add
-            );
+            // Acumula APENAS o valor principal amortizado para bater com o total da parcela
+            principalAmortizationTotals.merge(installment.getId(), principalAmount, BigDecimal::add);
 
-            accountTotals.merge(
-                    account.getId(),
-                    effectiveAmount,
-                    BigDecimal::add
-            );
+            // Acumula o valor EFETIVO para deduzir do saldo da conta
+            accountTotals.merge(account.getId(), effectiveAmount, BigDecimal::add);
 
-            // 🧾 Criação
+            // 6. Instancia a Transação
             Transaction transaction = new Transaction(
-                    dto.amount(),
+                    principalAmount,
                     interest,
                     fine,
                     discount,
-                    installment.getMovementType() == MovementType.PAYMENT
-                            ? MovementDirection.OUTFLOW
-                            : MovementDirection.INFLOW,
+                    installment.getMovementType() == MovementType.PAYMENT ? MovementDirection.OUTFLOW : MovementDirection.INFLOW,
                     installment.getMovementType(),
                     dto.paymentDate(),
                     user,
@@ -138,49 +110,37 @@ public class TransactionService {
             transactions.add(transaction);
         }
 
-        // 🔎 Validação das parcelas
-        for (Map.Entry<UUID, BigDecimal> entry : installmentTotals.entrySet()) {
-            Installment installment = installmentRepository.findById(entry.getKey()).orElseThrow();
+        // 7. Validação de Sobrepaga da Parcela (Apenas valor Principal)
+        for (Map.Entry<UUID, BigDecimal> entry : principalAmortizationTotals.entrySet()) {
+            Installment installment = installmentRepository.findByIdForUpdate(entry.getKey()).orElseThrow();
 
-            BigDecimal totalAfterPayment = installment.getTotalPaid().add(entry.getValue());
+            // Aqui validamos apenas o montante principal contra o saldo restante principal
+            BigDecimal totalAmortizedAfterPayment = installment.getTotalPaid().add(entry.getValue());
 
-            if (totalAfterPayment.compareTo(installment.getAmount()) > 0) {
-                throw new BusinessException(
-                        HttpStatus.BAD_REQUEST,
-                        "Pagamento excede o valor da parcela."
-                );
+            if (totalAmortizedAfterPayment.compareTo(installment.getAmount()) > 0) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "O pagamento (sem juros/multas) excede o valor original da parcela.");
             }
         }
 
-        // 🔎 Validação das contas
+        // 8. Validação do Saldo da Conta
         for (Map.Entry<UUID, BigDecimal> entry : accountTotals.entrySet()) {
-            AccountBase account = accountRepository.findById(entry.getKey()).orElseThrow();
-
+            AccountBase account = accountRepository.findByIdForUpdate(entry.getKey()).orElseThrow();
             BigDecimal availableBalance = account.getBalance();
 
             if (account.getType() == AccountType.CHECKING) {
-                availableBalance = availableBalance.add(
-                        ((CheckingAccount) account).getOverdraftLimit()
-                );
+                availableBalance = availableBalance.add(((CheckingAccount) account).getOverdraftLimit());
             }
 
             if (availableBalance.compareTo(entry.getValue()) < 0) {
-                throw new BusinessException(
-                        HttpStatus.BAD_REQUEST,
-                        "Saldo insuficiente para realizar as transações."
-                );
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "Saldo insuficiente para realizar as transações.");
             }
         }
 
-        // 💾 Persistência
-        return transactionRepository.saveAll(transactions).stream().map(
-                Transaction::toResponse
-        ).toList();
+        // 9. Persistência
+        return transactionRepository.saveAll(transactions).stream()
+                .map(Transaction::toResponse)
+                .toList();
     }
-
-    // ==========================================
-    // MÉTODOS NOVOS: BUSCA E ESTORNO
-    // ==========================================
 
     public List<TransactionResponseDTO> findAllByUser() {
         User user = userContextService.getAuthenticatedUser();
@@ -192,44 +152,50 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionResponseDTO reverseTransaction(UUID transactionId) {
+    public TransactionResponseDTO reverseTransaction(UUID transactionId, ReversalRequestDTO dto) {
         User user = userContextService.getAuthenticatedUser();
 
         // 1. Busca a transação original
         Transaction original = transactionRepository.findByIdAndUserId(transactionId, user.getId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Transação não encontrada."));
 
-        // (Opcional) Regra de negócio para não estornar duas vezes
+        // Regra de negócio para não estornar duas vezes
         if (original.getMovementType() == MovementType.REVERSAL) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Esta transação já é um estorno.");
         }
 
+        // 🌟 TRAVA VERDADEIRA: Verifica no banco se já existe um estorno apontando para esta transação
+        if (transactionRepository.existsByReversalOfId(original.getId())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Esta transação já foi estornada anteriormente.");
+        }
+
+        String finalReason = (dto != null && dto.reason() != null && !dto.reason().trim().isEmpty())
+                ? dto.reason()
+                : "Estorno da transação " + original.getId();
+
         // 2. Cria a transação reversa (Estorno)
         Transaction reversal = new Transaction(
                 original.getAmount(),
-                BigDecimal.ZERO,
-                BigDecimal.ZERO,
-                BigDecimal.ZERO,
+                original.getInterest(),
+                original.getFine(),
+                original.getDiscount(),
                 original.getMovementDirection() == MovementDirection.INFLOW ? MovementDirection.OUTFLOW : MovementDirection.INFLOW,
-                MovementType.REVERSAL, // 🌟 É AQUI QUE A MÁGICA ACONTECE!
+                MovementType.REVERSAL,
                 LocalDate.now(),
                 user,
                 original.getAccount(),
                 original.getInstallment(),
-                null,
+                original,
                 original.getPaymentInstrument(),
-                "Estorno da transação " + original.getId()
+                finalReason
         );
 
+        transactionRepository.save(original); // Salva a original com a flag = true
+
         // 3. Salva a nova transação
-        // Como AccountBase e Installment são calculados dinamicamente,
-        // apenas salvar o estorno já regulariza o saldo da conta e o status da parcela!
         Transaction savedReversal = transactionRepository.save(reversal);
 
         return savedReversal.toResponse();
-    }
-    private BigDecimal defaultZero(BigDecimal value) {
-        return value != null ? value : BigDecimal.ZERO;
     }
 
     @Transactional
@@ -242,8 +208,8 @@ public class TransactionService {
 
         for (CreateManualAdjustmentTransactionDTO dto : request.dto()) {
 
-            // 1. Validar a Conta
-            AccountBase account = accountRepository.findById(dto.accountId())
+            // 1. Validar a Conta com LOCK PESSIMISTA
+            AccountBase account = accountRepository.findByIdForUpdate(dto.accountId())
                     .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada."));
 
             if (!account.getAccountHolder().getId().equals(user.getId())) {
@@ -261,7 +227,7 @@ public class TransactionService {
 
             // 3. Validação de Data
             if(LocalDate.now().isBefore(dto.paymentDate())){
-                throw new BusinessException(HttpStatus.BAD_REQUEST, "A data do ajuste não pode ser maior que a data atual.");
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "A data do ajuste não pode ser futura à data atual.");
             }
 
             // 4. Calcular o impacto da transação no saldo (- se saída, + se entrada)
@@ -278,15 +244,11 @@ public class TransactionService {
                     BigDecimal.ZERO, // Sem multas
                     BigDecimal.ZERO, // Sem descontos
                     dto.direction(),
-
-                    // 🌟 DICA DE DOMÍNIO: Se você tiver "ADJUSTMENT" no enum MovementType, use-o.
-                    // Caso contrário, deduzimos pela direção:
-                    dto.direction() == MovementDirection.OUTFLOW ? MovementType.PAYMENT : MovementType.RECEIPT,
-
+                    MovementType.MANUAL_ADJUSTMENT, // Uso correto do Enum para Ajuste Manual
                     dto.paymentDate(),
                     user,
                     account,
-                    null, // 🌟 Aqui está o pulo do gato: Installment é NULL!
+                    null, // Installment é NULL
                     null, // ReversalOf é NULL
                     instrument,
                     dto.reason() // Salvamos o motivo no campo observations
@@ -298,7 +260,7 @@ public class TransactionService {
         // 6. Validar limite de saque para contas correntes (Check de Saldo)
         for (Map.Entry<UUID, BigDecimal> entry : accountBalanceImpact.entrySet()) {
             if (entry.getValue().signum() < 0) { // Se o saldo final do lote for negativo (saída)
-                AccountBase account = accountRepository.findById(entry.getKey()).orElseThrow();
+                AccountBase account = accountRepository.findByIdForUpdate(entry.getKey()).orElseThrow();
                 BigDecimal availableBalance = account.getBalance();
 
                 if (account.getType() == AccountType.CHECKING) {
@@ -318,13 +280,24 @@ public class TransactionService {
                 .toList();
     }
 
+    private BigDecimal defaultZero(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
+    }
+
     private void validateAccountAndInstrumentCompatibility(
             AccountBase account,
             PaymentInstrumentBase instrument
     ) {
+        if(instrument.getInstrumentNature() == InstrumentNature.PURCHASE){
+            throw new BusinessException(
+                    HttpStatus.BAD_REQUEST,
+                    "A natureza de Pagamento [PURCHASE] não pode ser usado para efetivar uma transação."
+            );
+        };
+
         if (account.getType() == AccountType.WALLET) {
 
-            if (instrument == null || instrument.getPaymentType() != PaymentType.CASH) {
+            if (instrument.getPaymentType() != PaymentType.CASH) {
                 throw new BusinessException(
                         HttpStatus.BAD_REQUEST,
                         "Contas do tipo WALLET só podem ser movimentadas com instrumento CASH."
@@ -333,7 +306,7 @@ public class TransactionService {
 
         } else {
             // Conta NÃO é WALLET
-            if (instrument != null && instrument.getPaymentType() == PaymentType.CASH) {
+            if (instrument.getPaymentType() == PaymentType.CASH) {
                 throw new BusinessException(
                         HttpStatus.BAD_REQUEST,
                         "Instrumento CASH só pode ser usado com contas do tipo WALLET."
@@ -341,6 +314,4 @@ public class TransactionService {
             }
         }
     }
-
-
 }

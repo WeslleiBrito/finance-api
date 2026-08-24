@@ -4,6 +4,7 @@ import com.project.financeapi.dto.account.AccountUpdateDTO;
 import com.project.financeapi.dto.account.response.CreatePaymentAccountResponseDTO;
 import com.project.financeapi.dto.account.update.UpdatePaymentAccountRequestDTO;
 import com.project.financeapi.entity.Bank;
+import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.enumSystem.AccountType;
@@ -37,7 +38,10 @@ public class PaymentAccount extends AccountBase {
                 this.getType(),
                 this.getBalance(),
                 this.getStatus(),
-                this.provider
+                this.provider,
+                this.getTransactions().stream().map(
+                        Transaction::toResponse
+                ).toList()
         );
     }
 

@@ -13,6 +13,7 @@ public record InstallmentResponseDTO(
         UUID id,
         UUID invoiceId,
         UUID accountId,
+        UUID paymentInstrumentId,
         Integer parcelNumber,
         BigDecimal amount,
         BigDecimal totalPaid,

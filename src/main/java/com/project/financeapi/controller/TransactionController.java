@@ -2,6 +2,7 @@ package com.project.financeapi.controller;
 
 import com.project.financeapi.dto.transaction.CreateManualAdjustmentTransactionRequestDTO;
 import com.project.financeapi.dto.transaction.CreateTransactionRequestDTO;
+import com.project.financeapi.dto.transaction.ReversalRequestDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
 import com.project.financeapi.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,16 +43,6 @@ public class TransactionController {
         return ResponseEntity.status(HttpStatus.OK).body(transactions);
     }
 
-    // 🌟 ROTA ADICIONADA: Estorno (POST /api/transactions/{id}/reverse)
-    @PostMapping("/{id}/reverse")
-    @Operation(summary = "Estornar transação", description = "Cria uma transação de estorno e recalcula os saldos.")
-    public ResponseEntity<TransactionResponseDTO> reverseTransaction(
-            @PathVariable UUID id
-    ) {
-        TransactionResponseDTO response = transactionService.reverseTransaction(id);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
     @PostMapping("/adjustments")
     @Operation(summary = "Cria lançamentos/ajustes manuais", description = "Cria transações avulsas que afetam diretamente o saldo da conta, sem vinculação com faturas.")
     public ResponseEntity<List<TransactionResponseDTO>> createAdjustments(
@@ -59,5 +50,15 @@ public class TransactionController {
     ) {
         List<TransactionResponseDTO> responses = transactionService.createManualAdjustments(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(responses);
+    }
+
+    @PostMapping("/{id}/reverse")
+    @Operation(summary = "Estornar transação", description = "Cria uma transação de estorno e recalcula os saldos.")
+    public ResponseEntity<TransactionResponseDTO> reverseTransaction(
+            @PathVariable UUID id,
+            @Valid @RequestBody(required = false) ReversalRequestDTO dto
+    ) {
+        TransactionResponseDTO response = transactionService.reverseTransaction(id, dto);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

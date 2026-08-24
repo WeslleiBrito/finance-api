@@ -1,6 +1,8 @@
 package com.project.financeapi.service;
 
 import com.project.financeapi.dto.Installments.InstallmentDTO;
+import com.project.financeapi.dto.Installments.InstallmentResponseDTO;
+import com.project.financeapi.dto.Installments.UpdateInstallmentRequestDTO;
 import com.project.financeapi.dto.invoice.CreateInvoiceRequestDTO;
 import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
 import com.project.financeapi.entity.*;
@@ -67,7 +69,6 @@ public class InvoiceService {
         }
 
         Invoice invoice = invoiceRepository.save(new Invoice(
-                dto.totalAmount(),
                 user,
                 person,
                 operationType
@@ -144,6 +145,96 @@ public class InvoiceService {
                 new BusinessException(HttpStatus.NOT_FOUND, "O documento informado não existe.")
         );
         return invoice.toResponse();
+    }
+
+    @Transactional
+    public void deleteInvoice(UUID id) {
+        User user = userContextService.getAuthenticatedUser();
+
+        Invoice invoice = invoiceRepository.findByIdAndCreatedBy(id, user).orElseThrow(() ->
+                new BusinessException(HttpStatus.NOT_FOUND, "O documento informado não existe.")
+        );
+
+        // 🌟 REGRA 3: Exclusão de Fatura inteira (só se não houver nenhuma transação em NENHUMA parcela)
+        if (invoice.getTotalPaid().add(invoice.getTotalDiscount()).compareTo(BigDecimal.ZERO) > 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Não é possível excluir uma fatura que já possui transações (pagamentos ou descontos). Estorne as transações antes de excluir.");
+        }
+
+        invoiceRepository.delete(invoice);
+    }
+
+    @Transactional
+    public void deleteInstallment(UUID installmentId) {
+        User user = userContextService.getAuthenticatedUser();
+
+        Installment installment = installmentRepository.findById(installmentId).orElseThrow(() ->
+                new BusinessException(HttpStatus.NOT_FOUND, "A parcela informada não existe.")
+        );
+
+        if (!installment.getCreatedBy().getId().equals(user.getId())) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para excluir esta parcela.");
+        }
+
+        // 🌟 SUA REGRA DE OURO AQUI: Só bloqueia se o líquido amortizado for maior que zero!
+        // Não importa se tem 100 transações de erro/estorno, se a soma deu zero, pode apagar.
+        if (installment.getTotalPaid().add(installment.getTotalDiscount()).compareTo(BigDecimal.ZERO) > 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Não é possível excluir uma parcela que possui saldo já amortizado. Faça o estorno dos pagamentos primeiro.");
+        }
+
+        Invoice invoice = installment.getInvoice();
+
+        if (invoice.getInstallments().size() == 1) {
+            // Se for a última parcela, apaga a fatura inteira
+            invoiceRepository.delete(invoice);
+        } else {
+            // 🌟 A SOLUÇÃO AQUI: Remove a parcela da lista da Fatura mãe!
+            // Isso diz ao Hibernate: "Essa parcela foi desvinculada, pode apagar sem medo".
+            invoice.getInstallments().remove(installment);
+
+            // Agora o delete vai funcionar e enviar o comando SQL para o banco!
+            installmentRepository.delete(installment);
+        }
+    }
+
+    @Transactional
+    public InstallmentResponseDTO updateInstallment(UUID installmentId, UpdateInstallmentRequestDTO dto) {
+        User user = userContextService.getAuthenticatedUser();
+
+        Installment installment = installmentRepository.findById(installmentId).orElseThrow(() ->
+                new BusinessException(HttpStatus.NOT_FOUND, "A parcela informada não existe.")
+        );
+
+        if (!installment.getCreatedBy().getId().equals(user.getId())) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar esta parcela.");
+        }
+
+        // 🌟 TRAVA MATEMÁTICA: O novo valor não pode ser menor que o que já foi efetivamente pago.
+        BigDecimal amortized = installment.getTotalPaid().add(installment.getTotalDiscount());
+        if (dto.amount().compareTo(amortized) < 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST,
+                    "O novo valor (R$ " + dto.amount() + ") não pode ser menor que o valor já amortizado (R$ " + amortized + "). Estorne o pagamento primeiro.");
+        }
+
+        // Atualiza a Conta
+        AccountBase account = accountRepository.findById(dto.accountId())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada."));
+        installment.setAccount(account);
+
+        // Atualiza o Instrumento (opcional)
+        if (dto.paymentInstrumentId() != null) {
+            PaymentInstrumentBase instrument = paymentInstrumentRepository.findByIdAndUser(dto.paymentInstrumentId(), user.getId())
+                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Instrumento não encontrado."));
+            installment.setPaymentInstrument(instrument);
+        } else {
+            installment.setPaymentInstrument(null); // Limpou o instrumento
+        }
+
+        // Atualiza os dados básicos
+        installment.setAmount(dto.amount());
+        installment.setDueDate(dto.dueDate());
+
+        // Salva e retorna o DTO atualizado
+        return installmentRepository.save(installment).toResponse();
     }
 
 }
