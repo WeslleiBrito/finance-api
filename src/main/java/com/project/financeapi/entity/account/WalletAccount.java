@@ -30,6 +30,7 @@ public class WalletAccount extends AccountBase {
                 this.getName(),
                 this.getType(),
                 this.getBalance(),
+                this.getInitialValue(),
                 this.getStatus(),
                 this.getTransactions().stream().map(
                         Transaction::toResponse

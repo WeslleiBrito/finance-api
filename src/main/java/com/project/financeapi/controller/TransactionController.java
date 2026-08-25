@@ -61,4 +61,13 @@ public class TransactionController {
         TransactionResponseDTO response = transactionService.reverseTransaction(id, dto);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
+
+    @PostMapping("/transfer")
+    @Operation(summary = "Transferência entre contas", description = "Transfere saldo de uma conta para outra através de transações espelhadas.")
+    public ResponseEntity<List<TransactionResponseDTO>> transfer(
+            @Valid @RequestBody com.project.financeapi.dto.transaction.TransferRequestDTO request
+    ) {
+        List<TransactionResponseDTO> responses = transactionService.transfer(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responses);
+    }
 }

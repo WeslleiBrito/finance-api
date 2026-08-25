@@ -10,6 +10,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -55,6 +57,10 @@ public class Transaction {
     @Column(name = "payment_date", nullable = false)
     private LocalDate paymentDate;
 
+    @Setter
+    @Column(name = "is_reversed", nullable = false)
+    private boolean reversed = false;
+
     /* ================= RELAÇÕES ================= */
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -81,6 +87,15 @@ public class Transaction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reversal_of_transaction_id")
     private Transaction reversalOf;
+
+    /**
+     * Transação par/vinculada.
+     * Usada principalmente para ligar as duas pontas de uma TRANSFERÊNCIA.
+     */
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "linked_transaction_id")
+    private Transaction linkedTransaction;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_instrument_id")
@@ -121,7 +136,7 @@ public class Transaction {
                 this.movementDirection,
 
                 this.reversalOf != null ? this.reversalOf.getId() : null,
-                this.reversalOf != null,
+                this.reversed,
 
                 this.paymentDate,
                 this.createdAt,
@@ -160,6 +175,31 @@ public class Transaction {
         this.reversalOf = reversalOf;
         this.paymentInstrument = instrument;
         this.observations = observations;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // 🌟 Construtor Simplificado (Ideal para Transferências e Ajustes Manuais)
+    public Transaction(
+            BigDecimal amount,
+            MovementDirection direction,
+            MovementType type,
+            LocalDate paymentDate,
+            User createdBy,
+            AccountBase account,
+            String observations,
+            Transaction linkedTransaction
+    ) {
+        this.amount = amount;
+        this.interest = BigDecimal.ZERO;
+        this.fine = BigDecimal.ZERO;
+        this.discount = BigDecimal.ZERO;
+        this.movementDirection = direction;
+        this.movementType = type;
+        this.paymentDate = paymentDate;
+        this.createdBy = createdBy;
+        this.account = account;
+        this.observations = observations;
+        this.linkedTransaction = linkedTransaction;
         this.createdAt = LocalDateTime.now();
     }
 }

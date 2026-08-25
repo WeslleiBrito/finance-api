@@ -38,6 +38,7 @@ public class InvestmentAccount extends AccountBase {
                 this.getName(),
                 this.getType(),
                 this.getBalance(),
+                this.getInitialValue(),
                 this.getStatus(),
                 this.riskLevel,
                 this.getTransactions().stream().map(

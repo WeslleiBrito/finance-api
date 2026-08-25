@@ -1,6 +1,7 @@
 package com.project.financeapi.dto.OperationType;
 
 import com.project.financeapi.dto.operationGroup_.OperationGroupResponseDTO;
+import com.project.financeapi.enumSystem.MovementDirection;
 import com.project.financeapi.enumSystem.MovementType;
 import com.project.financeapi.enumSystem.StatusEntity;
 

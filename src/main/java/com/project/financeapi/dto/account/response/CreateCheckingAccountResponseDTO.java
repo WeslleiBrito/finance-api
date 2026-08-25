@@ -15,6 +15,7 @@ public record CreateCheckingAccountResponseDTO(
         String name,
         AccountType type,
         BigDecimal balance,
+        BigDecimal initialValue,
         AccountStatus status,
         BigDecimal overdraftLimit,
         List<TransactionResponseDTO> transactions

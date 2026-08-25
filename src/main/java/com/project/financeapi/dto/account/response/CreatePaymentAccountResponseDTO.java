@@ -15,6 +15,7 @@ public record CreatePaymentAccountResponseDTO(
         String name,
         AccountType type,
         BigDecimal balance,
+        BigDecimal initialValue,
         AccountStatus status,
         String provider,
         List<TransactionResponseDTO> transactions

@@ -15,6 +15,7 @@ public record CreateWalletAccountResponseDTO(
         String name,
         AccountType type,
         BigDecimal balance,
+        BigDecimal initialValue,
         AccountStatus status,
         List<TransactionResponseDTO> transactions
 ) implements AccountResponseDTO {

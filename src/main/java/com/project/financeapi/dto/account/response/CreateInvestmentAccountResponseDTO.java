@@ -15,6 +15,7 @@ public record CreateInvestmentAccountResponseDTO (
         String name,
         AccountType type,
         BigDecimal balance,
+        BigDecimal initialValue,
         AccountStatus status,
         BigDecimal riskLevel,
         List<TransactionResponseDTO> transactions

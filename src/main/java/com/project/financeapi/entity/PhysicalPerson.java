@@ -2,6 +2,7 @@ package com.project.financeapi.entity;
 
 import com.project.financeapi.dto.person.PhysicalPersonResponseDTO;
 import com.project.financeapi.entity.base.PersonBase;
+import com.project.financeapi.enumSystem.PersonRole;
 import com.project.financeapi.enumSystem.PersonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,8 +23,25 @@ public class PhysicalPerson extends PersonBase {
     @Column(name = "cpf")
     private String cpf;
 
-    public PhysicalPerson(User createdBy, String cpf, String name, String nickname, List<Phone> phones, List<Email> emails, List<Address> addresses) {
-            super(createdBy, name, PersonType.INDIVIDUAL, phones, emails, addresses);
+    public PhysicalPerson(
+            User createdBy,
+            String cpf,
+            String name,
+            String nickname,
+            PersonRole role,
+            List<Phone> phones,
+            List<Email> emails,
+            List<Address> addresses
+    ) {
+            super(
+                    createdBy,
+                    name,
+                    PersonType.INDIVIDUAL,
+                    role,
+                    phones,
+                    emails,
+                    addresses
+            );
             this.nickname = (nickname != null) ? nickname : name;
             this.cpf = cpf;
     }
@@ -45,6 +63,7 @@ public class PhysicalPerson extends PersonBase {
                 this.getNickname(),
                 this.getCpf(),
                 this.getPersonType(),
+                this.getRole(),
                 this.getPhones().stream().map(Phone::toResponse).toList(),
                 this.getEmails().stream().map(Email::toResponse).toList(),
                 this.getAddresses().stream().map(Address::toResponse).toList(),

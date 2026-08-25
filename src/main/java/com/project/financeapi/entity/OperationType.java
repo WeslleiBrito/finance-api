@@ -39,7 +39,6 @@ public class OperationType {
     @Column(name = "movement_type", nullable = false)
     private MovementType movementType;
 
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by")
     private User createdBy;
@@ -51,7 +50,12 @@ public class OperationType {
     @Column(name = "is_system")
     private boolean isSystem = false;
 
-    public OperationType(String name, MovementType movementType, User createdBy, OperationGroup group) {
+    public OperationType(
+            String name,
+            MovementType movementType,
+            User createdBy,
+            OperationGroup group
+    ) {
         this.name = name;
         this.movementType = movementType;
         this.createdBy = createdBy;

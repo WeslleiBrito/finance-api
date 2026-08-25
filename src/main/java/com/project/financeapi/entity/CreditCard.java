@@ -2,15 +2,15 @@ package com.project.financeapi.entity;
 
 import com.project.financeapi.dto.Installments.InstallmentDTO;
 import com.project.financeapi.dto.bank.*;
-import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
-import com.project.financeapi.enumSystem.CardBrandStatus;
 import com.project.financeapi.enumSystem.InstrumentNature;
+import com.project.financeapi.enumSystem.MovementDirection;
 import com.project.financeapi.enumSystem.PaymentType;
 import com.project.financeapi.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
@@ -168,6 +168,11 @@ public class CreditCard extends PaymentInstrumentBase {
                 ? calculateDueDate(today.plusMonths(1))
                 : calculateDueDate(today);
 
+        return getInstallmentDTOS(ordered, firstDueDate);
+    }
+
+    @NotNull
+    private static List<InstallmentDTO> getInstallmentDTOS(List<InstallmentDTO> ordered, LocalDate firstDueDate) {
         List<InstallmentDTO> processed = new ArrayList<>();
 
         for (int i = 0; i < ordered.size(); i++) {
@@ -181,10 +186,10 @@ public class CreditCard extends PaymentInstrumentBase {
                     dto.parcelNumber(),
                     dueDate,
                     dto.instrument(),
-                    dto.accountId()
+                    dto.accountId(),
+                    MovementDirection.OUTFLOW
             ));
         }
-
         return processed;
     }
 

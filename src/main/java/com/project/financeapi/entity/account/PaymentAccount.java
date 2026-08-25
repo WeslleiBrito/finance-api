@@ -37,6 +37,7 @@ public class PaymentAccount extends AccountBase {
                 this.getName(),
                 this.getType(),
                 this.getBalance(),
+                this.getInitialValue(),
                 this.getStatus(),
                 this.provider,
                 this.getTransactions().stream().map(

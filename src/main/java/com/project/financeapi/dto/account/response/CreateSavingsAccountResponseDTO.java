@@ -14,6 +14,7 @@ public record CreateSavingsAccountResponseDTO(
         String name,
         AccountType type,
         BigDecimal balance,
+        BigDecimal initialValue,
         AccountStatus status,
         BigDecimal interestRate,
         List<TransactionResponseDTO> transactions

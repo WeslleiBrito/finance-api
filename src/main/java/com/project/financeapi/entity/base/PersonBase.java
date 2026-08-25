@@ -3,6 +3,7 @@ package com.project.financeapi.entity.base;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.project.financeapi.dto.person.PersonResponseDTO;
 import com.project.financeapi.entity.*;
+import com.project.financeapi.enumSystem.PersonRole;
 import com.project.financeapi.enumSystem.PersonType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -39,6 +40,10 @@ public abstract class PersonBase {
     @ToString.Include
     private PersonType personType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PersonRole role = PersonRole.BOTH; // Default se não vier
+
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
@@ -57,10 +62,19 @@ public abstract class PersonBase {
     @JsonManagedReference
     private List<Invoice> invoices = new ArrayList<>();
 
-    public PersonBase(User createdBy, String name, PersonType personType, List<Phone> phones, List<Email> emails, List<Address> addresses) {
+    public PersonBase(
+            User createdBy,
+            String name,
+            PersonType personType,
+            PersonRole role,
+            List<Phone> phones,
+            List<Email> emails,
+            List<Address> addresses
+    ) {
         this.createdBy = createdBy;
         this.name = name;
         this.personType = personType;
+        this.role = role;
         this.phones = phones;
         this.emails = emails;
         this.addresses = addresses;
@@ -73,8 +87,9 @@ public abstract class PersonBase {
 
     // ... seus atributos e construtores existentes ...
 
-    public void updateCommonData(String name) {
+    public void updateCommonData(String name, PersonRole role) {
         if (name != null) this.setName(name);
+        this.setRole(role);
     }
 
     public void updateContactsAndAddresses(List<Phone> newPhones, List<Email> newEmails, List<Address> newAddresses) {

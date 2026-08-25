@@ -40,6 +40,7 @@ public class SavingsAccount extends AccountBase {
                 this.getName(),
                 this.getType(),
                 this.getBalance(),
+                this.getInitialValue(),
                 this.getStatus(),
                 this.getInterestRate(),
                 this.getTransactions().stream().map(

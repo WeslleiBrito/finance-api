@@ -48,6 +48,7 @@ public class CheckingAccount extends AccountBase {
                 this.getName(),
                 this.getType(),
                 this.getBalance(),
+                this.getInitialValue(),
                 this.getStatus(),
                 this.getOverdraftLimit(),
                 this.getTransactions().stream().map(

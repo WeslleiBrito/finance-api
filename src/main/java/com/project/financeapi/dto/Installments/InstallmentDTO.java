@@ -1,7 +1,9 @@
 package com.project.financeapi.dto.Installments;
 
+import com.project.financeapi.enumSystem.MovementDirection;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.aspectj.bridge.IMessage;
 
 
 import java.math.BigDecimal;
@@ -24,5 +26,8 @@ public record InstallmentDTO (
         UUID accountId,
 
         @NotNull(message = "O instrumento de pagamento deve ser informado.")
-        UUID instrument
+        UUID instrument,
+
+        @NotNull(message = "Informe o sentido do recurso [OUTFLOW, INFLOW]")
+        MovementDirection movementDirection
 ) {}

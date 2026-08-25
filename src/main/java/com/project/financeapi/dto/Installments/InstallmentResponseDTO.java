@@ -1,6 +1,7 @@
 package com.project.financeapi.dto.Installments;
 
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
+import com.project.financeapi.enumSystem.MovementDirection;
 import com.project.financeapi.enumSystem.MovementType;
 import com.project.financeapi.enumSystem.PaymentStatus;
 
@@ -21,6 +22,7 @@ public record InstallmentResponseDTO(
         BigDecimal totalFine,
         BigDecimal TotalDiscount,
         MovementType movementType,
+        MovementDirection movementDirection,
         PaymentStatus status,
         LocalDate dueDate,
         LocalDate createdAt,

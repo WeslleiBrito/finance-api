@@ -7,6 +7,7 @@ import com.project.financeapi.dto.person.PersonResponseCompactDTO;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enumSystem.DocumentStatus;
+import com.project.financeapi.enumSystem.MovementDirection;
 import com.project.financeapi.enumSystem.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;

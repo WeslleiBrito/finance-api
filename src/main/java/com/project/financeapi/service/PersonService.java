@@ -122,7 +122,7 @@ public class PersonService {
         List<Address> mappedAddresses = dto.addressesList() != null ? dto.addressesList().stream().map(a -> new Address(user, person, a.street(), a.number(), a.neighborhood(), a.complement(), a.city(), a.state(), a.zipCode())).toList() : new ArrayList<>();
 
         // 3. A própria entidade faz a atualização
-        person.updateCommonData(dto.name());
+        person.updateCommonData(dto.name(), dto.role());
         person.updatePhysicalData(dto.CPF(), dto.nickname());
         person.updateContactsAndAddresses(mappedPhones, mappedEmails, mappedAddresses);
 
@@ -159,7 +159,7 @@ public class PersonService {
         List<Address> mappedAddresses = dto.addressesList() != null ? dto.addressesList().stream().map(a -> new Address(user, person, a.street(), a.number(), a.neighborhood(), a.complement(), a.city(), a.state(), a.zipCode())).toList() : new ArrayList<>();
 
         // 3. A própria entidade faz a atualização
-        person.updateCommonData(dto.name());
+        person.updateCommonData(dto.name(), dto.role());
         person.updateLegalData(dto.CNPJ(), dto.tradeName());
         person.updateContactsAndAddresses(mappedPhones, mappedEmails, mappedAddresses);
 

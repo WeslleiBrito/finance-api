@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.project.financeapi.dto.Installments.InstallmentResponseDTO;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
+import com.project.financeapi.enumSystem.MovementDirection;
 import com.project.financeapi.enumSystem.MovementType;
 import com.project.financeapi.enumSystem.PaymentStatus;
 import jakarta.persistence.*;
@@ -33,9 +34,15 @@ public class Installment {
     @Column(nullable = false, name = "due_date")
     private LocalDate dueDate  = LocalDate.now();
 
+    // O MovementType tem função semântica
     @Enumerated(EnumType.STRING)
     @Column(name = "movement_type", nullable = false)
     private MovementType movementType;
+
+    // O MovementDirection tem função movimentação das contas entrada/saídas
+    @Enumerated(EnumType.STRING)
+    @Column(name = "movement_direction")
+    private MovementDirection movementDirection;
 
     @Column(nullable = false, name = "created_at")
     private LocalDate createdAt  = LocalDate.now();
@@ -75,6 +82,7 @@ public class Installment {
             BigDecimal amount,
             LocalDate dueDate,
             MovementType movementType,
+            MovementDirection movementDirection,
             Integer parcelNumber,
             User createdBy,
             Invoice invoice,
@@ -89,6 +97,7 @@ public class Installment {
         this.invoice = invoice;
         this.paymentInstrument = paymentInstrument;
         this.account = account;
+        this.movementDirection = movementDirection;
     }
 
     /**
@@ -189,6 +198,7 @@ public class Installment {
                 this.getTotalFine(),
                 this.getTotalDiscount(),
                 this.movementType,
+                this.getMovementDirection(),
                 this.isPaid(),
                 this.getDueDate(),
                 this.getCreatedAt(),

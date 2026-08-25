@@ -115,6 +115,7 @@ public class InvoiceService {
                             dtoItem.amount(),
                             dtoItem.dueDate(),
                             operationType.getMovementType(),
+                            dtoItem.movementDirection(),
                             dtoItem.parcelNumber(),
                             user,
                             invoice,
