@@ -32,15 +32,15 @@ public class PaymentInstrumentService {
 
         User user = userContextService.getAuthenticatedUser();
 
-        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), dto.cardBrand())
+        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), dto.cardBrandId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bandeira de cartão não encontrada."));
 
 
         Bank bank = null;
 
-        if(dto.bank() != null){
+        if(dto.bankId() != null){
 
-            bank = bankRepository.findById(dto.bank())
+            bank = bankRepository.findById(dto.bankId())
                     .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Banco não encontrado."));
 
         }

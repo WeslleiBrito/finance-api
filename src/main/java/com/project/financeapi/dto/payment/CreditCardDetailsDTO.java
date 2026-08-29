@@ -18,7 +18,7 @@ public record CreditCardDetailsDTO(
         InstrumentNature instrumentNature,
         LocalDate expirationDate, // opcional
         String cardHolderName,
-        Integer closeDay,
+        Integer closingDay,
         Integer dueDay, // dia de vencimento
         BigDecimal creditLimit,
         BigDecimal availableLimit,

@@ -7,6 +7,8 @@ import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
+
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -16,7 +18,7 @@ import java.util.List;
 public class SimplePaymentInstrument extends PaymentInstrumentBase {
 
     @Override
-    public List<InstallmentDTO> process(List<InstallmentDTO> installmentDTOS) {
+    public List<InstallmentDTO> process(List<InstallmentDTO> installmentDTOS, LocalDate purchaseDate) {
         return installmentDTOS;
     }
 

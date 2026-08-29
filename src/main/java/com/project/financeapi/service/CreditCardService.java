@@ -26,26 +26,16 @@ public class CreditCardService {
     private static final Logger logger = LoggerFactory.getLogger(CreditCardService.class);
 
 
-    public List<CreditCardDetailsDTO> getAll(String token){
+    public List<CreditCardDetailsDTO> getAll() {
+        User user = userContextService.getAuthenticatedUser();
 
-        try {
-
-            User user = userContextService.getAuthenticatedUser();
-
-            List<CreditCard> creditCards = creditCardRepository.findAllByCreatedBy_Id(user.getId());
-
-            return creditCards.stream().map(
-                    CreditCard::toDTO
-            ).toList();
-
-        } catch (Exception e) {
-            logger.error(">>> ERRO FATAL no método getAll: ", e);
-            throw e;
-        }
+        return creditCardRepository.findAllByCreatedBy_Id(user.getId())
+                .stream()
+                .map(CreditCard::toDTO)
+                .toList();
     }
 
-    public CreditCardDetailsDTO getById(String token, UUID id) {
-
+    public CreditCardDetailsDTO getById(UUID id) {
         User user = userContextService.getAuthenticatedUser();
 
         CreditCard creditCard = creditCardRepository.findByCreatedByAndId(user.getId(), id)

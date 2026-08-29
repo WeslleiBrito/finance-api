@@ -126,15 +126,13 @@ public class TransactionService {
         // 8. Validação do Saldo da Conta
         for (Map.Entry<UUID, BigDecimal> entry : accountTotals.entrySet()) {
             AccountBase account = accountRepository.findByIdForUpdate(entry.getKey()).orElseThrow();
-            BigDecimal availableBalance = account.getBalance();
 
-            if (account.getType() == AccountType.CHECKING) {
-                availableBalance = availableBalance.add(((CheckingAccount) account).getOverdraftLimit());
-            }
-
-            if (availableBalance.compareTo(entry.getValue()) < 0) {
-                throw new BusinessException(HttpStatus.BAD_REQUEST, "Saldo insuficiente para realizar as transações.");
-            }
+            // 🌟 Substituído pela função auxiliar
+            validateSufficientFunds(
+                    account,
+                    entry.getValue(),
+                    "Saldo insuficiente na conta '" + account.getName() + "' para realizar as transações."
+            );
         }
 
         // 9. Persistência
@@ -179,6 +177,17 @@ public class TransactionService {
 
             if (transactionRepository.existsByReversalOfId(sibling.getId()) || sibling.isReversed()) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "A contraparte desta transferência já foi estornada.");
+            }
+
+            // Se estamos estornando uma ENTRADA (INFLOW), a direção do estorno será SAÍDA (OUTFLOW).
+            // Isso significa que vamos tirar o dinheiro que já estava na conta.
+            // Precisamos validar se a conta não ficará negativa/estourada.
+            if (original.getMovementDirection() == MovementDirection.INFLOW) {
+                validateSufficientFunds(
+                        original.getAccount(),
+                        original.getAmount(), // O valor nominal (principal)
+                        "Saldo insuficiente para estornar este recebimento. A conta ficaria negativa além do limite."
+                );
             }
 
             // 1. Cria o Estorno da Original (usando o construtor completo para garantir o reversalOf)
@@ -296,22 +305,20 @@ public class TransactionService {
             );
 
             transactions.add(transaction);
-        }
+        } // 🌟 FIM DO LAÇO PRINCIPAL
 
-        // 6. Validar limite de saque para contas correntes (Check de Saldo)
+        // 6. Validar limite de saque para contas correntes (Check de Saldo Acumulado)
         for (Map.Entry<UUID, BigDecimal> entry : accountBalanceImpact.entrySet()) {
             if (entry.getValue().signum() < 0) { // Se o saldo final do lote for negativo (saída)
-                AccountBase account = accountRepository.findByIdForUpdate(entry.getKey()).orElseThrow();
-                BigDecimal availableBalance = account.getBalance();
 
-                if (account.getType() == AccountType.CHECKING) {
-                    availableBalance = availableBalance.add(((CheckingAccount) account).getOverdraftLimit());
-                }
+                // 🌟 Renomeado para impactedAccount e movido para fora do laço principal
+                AccountBase impactedAccount = accountRepository.findByIdForUpdate(entry.getKey()).orElseThrow();
 
-                // Subtrai (soma o impacto que já está negativo) e verifica se "estourou" o limite
-                if (availableBalance.add(entry.getValue()).compareTo(BigDecimal.ZERO) < 0) {
-                    throw new BusinessException(HttpStatus.BAD_REQUEST, "Saldo insuficiente para realizar o ajuste de saída na conta.");
-                }
+                validateSufficientFunds(
+                        impactedAccount,
+                        entry.getValue().abs(),
+                        "Saldo insuficiente para realizar o ajuste de saída na conta."
+                );
             }
         }
 
@@ -351,14 +358,11 @@ public class TransactionService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "A conta de destino não pertence ao usuário.");
         }
 
-        BigDecimal availableBalance = sourceAccount.getBalance();
-        if (sourceAccount.getType() == AccountType.CHECKING) {
-            availableBalance = availableBalance.add(((CheckingAccount) sourceAccount).getOverdraftLimit());
-        }
-
-        if (availableBalance.compareTo(request.amount()) < 0) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Saldo insuficiente na conta de origem para realizar a transferência.");
-        }
+        validateSufficientFunds(
+                sourceAccount,
+                request.amount(),
+                "Saldo insuficiente na conta de origem para realizar a transferência."
+        );
 
         String baseObs = request.observations() != null && !request.observations().trim().isEmpty()
                 ? request.observations()
@@ -417,6 +421,24 @@ public class TransactionService {
                         "Instrumento CASH só pode ser usado com contas do tipo WALLET."
                 );
             }
+        }
+    }
+
+    /**
+     * Valida se uma conta tem saldo suficiente para suportar uma saída de recursos,
+     * respeitando as regras específicas do Cheque Especial (Overdraft) para Contas Correntes.
+     */
+    private void validateSufficientFunds(AccountBase account, BigDecimal amountToRemove, String customErrorMessage) {
+        BigDecimal availableBalance = account.getBalance();
+
+        // 🌟 Se for Conta Corrente, soma o Limite (Cheque Especial) ao saldo disponível
+        if (account.getType() == AccountType.CHECKING) {
+            availableBalance = availableBalance.add(((CheckingAccount) account).getOverdraftLimit());
+        }
+
+        // Se o saldo disponível for menor que a quantia a ser removida
+        if (availableBalance.compareTo(amountToRemove) < 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, customErrorMessage);
         }
     }
 }

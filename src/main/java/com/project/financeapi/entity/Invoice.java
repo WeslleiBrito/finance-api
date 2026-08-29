@@ -62,7 +62,7 @@ public class Invoice {
     public Invoice(
             User createdBy,
             PersonBase person,
-            OperationType operationType // Sem o account aqui!
+            OperationType operationType
     ) {
         this.createdBy = createdBy;
         this.person = person;

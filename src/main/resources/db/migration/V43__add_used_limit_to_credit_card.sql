@@ -1,0 +1,2 @@
+ALTER TABLE credit_card
+ADD COLUMN used_limit NUMERIC(19, 2) NOT NULL DEFAULT 0.00;

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,6 +21,9 @@ public record CreateInvoiceRequestDTO(
 
         @NotNull(message = "A pessoa beneficiária/fornecedora não foi informada.")
         UUID personId,
+
+        @NotNull(message = "A data da compra/emissão é obrigatória.")
+        LocalDate purchaseDate,
 
         @NotNull(message = "As parcelas devem ser informadas")
         List<@Valid InstallmentDTO> installments

@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,5 +97,5 @@ public abstract class PaymentInstrumentBase implements PaymentInstrument {
 
     public abstract PaymentMethodDetailsDTO toDTO();
 
-    public abstract List<InstallmentDTO> process(List<InstallmentDTO> installmentDTOS);
+    public abstract List<InstallmentDTO> process(List<InstallmentDTO> installmentDTOS, LocalDate purchaseDate);
 }

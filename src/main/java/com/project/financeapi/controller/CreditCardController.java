@@ -23,16 +23,14 @@ public class CreditCardController {
 
     @GetMapping
     public ResponseEntity<List<CreditCardDetailsDTO>> getAll(
-            @RequestHeader("X-Auth-Token") String token
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(creditCardService.getAll(token));
+        return ResponseEntity.status(HttpStatus.OK).body(creditCardService.getAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CreditCardDetailsDTO> getById(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable UUID id
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(creditCardService.getById(token, id));
+        return ResponseEntity.status(HttpStatus.OK).body(creditCardService.getById(id));
     }
 }

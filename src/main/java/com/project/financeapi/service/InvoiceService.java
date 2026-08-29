@@ -100,8 +100,18 @@ public class InvoiceService {
                                     "Instrumento de pagamento inválido"
                             ));
 
+            // Consome o limite do cartão
+            if (instrument instanceof CreditCard card) {
+                BigDecimal totalAmountForCard = entry.getValue().stream()
+                        .map(InstallmentDTO::amount)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                card.consumeLimit(totalAmountForCard);
+                paymentInstrumentRepository.save(card);
+            }
+
             List<InstallmentDTO> processed =
-                    instrument.process(entry.getValue());
+                    instrument.process(entry.getValue(), dto.purchaseDate());
 
             processedInstallments.addAll(processed);
         }
@@ -120,7 +130,7 @@ public class InvoiceService {
                             user,
                             invoice,
                             paymentInstrumentRepository.getReferenceById(dtoItem.instrument()),
-                            installmentAccount // 🌟 Passando a conta!
+                            installmentAccount
                     );
                 })
                 .toList();
@@ -132,11 +142,8 @@ public class InvoiceService {
     }
 
     public List<InvoiceResponseDTO> findAll() {
-
         User user = userContextService.getAuthenticatedUser();
-
         List<Invoice> invoices = invoiceRepository.findByCreatedBy(user);
-
         return invoices.stream().map(Invoice::toResponse).toList();
     }
 
@@ -156,9 +163,16 @@ public class InvoiceService {
                 new BusinessException(HttpStatus.NOT_FOUND, "O documento informado não existe.")
         );
 
-        // 🌟 REGRA 3: Exclusão de Fatura inteira (só se não houver nenhuma transação em NENHUMA parcela)
         if (invoice.getTotalPaid().add(invoice.getTotalDiscount()).compareTo(BigDecimal.ZERO) > 0) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Não é possível excluir uma fatura que já possui transações (pagamentos ou descontos). Estorne as transações antes de excluir.");
+        }
+
+        // Liberar o limite de todos os cartões envolvidos antes de excluir
+        for (Installment installment : invoice.getInstallments()) {
+            if (installment.getPaymentInstrument() instanceof CreditCard card) {
+                card.freeUpLimit(installment.getAmount());
+                paymentInstrumentRepository.save(card);
+            }
         }
 
         invoiceRepository.delete(invoice);
@@ -176,23 +190,22 @@ public class InvoiceService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para excluir esta parcela.");
         }
 
-        // 🌟 SUA REGRA DE OURO AQUI: Só bloqueia se o líquido amortizado for maior que zero!
-        // Não importa se tem 100 transações de erro/estorno, se a soma deu zero, pode apagar.
         if (installment.getTotalPaid().add(installment.getTotalDiscount()).compareTo(BigDecimal.ZERO) > 0) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Não é possível excluir uma parcela que possui saldo já amortizado. Faça o estorno dos pagamentos primeiro.");
         }
 
         Invoice invoice = installment.getInvoice();
 
+        // Liberar limite do cartão caso essa parcela esteja vinculada a um
+        if (installment.getPaymentInstrument() instanceof CreditCard card) {
+            card.freeUpLimit(installment.getAmount());
+            paymentInstrumentRepository.save(card);
+        }
+
         if (invoice.getInstallments().size() == 1) {
-            // Se for a última parcela, apaga a fatura inteira
             invoiceRepository.delete(invoice);
         } else {
-            // 🌟 A SOLUÇÃO AQUI: Remove a parcela da lista da Fatura mãe!
-            // Isso diz ao Hibernate: "Essa parcela foi desvinculada, pode apagar sem medo".
             invoice.getInstallments().remove(installment);
-
-            // Agora o delete vai funcionar e enviar o comando SQL para o banco!
             installmentRepository.delete(installment);
         }
     }
@@ -209,33 +222,63 @@ public class InvoiceService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar esta parcela.");
         }
 
-        // 🌟 TRAVA MATEMÁTICA: O novo valor não pode ser menor que o que já foi efetivamente pago.
         BigDecimal amortized = installment.getTotalPaid().add(installment.getTotalDiscount());
         if (dto.amount().compareTo(amortized) < 0) {
             throw new BusinessException(HttpStatus.BAD_REQUEST,
                     "O novo valor (R$ " + dto.amount() + ") não pode ser menor que o valor já amortizado (R$ " + amortized + "). Estorne o pagamento primeiro.");
         }
 
+        // 🌟 LÓGICA DE TROCA DE INSTRUMENTO E AJUSTE DE LIMITE 🌟
+        PaymentInstrumentBase oldInstrument = installment.getPaymentInstrument();
+        BigDecimal oldAmount = installment.getAmount();
+        BigDecimal newAmount = dto.amount();
+
+        PaymentInstrumentBase newInstrument = null;
+        if (dto.paymentInstrumentId() != null) {
+            newInstrument = paymentInstrumentRepository.findByIdAndUser(dto.paymentInstrumentId(), user.getId())
+                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Instrumento não encontrado."));
+        }
+
+        // Verifica se houve troca de instrumento (de A para B, de Nulo para A, ou de A para Nulo)
+        boolean instrumentChanged = false;
+        if (oldInstrument == null && newInstrument != null) instrumentChanged = true;
+        else if (oldInstrument != null && newInstrument == null) instrumentChanged = true;
+        else if (oldInstrument != null && newInstrument != null && !oldInstrument.getId().equals(newInstrument.getId())) instrumentChanged = true;
+
+        if (instrumentChanged) {
+            // 1. Devolve o limite para o instrumento ANTIGO (se era cartão)
+            if (oldInstrument instanceof CreditCard oldCard) {
+                oldCard.freeUpLimit(oldAmount);
+                paymentInstrumentRepository.save(oldCard);
+            }
+            // 2. Consome o limite do instrumento NOVO (se for cartão)
+            if (newInstrument instanceof CreditCard newCard) {
+                newCard.consumeLimit(newAmount);
+                paymentInstrumentRepository.save(newCard);
+            }
+        } else {
+            // Instrumento não mudou. Se for cartão, ajusta apenas a diferença matemática
+            if (oldInstrument instanceof CreditCard card) {
+                BigDecimal difference = newAmount.subtract(oldAmount);
+
+                if (difference.compareTo(BigDecimal.ZERO) > 0) {
+                    card.consumeLimit(difference); // Aumentou o valor da parcela
+                } else if (difference.compareTo(BigDecimal.ZERO) < 0) {
+                    card.freeUpLimit(difference.abs()); // Diminuiu o valor da parcela
+                }
+                paymentInstrumentRepository.save(card);
+            }
+        }
+
         // Atualiza a Conta
         AccountBase account = accountRepository.findById(dto.accountId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada."));
+
         installment.setAccount(account);
-
-        // Atualiza o Instrumento (opcional)
-        if (dto.paymentInstrumentId() != null) {
-            PaymentInstrumentBase instrument = paymentInstrumentRepository.findByIdAndUser(dto.paymentInstrumentId(), user.getId())
-                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Instrumento não encontrado."));
-            installment.setPaymentInstrument(instrument);
-        } else {
-            installment.setPaymentInstrument(null); // Limpou o instrumento
-        }
-
-        // Atualiza os dados básicos
-        installment.setAmount(dto.amount());
+        installment.setPaymentInstrument(newInstrument);
+        installment.setAmount(newAmount);
         installment.setDueDate(dto.dueDate());
 
-        // Salva e retorna o DTO atualizado
         return installmentRepository.save(installment).toResponse();
     }
-
 }
