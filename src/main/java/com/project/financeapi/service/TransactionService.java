@@ -66,7 +66,7 @@ public class TransactionService {
 
             validateAccountAndInstrumentCompatibility(account, instrument);
 
-            // 4. Validação da Data (Adicionado isEqual indiretamente usando apenas isBefore)
+            // 4. Validação da Data
             if (LocalDate.now().isBefore(dto.paymentDate())) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "A data informada não pode ser futura à data atual.");
             }
@@ -91,7 +91,15 @@ public class TransactionService {
             if(installment.getMovementDirection() == MovementDirection.OUTFLOW) {
                 accountTotals.merge(account.getId(), effectiveAmount, BigDecimal::add);
             }
-            // 6. Instancia a Transação
+
+            // 🌟 6. RESTITUIÇÃO DE LIMITE DO CARTÃO DE CRÉDITO
+            // Se a parcela que estamos pagando foi feita no Cartão, o pagamento libera o limite
+            if (installment.getPaymentInstrument() instanceof CreditCard card) {
+                card.freeUpLimit(principalAmount); // Apenas o valor principal devolve o limite
+                paymentInstrumentRepository.save(card);
+            }
+
+            // 7. Instancia a Transação
             Transaction transaction = new Transaction(
                     principalAmount,
                     interest,
@@ -111,11 +119,10 @@ public class TransactionService {
             transactions.add(transaction);
         }
 
-        // 7. Validação de Sobrepaga da Parcela (Apenas valor Principal)
+        // 8. Validação de Sobrepaga da Parcela (Apenas valor Principal)
         for (Map.Entry<UUID, BigDecimal> entry : principalAmortizationTotals.entrySet()) {
             Installment installment = installmentRepository.findByIdForUpdate(entry.getKey()).orElseThrow();
 
-            // Aqui validamos apenas o montante principal contra o saldo restante principal
             BigDecimal totalAmortizedAfterPayment = installment.getTotalPaid().add(entry.getValue());
 
             if (totalAmortizedAfterPayment.compareTo(installment.getAmount()) > 0) {
@@ -123,11 +130,10 @@ public class TransactionService {
             }
         }
 
-        // 8. Validação do Saldo da Conta
+        // 9. Validação do Saldo da Conta
         for (Map.Entry<UUID, BigDecimal> entry : accountTotals.entrySet()) {
             AccountBase account = accountRepository.findByIdForUpdate(entry.getKey()).orElseThrow();
 
-            // 🌟 Substituído pela função auxiliar
             validateSufficientFunds(
                     account,
                     entry.getValue(),
@@ -135,7 +141,7 @@ public class TransactionService {
             );
         }
 
-        // 9. Persistência
+        // 10. Persistência
         return transactionRepository.saveAll(transactions).stream()
                 .map(Transaction::toResponse)
                 .toList();
@@ -171,7 +177,7 @@ public class TransactionService {
                 ? dto.reason()
                 : "Estorno da transação " + original.getId();
 
-        // 🌟 LÓGICA DE ESTORNO DUPLO PARA TRANSFERÊNCIAS (Verificando o Vínculo)
+        // LÓGICA DE ESTORNO DUPLO PARA TRANSFERÊNCIAS
         if (original.getMovementType() == MovementType.TRANSFER && original.getLinkedTransaction() != null) {
             Transaction sibling = original.getLinkedTransaction();
 
@@ -179,40 +185,32 @@ public class TransactionService {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "A contraparte desta transferência já foi estornada.");
             }
 
-            // Se estamos estornando uma ENTRADA (INFLOW), a direção do estorno será SAÍDA (OUTFLOW).
-            // Isso significa que vamos tirar o dinheiro que já estava na conta.
-            // Precisamos validar se a conta não ficará negativa/estourada.
             if (original.getMovementDirection() == MovementDirection.INFLOW) {
                 validateSufficientFunds(
                         original.getAccount(),
-                        original.getAmount(), // O valor nominal (principal)
+                        original.getAmount(),
                         "Saldo insuficiente para estornar este recebimento. A conta ficaria negativa além do limite."
                 );
             }
 
-            // 1. Cria o Estorno da Original (usando o construtor completo para garantir o reversalOf)
             Transaction originalReversal = new Transaction(
                     original.getAmount(), original.getInterest(), original.getFine(), original.getDiscount(),
                     original.getMovementDirection().toggle(), MovementType.REVERSAL, LocalDate.now(),
                     user, original.getAccount(), null, original, null, finalReason
             );
 
-            // 2. Cria o Estorno da Irmã
             Transaction siblingReversal = new Transaction(
                     sibling.getAmount(), sibling.getInterest(), sibling.getFine(), sibling.getDiscount(),
                     sibling.getMovementDirection().toggle(), MovementType.REVERSAL, LocalDate.now(),
                     user, sibling.getAccount(), null, sibling, null, finalReason + " (Estorno Vinculado)"
             );
 
-            // 3. Cruza os vínculos dos novos estornos
             originalReversal.setLinkedTransaction(siblingReversal);
             siblingReversal.setLinkedTransaction(originalReversal);
 
-            // 4. Marca as transações originais como estornadas (reversed = true)
             original.setReversed(true);
             sibling.setReversed(true);
 
-            // 5. Salva as originais atualizadas e depois os estornos
             transactionRepository.saveAll(List.of(original, sibling));
             transactionRepository.saveAll(List.of(originalReversal, siblingReversal));
 
@@ -222,6 +220,15 @@ public class TransactionService {
         // ==============================================================
         // Fluxo padrão para transações COMUNS (Pagamentos, Recebimentos, Ajustes)
         // ==============================================================
+
+        if (original.getMovementDirection() == MovementDirection.INFLOW) {
+            validateSufficientFunds(
+                    original.getAccount(),
+                    original.getAmount(),
+                    "Saldo insuficiente para estornar este recebimento. A conta ficaria negativa além do limite."
+            );
+        }
+
         Transaction reversal = new Transaction(
                 original.getAmount(),
                 original.getInterest(),
@@ -238,9 +245,16 @@ public class TransactionService {
                 finalReason
         );
 
-        // 🌟 Marca a transação original como estornada e salva
+        // Marca a transação original como estornada e salva
         original.setReversed(true);
         transactionRepository.save(original);
+
+        // 🌟 CONSUMO DE LIMITE DE CARTÃO NO ESTORNO
+        // Se a transação original era o pagamento de um cartão, o estorno significa que a dívida voltou!
+        if (original.getInstallment() != null && original.getInstallment().getPaymentInstrument() instanceof CreditCard card) {
+            card.consumeLimit(original.getAmount()); // Consome novamente o limite
+            paymentInstrumentRepository.save(card);
+        }
 
         // Salva e retorna a nova transação de estorno
         Transaction savedReversal = transactionRepository.save(reversal);
@@ -252,13 +266,11 @@ public class TransactionService {
     public List<TransactionResponseDTO> createManualAdjustments(CreateManualAdjustmentTransactionRequestDTO request) {
         User user = userContextService.getAuthenticatedUser();
 
-        // 📊 Acumulador de impacto financeiro por conta para validação de saldo
         Map<UUID, BigDecimal> accountBalanceImpact = new HashMap<>();
         List<Transaction> transactions = new ArrayList<>();
 
         for (CreateManualAdjustmentTransactionDTO dto : request.dto()) {
 
-            // 1. Validar a Conta com LOCK PESSIMISTA
             AccountBase account = accountRepository.findByIdForUpdate(dto.accountId())
                     .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada."));
 
@@ -266,7 +278,6 @@ public class TransactionService {
                 throw new BusinessException(HttpStatus.FORBIDDEN, "A conta não pertence ao usuário.");
             }
 
-            // 2. Validar o Instrumento de Pagamento (se houver)
             PaymentInstrumentBase instrument = null;
             if (dto.paymentInstrumentId() != null) {
                 instrument = paymentInstrumentRepository.findByIdAndUser(dto.paymentInstrumentId(), user.getId())
@@ -275,43 +286,37 @@ public class TransactionService {
 
             validateAccountAndInstrumentCompatibility(account, instrument);
 
-            // 3. Validação de Data
             if(LocalDate.now().isBefore(dto.paymentDate())){
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "A data do ajuste não pode ser futura à data atual.");
             }
 
-            // 4. Calcular o impacto da transação no saldo (- se saída, + se entrada)
             BigDecimal impact = dto.direction() == MovementDirection.OUTFLOW
                     ? dto.amount().negate()
                     : dto.amount();
 
             accountBalanceImpact.merge(account.getId(), impact, BigDecimal::add);
 
-            // 5. Instanciar a Transação Avulsa (Ajuste)
             Transaction transaction = new Transaction(
                     dto.amount(),
-                    BigDecimal.ZERO, // Sem juros
-                    BigDecimal.ZERO, // Sem multas
-                    BigDecimal.ZERO, // Sem descontos
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
                     dto.direction(),
-                    MovementType.MANUAL_ADJUSTMENT, // Uso correto do Enum para Ajuste Manual
+                    MovementType.MANUAL_ADJUSTMENT,
                     dto.paymentDate(),
                     user,
                     account,
-                    null, // Installment é NULL
-                    null, // ReversalOf é NULL
+                    null,
+                    null,
                     instrument,
-                    dto.reason() // Salvamos o motivo no campo observations
+                    dto.reason()
             );
 
             transactions.add(transaction);
-        } // 🌟 FIM DO LAÇO PRINCIPAL
+        }
 
-        // 6. Validar limite de saque para contas correntes (Check de Saldo Acumulado)
         for (Map.Entry<UUID, BigDecimal> entry : accountBalanceImpact.entrySet()) {
-            if (entry.getValue().signum() < 0) { // Se o saldo final do lote for negativo (saída)
-
-                // 🌟 Renomeado para impactedAccount e movido para fora do laço principal
+            if (entry.getValue().signum() < 0) {
                 AccountBase impactedAccount = accountRepository.findByIdForUpdate(entry.getKey()).orElseThrow();
 
                 validateSufficientFunds(
@@ -322,7 +327,6 @@ public class TransactionService {
             }
         }
 
-        // 7. Persistir os ajustes
         return transactionRepository.saveAll(transactions).stream()
                 .map(Transaction::toResponse)
                 .toList();
@@ -368,7 +372,6 @@ public class TransactionService {
                 ? request.observations()
                 : "Transferência";
 
-        // 1. Cria e SALVA a Saída primeiro (para gerar o ID no banco)
         Transaction outflow = new Transaction(
                 request.amount(), MovementDirection.OUTFLOW, MovementType.TRANSFER,
                 request.transferDate(), user, sourceAccount,
@@ -376,7 +379,6 @@ public class TransactionService {
         );
         outflow = transactionRepository.save(outflow);
 
-        // 2. Cria e SALVA a Entrada já apontando para a Saída
         Transaction inflow = new Transaction(
                 request.amount(), MovementDirection.INFLOW, MovementType.TRANSFER,
                 request.transferDate(), user, destAccount,
@@ -384,7 +386,6 @@ public class TransactionService {
         );
         inflow = transactionRepository.save(inflow);
 
-        // 3. Atualiza a Saída apontando para a Entrada
         outflow.setLinkedTransaction(inflow);
         transactionRepository.save(outflow);
 
@@ -395,7 +396,6 @@ public class TransactionService {
             AccountBase account,
             PaymentInstrumentBase instrument
     ) {
-        // 🌟 CORREÇÃO: Previne o erro se a transação não tiver instrumento de pagamento!
         if (instrument == null) {
             return;
         }
@@ -424,19 +424,13 @@ public class TransactionService {
         }
     }
 
-    /**
-     * Valida se uma conta tem saldo suficiente para suportar uma saída de recursos,
-     * respeitando as regras específicas do Cheque Especial (Overdraft) para Contas Correntes.
-     */
     private void validateSufficientFunds(AccountBase account, BigDecimal amountToRemove, String customErrorMessage) {
         BigDecimal availableBalance = account.getBalance();
 
-        // 🌟 Se for Conta Corrente, soma o Limite (Cheque Especial) ao saldo disponível
         if (account.getType() == AccountType.CHECKING) {
             availableBalance = availableBalance.add(((CheckingAccount) account).getOverdraftLimit());
         }
 
-        // Se o saldo disponível for menor que a quantia a ser removida
         if (availableBalance.compareTo(amountToRemove) < 0) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, customErrorMessage);
         }

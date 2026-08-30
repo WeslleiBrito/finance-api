@@ -6,6 +6,7 @@ import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
 import com.project.financeapi.enumSystem.InstrumentNature;
 import com.project.financeapi.enumSystem.MovementDirection;
+import com.project.financeapi.enumSystem.PaymentStatus;
 import com.project.financeapi.enumSystem.PaymentType;
 import com.project.financeapi.exception.BusinessException;
 import jakarta.persistence.*;
@@ -44,7 +45,7 @@ public class CreditCard extends PaymentInstrumentBase {
     @Column(name = "credit_limit", nullable = false)
     private BigDecimal creditLimit;
 
-    // 🌟 NOVA COLUNA: Limite já comprometido
+    // Mantido por compatibilidade/histórico, mas ignorado no cálculo principal
     @Column(name = "used_limit", nullable = false)
     private BigDecimal usedLimit = BigDecimal.ZERO;
 
@@ -96,15 +97,36 @@ public class CreditCard extends PaymentInstrumentBase {
     }
 
     /**
-     * 🌟 AGORA COM O(1) DE COMPLEXIDADE: Cálculo instantâneo do limite
+     * 🌟 FONTE DA VERDADE: Calcula o limite comprometido somando o saldo devedor das parcelas vinculadas.
      */
     @Transient
-    public BigDecimal getAvailableLimit() {
-        return this.creditLimit.subtract(this.usedLimit);
+    public BigDecimal getDynamicUsedLimit() {
+        if (this.installments != null && !this.installments.isEmpty()) {
+            return this.installments.stream()
+                    .filter(i -> i.isPaid() != PaymentStatus.CANCELLED)
+                    .map(i -> {
+                        BigDecimal amt = i.getAmount() != null ? i.getAmount() : BigDecimal.ZERO;
+                        BigDecimal paid = i.getTotalPaid() != null ? i.getTotalPaid() : BigDecimal.ZERO;
+                        // O que compromete o limite é o valor que ainda falta pagar da parcela
+                        return amt.subtract(paid).max(BigDecimal.ZERO);
+                    })
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        // Se as parcelas não estiverem carregadas, usa a coluna do banco como fallback de segurança
+        return this.usedLimit != null ? this.usedLimit : BigDecimal.ZERO;
     }
 
     /**
-     * Consome o limite do cartão (Ex: ao fazer uma nova compra)
+     * 🌟 AGORA COM CÁLCULO DINÂMICO: Retorna o limite disponível real
+     */
+    @Transient
+    public BigDecimal getAvailableLimit() {
+        return this.creditLimit.subtract(this.getDynamicUsedLimit()).max(BigDecimal.ZERO);
+    }
+
+    /**
+     * Consome o limite temporariamente (útil no momento exato da criação antes das parcelas persistirem)
      */
     public void consumeLimit(BigDecimal amount) {
         if (amount == null) return;
@@ -115,16 +137,21 @@ public class CreditCard extends PaymentInstrumentBase {
     }
 
     /**
-     * Libera o limite do cartão (Ex: ao pagar a fatura ou estornar uma compra)
+     * Libera o limite da coluna base
      */
     public void freeUpLimit(BigDecimal amount) {
         if (amount == null) return;
-        // Subtrai o valor e garante que o limite usado nunca fique negativo
         this.usedLimit = this.usedLimit.subtract(amount).max(BigDecimal.ZERO);
     }
 
     @Override
     public CreditCardDetailsDTO toDTO(){
+
+        List<com.project.financeapi.dto.Installments.InstallmentResponseDTO> mappedInstallments =
+                this.installments != null
+                        ? this.installments.stream().map(Installment::toResponse).toList()
+                        : new ArrayList<>();
+
         return new CreditCardDetailsDTO(
                 this.getId(),
                 this.getPaymentType(),
@@ -135,17 +162,18 @@ public class CreditCard extends PaymentInstrumentBase {
                 this.closingDay,
                 this.dueDay,
                 this.creditLimit,
-                this.getAvailableLimit(),
+                this.getAvailableLimit(), // 🌟 Chama o novo cálculo dinâmico automaticamente
                 this.revolvingInterest,
                 this.fine,
                 this.getStatus(),
                 this.getCardBrand().toResponse(com.project.financeapi.enumSystem.CardBrandStatus.ACTIVE),
-                new BankResponseDTO(
+                this.getBank() != null ? new BankResponseDTO(
                         this.getBank().getId(),
                         this.getBank().getName(),
                         this.getBank().getCode(),
                         this.getBank().getStatus()
-                )
+                ) : null,
+                mappedInstallments
         );
     }
 
@@ -167,15 +195,12 @@ public class CreditCard extends PaymentInstrumentBase {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Limite insuficiente no cartão de crédito.");
         }
 
-        // 🌟 CORREÇÃO FINAL: Usa a data da compra passada pelo Invoice (e não da primeira parcela)
         if (purchaseDate == null) {
-            purchaseDate = LocalDate.now(); // Fallback
+            purchaseDate = LocalDate.now();
         }
 
-        // Verifica se a data da compra já passou do dia de fechamento
         boolean afterClosing = purchaseDate.getDayOfMonth() > this.closingDay;
 
-        // Se passou do fechamento, a fatura base cai para o mês seguinte
         LocalDate baseInvoiceDate = afterClosing
                 ? purchaseDate.plusMonths(1)
                 : purchaseDate;
@@ -192,7 +217,6 @@ public class CreditCard extends PaymentInstrumentBase {
         for (int i = 0; i < ordered.size(); i++) {
             InstallmentDTO dto = ordered.get(i);
 
-            // Para compras parceladas, cada parcela avança exatamente um mês a partir do primeiro vencimento
             LocalDate dueDate = firstDueDate.plusMonths(i);
 
             processed.add(new InstallmentDTO(
@@ -201,19 +225,15 @@ public class CreditCard extends PaymentInstrumentBase {
                     dueDate,
                     dto.accountId(),
                     dto.instrument(),
-                    MovementDirection.OUTFLOW // Lançamento de cartão sempre tira dinheiro
+                    MovementDirection.OUTFLOW
             ));
         }
         return processed;
     }
 
     private LocalDate calculateDueDate(LocalDate baseInvoiceDate, boolean dueInNextMonth) {
-        // Empurra para o mês seguinte caso seja o cenário de virada de mês
         LocalDate targetMonth = dueInNextMonth ? baseInvoiceDate.plusMonths(1) : baseInvoiceDate;
-
-        // Proteção contra meses que não têm dia 31, 30 ou 29
         int day = Math.min(this.dueDay, targetMonth.lengthOfMonth());
-
         return LocalDate.of(targetMonth.getYear(), targetMonth.getMonth(), day);
     }
 }

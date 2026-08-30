@@ -9,8 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,12 +19,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CreditCardService {
 
-
     private final CreditCardRepository creditCardRepository;
     private final UserContextService userContextService;
-    private static final Logger logger = LoggerFactory.getLogger(CreditCardService.class);
 
-
+    // 🌟 Anotação obrigatória para permitir o carregamento das parcelas vinculadas
+    @Transactional(readOnly = true)
     public List<CreditCardDetailsDTO> getAll() {
         User user = userContextService.getAuthenticatedUser();
 
@@ -35,6 +33,8 @@ public class CreditCardService {
                 .toList();
     }
 
+    // 🌟 Anotação obrigatória para permitir o carregamento das parcelas vinculadas
+    @Transactional(readOnly = true)
     public CreditCardDetailsDTO getById(UUID id) {
         User user = userContextService.getAuthenticatedUser();
 
@@ -43,5 +43,4 @@ public class CreditCardService {
 
         return creditCard.toDTO();
     }
-
 }
