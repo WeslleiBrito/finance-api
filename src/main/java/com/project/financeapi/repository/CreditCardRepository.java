@@ -18,7 +18,7 @@ public interface CreditCardRepository extends JpaRepository<CreditCard, UUID> {
               AND c.status != "CANCELED"
             """)
     Optional<CreditCard> findByCreatedByAndId(
-            @Param("userId") UUID userId,
+            @Param("userId") String userId,
             @Param("cardId") UUID cardId
     );
 
@@ -26,6 +26,6 @@ public interface CreditCardRepository extends JpaRepository<CreditCard, UUID> {
             SELECT c FROM CreditCard c
             WHERE c.status != "CANCELED" AND c.createdBy.id = :userId
             """)
-    List<CreditCard> findAllByCreatedBy_Id(@Param("userId") UUID userId);
+    List<CreditCard> findAllByCreatedBy_Id(@Param("userId") String userId);
 
 }

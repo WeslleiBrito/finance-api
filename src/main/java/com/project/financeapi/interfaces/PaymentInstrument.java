@@ -2,7 +2,8 @@ package com.project.financeapi.interfaces;
 
 import com.project.financeapi.dto.payment.PaymentMethodDetailsDTO;
 import com.project.financeapi.entity.Installment;
-import com.project.financeapi.enums.InstrumentNature;
+import com.project.financeapi.enumSystem.CardBrandStatus;
+import com.project.financeapi.enumSystem.InstrumentNature;
 import java.util.List;
 
 public interface PaymentInstrument {

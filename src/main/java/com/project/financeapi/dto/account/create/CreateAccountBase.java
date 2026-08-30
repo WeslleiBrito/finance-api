@@ -1,9 +1,7 @@
 package com.project.financeapi.dto.account.create;
 
-import com.project.financeapi.enums.AccountType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -15,7 +13,7 @@ public record CreateAccountBase(
         @Size(max = 30, message = "O nome da conta deve ter no máximo 30 caracteres")
         String name,
 
-        @Positive(message = "O valor inicial da conta precisa ser maior que zero.")
+        @NotNull(message = "O valor inicial é obrigatório.")
         BigDecimal initialValue,
 
         UUID bankId

@@ -1,38 +1,64 @@
-
 services:
-  db:
-    image: postgres:15
-    container_name: finance-db
-    environment:
-      POSTGRES_DB: financeapi
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - finance_network
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: finance-app
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/financeapi
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: admin
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
-      JWT_SECRET: aHOgqS8hoTtca6mF58hGsNRDnSacFc29KWZ4upVKE7Ukzv33ig
-      JWT_EXPIRATION: 86400000
+    restart: unless-stopped
+
     ports:
-      - "8080:8080"
+      - "${APP_PORT}:8080"
+
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      
+      # Nomes que o Spring Boot reconhece nativamente:
+      SPRING_DATASOURCE_URL: ${DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASS}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: ${DB_DRIVER}
+      SPRING_JPA_DATABASE_PLATFORM: ${DB_DIALECT}
+
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
     networks:
       - finance_network
 
-volumes:
-  postgres_data:
+
+  db:
+    image: postgres:15-alpine
+    container_name: finance-db
+    restart: unless-stopped
+
+    ports:
+      - "${IP_DB}:5432"
+
+    environment:
+      POSTGRES_DB: financeapi
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d financeapi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - finance_network
+
 
 networks:
   finance_network:
+    driver: bridge
+
+
+volumes:
+  postgres_data:

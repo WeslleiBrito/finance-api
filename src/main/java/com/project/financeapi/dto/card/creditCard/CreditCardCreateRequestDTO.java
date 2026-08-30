@@ -21,8 +21,8 @@ public record CreditCardCreateRequestDTO(
         @Max(value = 31, message = "A maior data para o vencimento do cartão é 31.")
         Integer dueDay,
         @NotNull(message = "A bandeira precisa ser informada.")
-        UUID cardBrand,
-        UUID bank,
+        UUID cardBrandId,
+        UUID bankId,
         BigDecimal revolvingInterest,
         BigDecimal fine,
         LocalDate expirationDate

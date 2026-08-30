@@ -1,7 +1,10 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.dto.person.LegalEntityPersonResponseDTO;
+import com.project.financeapi.dto.person.PhysicalPersonResponseDTO;
 import com.project.financeapi.entity.base.PersonBase;
-import com.project.financeapi.enums.PersonType;
+import com.project.financeapi.enumSystem.PersonRole;
+import com.project.financeapi.enumSystem.PersonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -18,15 +21,47 @@ public class LegalEntity extends PersonBase {
     @Column(name = "trade_name", nullable = false)
     private String tradeName;
 
-    @Column(name = "cnpj", nullable = false)
+    @Column(name = "cnpj")
     private String cnpj;
 
-    public LegalEntity(User createdBy, String cnpj,  String name, String tradeName, List<Phone> phones, List<Email> emails, List<Address> addresses) {
-        super(createdBy, name, PersonType.LEGAL_ENTITY, phones, emails, addresses);
+    public LegalEntity(
+            User createdBy,
+            String cnpj,
+            String name,
+            String tradeName,
+            PersonRole role,
+            List<Phone> phones,
+            List<Email> emails,
+            List<Address> addresses
+    ) {
+        super(createdBy, name, PersonType.LEGAL_ENTITY, role, phones, emails, addresses);
         this.tradeName = (tradeName != null) ? tradeName : name;
         this.cnpj = cnpj;
     }
 
     public LegalEntity() {
     }
+
+    public void updateLegalData(String cnpj, String tradeName) {
+        if (cnpj != null) this.setCnpj(cnpj);
+        if (tradeName != null) this.setTradeName(tradeName);
+    }
+
+    @Override
+    public LegalEntityPersonResponseDTO toDTO() {
+
+        return new LegalEntityPersonResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getTradeName(),
+                this.getCnpj(),
+                this.getPersonType(),
+                this.getRole(),
+                this.getPhones().stream().map(Phone::toResponse).toList(),
+                this.getEmails().stream().map(Email::toResponse).toList(),
+                this.getAddresses().stream().map(Address::toResponse).toList(),
+                this.getInvoices().stream().map(Invoice::toResponse).toList()
+        );
+    }
+
 }

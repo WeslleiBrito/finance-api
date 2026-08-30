@@ -1,11 +1,11 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.ResponseDefaultDTO;
-import com.project.financeapi.dto.operationGroup.OperationGroupCreateRequestDTO;
-import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
-import com.project.financeapi.dto.operationGroup.UpdateRequestOperationGroup;
-import com.project.financeapi.dto.UpdateStatusRequestDTO;
+import com.project.financeapi.dto.operationGroup_.OperationGroupCreateRequestDTO;
+import com.project.financeapi.dto.operationGroup_.OperationGroupResponseDTO;
+import com.project.financeapi.dto.operationGroup_.UpdateRequestOperationGroup;
+import com.project.financeapi.enumSystem.StatusEntity;
 import com.project.financeapi.service.OperationGroupService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/operation-group")
+@Tag(name = "Grupos de Operação", description = "Gerenciamento de agrupamentos para operações financeiras")
 public class OperationGroupController {
 
     private final OperationGroupService operationGroupService;
@@ -30,61 +31,57 @@ public class OperationGroupController {
             @Valid @RequestBody OperationGroupCreateRequestDTO dto
         )
     {
-        OperationGroupResponseDTO operationGroup = operationGroupService.create(token, dto);
+        OperationGroupResponseDTO operationGroup = operationGroupService.create(dto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(operationGroup);
     }
 
     @GetMapping
     public ResponseEntity<List<OperationGroupResponseDTO>> findAll(
-            @RequestHeader("X-Auth-Token") String token
     ){
-        List<OperationGroupResponseDTO> operationGroups = operationGroupService.findAll(token);
+        List<OperationGroupResponseDTO> operationGroups = operationGroupService.findAll();
 
         return ResponseEntity.status(HttpStatus.OK).body(operationGroups);
     }
 
-    @GetMapping("/active")
+    @GetMapping("/operation-staus/{status}")
     public ResponseEntity<List<OperationGroupResponseDTO>> findActive(
-            @RequestHeader("X-Auth-Token") String token
-    ){
-        List<OperationGroupResponseDTO> operationGroups = operationGroupService.findActive(token);
+            @Valid @PathVariable StatusEntity status
+            ){
+        List<OperationGroupResponseDTO> operationGroups = operationGroupService.findAllOperationStatus(status);
 
         return ResponseEntity.status(HttpStatus.OK).body(operationGroups);
     }
 
-    @GetMapping("/inactivated")
-    public ResponseEntity<List<OperationGroupResponseDTO>> findInactivated(
-            @RequestHeader("X-Auth-Token") String token
-    ){
-        List<OperationGroupResponseDTO> operationGroups = operationGroupService.findInactivated(token);
+    @GetMapping("/{id}")
+    public ResponseEntity<OperationGroupResponseDTO> findById(
+            @Valid @PathVariable UUID id
+    ) {
+        OperationGroupResponseDTO operationGroup = operationGroupService.findById(id);
 
-        return ResponseEntity.status(HttpStatus.OK).body(operationGroups);
+        return ResponseEntity.status(HttpStatus.OK).body(operationGroup);
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<ResponseDefaultDTO> update(
-            @RequestHeader("X-Auth-Token") String token,
+    public ResponseEntity<OperationGroupResponseDTO> update(
             @Valid @RequestBody UpdateRequestOperationGroup dto,
             @Valid @PathVariable UUID id
     ){
 
-        ResponseDefaultDTO response = operationGroupService.update(token, id, dto);
+        OperationGroupResponseDTO response = operationGroupService.update(id, dto);
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
 
     }
 
-    @PutMapping("/update-status/{id}")
-    public ResponseEntity<ResponseDefaultDTO> updateStatusOperationGroup(
-            @RequestHeader("X-Auth-Token") String token,
-            @Valid @RequestBody UpdateStatusRequestDTO dto,
+    @PatchMapping("/update-status/{id}")
+    public ResponseEntity<HttpStatus> updateStatusOperationGroup(
             @Valid @PathVariable UUID id
     ){
 
-        ResponseDefaultDTO response = operationGroupService.updateStatusOperationGroup(token, id, dto);
+        operationGroupService.updateStatusOperationGroup(id);
 
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+        return ResponseEntity.noContent().build();
 
     }
 }

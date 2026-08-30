@@ -1,10 +1,6 @@
 package com.project.financeapi.repository;
 
-import com.project.financeapi.entity.OperationGroup;
 import com.project.financeapi.entity.OperationType;
-import com.project.financeapi.entity.User;
-import com.project.financeapi.enums.MovementType;
-import com.project.financeapi.enums.OperationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,45 +9,40 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface OperationTypeRepository extends JpaRepository<OperationType, UUID> {
-
-    @Query("""
-            SELECT t FROM OperationType t
-            WHERE t.createdBy IS NULL OR t.createdBy = :user
-            ORDER BY t.name
-    """)
-    List<OperationType> findAllByUserOrDefault(@Param("user") User user);
+public interface OperationTypeRepository
+        extends JpaRepository<OperationType, UUID> {
 
 
     @Query("""
-            SELECT t FROM OperationType t
-            WHERE t.createdBy IS NULL OR t.createdBy = :user
-            ORDER BY t.name
-    """)
-    List<OperationType> findByCreatedByAndMovementType(@Param("user") User user, MovementType movementType);
-
-
-    @Query("""
-            SELECT t FROM OperationType t
-            WHERE t.createdBy IS NULL OR t.createdBy = :user
-            ORDER BY t.name
-    """)
-    List<OperationType> findByCreatedByAndOperationStatus(@Param("user") User user, OperationStatus operationStatus);
+                SELECT t
+                FROM OperationType t
+                WHERE LOWER(t.name) = LOWER(:name)
+                  AND (t.isSystem is true OR t.createdBy.id = :userId)
+                  AND t.group.id = :groupId
+            """)
+    Optional<OperationType> findAccessibleByName(
+            @Param("userId") String userId,
+            @Param("groupId") UUID groupId,
+            @Param("name") String name
+    );
 
     @Query("""
-            SELECT t FROM OperationType t
-            WHERE t.createdBy IS NULL OR t.createdBy = :user
-            ORDER BY t.name
-    """)
-    List<OperationType> findByCreatedByAndGroup(@Param("user") User user, OperationGroup operationGroup);
+                SELECT t
+                FROM OperationType t
+                WHERE t.id = :id AND (t.createdBy.id = :userId or t.isSystem is true)
+            """)
+    Optional<OperationType> findByUserIdAndId(
+            @Param("userId") String userId,
+            @Param("id") UUID id
+    );
 
-    @Query(
-            """
-                SELECT t FROM OperationType t
-                WHERE (t.createdBy IS NULL OR t.createdBy = :user) 
-                AND t.id = :id
-            """
-    )
-    Optional<OperationType> findByCreatedByAndId(@Param("user") User user, @Param("id") UUID id);
-
+    @Query("""
+                SELECT t
+                FROM OperationType t
+                WHERE t.isSystem = true OR t.createdBy.id = :userId
+            """)
+    List<OperationType> findAllOperationTypeUserId(
+            @Param("userId") String userId
+    );
 }
+

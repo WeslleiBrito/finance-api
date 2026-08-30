@@ -3,7 +3,9 @@ package com.project.financeapi.controller;
 import com.project.financeapi.dto.card.cardBrand.CardBrandCreateRequestDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandUpdateRequestDTO;
+import com.project.financeapi.enumSystem.CardBrandStatus;
 import com.project.financeapi.service.CardBrandService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/card-brand")
 @RequiredArgsConstructor
+@Tag(name = "Bandeiras de Cartão", description = "Gerenciamento das bandeiras de cartões disponíveis")
 public class CardBrandController {
 
     private final CardBrandService cardBrandService;
@@ -33,33 +36,46 @@ public class CardBrandController {
 
     @PutMapping("/{id}")
     public ResponseEntity<CardBrandResponseDTO> update(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @RequestBody CardBrandUpdateRequestDTO dto,
             @Valid @PathVariable UUID id
     ) {
 
-        CardBrandResponseDTO cardBrand = cardBrandService.update(token, dto, id);
+        CardBrandResponseDTO cardBrand = cardBrandService.update(dto, id);
 
         return ResponseEntity.status(HttpStatus.OK).body(cardBrand);
     }
 
+    @PatchMapping("/update-status/{id}")
+    public ResponseEntity<HttpStatus> updateStatus(
+            @Valid @PathVariable UUID id
+    ){
+        cardBrandService.updateStatus(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping
     public ResponseEntity<List<CardBrandResponseDTO>> getAll(
-            @RequestHeader("X-Auth-Token") String token
     ) {
 
-        List<CardBrandResponseDTO> cardBrands = cardBrandService.getAll(token);
+        List<CardBrandResponseDTO> cardBrands = cardBrandService.findAll();
 
         return ResponseEntity.status(HttpStatus.OK).body(cardBrands);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CardBrandResponseDTO> findById(
-            @RequestHeader("X-Auth-Token") String token,
             @Valid @PathVariable UUID id
     ) {
-        CardBrandResponseDTO cardBrand = cardBrandService.getById(token, id);
+        CardBrandResponseDTO cardBrand = cardBrandService.findById(id);
 
         return ResponseEntity.status(HttpStatus.OK).body(cardBrand);
+    }
+
+    @GetMapping("/card-brand-status/{status}")
+    public ResponseEntity<List<CardBrandResponseDTO>> findAllStatus(
+            @Valid @PathVariable CardBrandStatus status
+    ){
+      return ResponseEntity.status(HttpStatus.OK).body(cardBrandService.findAllCardBrandStatus(status));
     }
 }

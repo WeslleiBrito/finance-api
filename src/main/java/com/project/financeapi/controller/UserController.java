@@ -1,11 +1,9 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.user.LoginRequestDTO;
-import com.project.financeapi.dto.user.SignupRequestDTO;
-import com.project.financeapi.dto.user.UpdatePasswordRequestDTO;
-import com.project.financeapi.entity.User;
-import com.project.financeapi.dto.user.TokenUser;
+import com.project.financeapi.dto.user.SyncUserRequestDTO;
 import com.project.financeapi.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,26 +11,32 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "Usuários", description = "Endpoints para sincronização de utilizadores com o Firebase")
 public class UserController {
+
     private final UserService userService;
-    public UserController(UserService userService){ this.userService = userService; }
 
-    @PostMapping("/signup")
-    public ResponseEntity<TokenUser> signup(@Valid @RequestBody SignupRequestDTO dto){
-        TokenUser saved = userService.signup(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public UserController(UserService userService){
+        this.userService = userService;
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<TokenUser> login(@Valid @RequestBody LoginRequestDTO dto) {
-        TokenUser tokenUser = userService.login(dto);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(tokenUser);
-    }
+    @PostMapping("/sync")
+    @Operation(summary = "Sincroniza um novo utilizador do Firebase",
+            description = "Deve ser chamado pelo App logo após o registo no Firebase. Requer o Token do Firebase no header Authorization.")
+    public ResponseEntity<Void> syncUser(
+            @Valid @RequestBody SyncUserRequestDTO dto,
+            @RequestHeader("Authorization") String authHeader) {
 
-    @PatchMapping("/update-password")
-    public ResponseEntity<TokenUser> updatePassword(@RequestHeader("X-Auth-Token") String token,
-                                                    @Valid @RequestBody UpdatePasswordRequestDTO dto){
-        TokenUser tokenUser = userService.updatePassword(token, dto);
-        return ResponseEntity.status(HttpStatus.OK).body(tokenUser);
+        // Extrai o token removendo o prefixo "Bearer "
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String token = authHeader.substring(7);
+
+        // Chama o serviço para validar o token no Google e criar o utilizador no banco local
+        userService.syncUser(dto, token);
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }

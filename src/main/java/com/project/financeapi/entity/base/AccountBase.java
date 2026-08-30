@@ -4,11 +4,12 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.project.financeapi.dto.account.AccountResponseDTO;
 import com.project.financeapi.dto.account.AccountUpdateDTO;
 import com.project.financeapi.entity.Bank;
-import com.project.financeapi.enums.AccountStatus;
-import com.project.financeapi.enums.AccountType;
+import com.project.financeapi.enumSystem.AccountStatus;
+import com.project.financeapi.enumSystem.AccountType;
 import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
-import com.project.financeapi.enums.MovementType;
+import com.project.financeapi.enumSystem.MovementType;
+import com.project.financeapi.enumSystem.MovementDirection;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -76,7 +77,6 @@ public abstract class AccountBase {
     }
 
     public BigDecimal getBalance() {
-
         if(transactions == null || transactions.isEmpty()){
             return initialValue;
         }
@@ -84,14 +84,17 @@ public abstract class AccountBase {
         return initialValue.add(
                 transactions.stream()
                         .map(t -> {
-                            BigDecimal value = t.getAmount() != null ? t.getAmount() : BigDecimal.ZERO;
-                            return t.getInstallment().getMovementType() == MovementType.INCOME
-                                    ? value
-                                    : value.negate();
+                            // 1. Pega o valor real que movimentou o caixa (já contabilizando juros, multas e descontos)
+                            BigDecimal effectiveValue = t.getEffectiveAmount() != null ? t.getEffectiveAmount() : BigDecimal.ZERO;
+
+                            // 2. Olha para a DIREÇÃO da transação, e não para a parcela.
+                            // Se o estorno inverteu a direção para INFLOW, ele vai somar o dinheiro de volta!
+                            return t.getMovementDirection() == MovementDirection.INFLOW
+                                    ? effectiveValue
+                                    : effectiveValue.negate();
                         })
                         .reduce(BigDecimal.ZERO, BigDecimal::add)
         );
-
     }
 
     public abstract AccountResponseDTO toDTO();
@@ -100,14 +103,6 @@ public abstract class AccountBase {
 
         if(dto.name() != null){
             this.name = dto.name();
-        }
-
-        if(dto.status() != null){
-            this.status = dto.status();
-        }
-
-        if(dto.status() != null){
-            this.type = dto.type();
         }
 
     }

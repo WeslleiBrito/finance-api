@@ -2,11 +2,13 @@ package com.project.financeapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
+import com.project.financeapi.dto.person.PersonResponseCompactDTO;
 import com.project.financeapi.entity.base.AccountBase;
 import com.project.financeapi.entity.base.PersonBase;
-import com.project.financeapi.enums.DocumentStatus;
-import com.project.financeapi.enums.MovementType;
-import com.project.financeapi.enums.PaymentStatus;
+import com.project.financeapi.enumSystem.DocumentStatus;
+import com.project.financeapi.enumSystem.MovementDirection;
+import com.project.financeapi.enumSystem.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,21 +33,12 @@ public class Invoice {
     @JoinColumn(name = "operation_type_id", nullable = false)
     private OperationType operationType;
 
-
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal totalAmount = BigDecimal.ZERO;
-
     @Column(nullable = false)
     private LocalDate issueDate = LocalDate.now();
 
     public int getQuantityInstallments() {
         return this.installments.size();
     }
-
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private DocumentStatus status = DocumentStatus.OPEN;
 
 
     @JsonManagedReference
@@ -60,11 +53,6 @@ public class Invoice {
     @JsonBackReference
     private PersonBase person; // pode ser cliente ou fornecedor
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "account_id", nullable = false)
-    private AccountBase account;
-
-
     // Parcelas deste documento
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Installment> installments = new ArrayList<>();
@@ -72,17 +60,24 @@ public class Invoice {
     public Invoice() {}
 
     public Invoice(
-            BigDecimal totalAmount,
             User createdBy,
             PersonBase person,
-            AccountBase account,
             OperationType operationType
     ) {
-        this.totalAmount = totalAmount;
         this.createdBy = createdBy;
         this.person = person;
-        this.account = account;
         this.operationType = operationType;
+    }
+
+    /**
+     * O Total da Fatura é a soma nominal de todas as suas parcelas.
+     */
+    public BigDecimal getTotalAmount() {
+        if (installments == null || installments.isEmpty()) return BigDecimal.ZERO;
+
+        return installments.stream()
+                .map(Installment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /**
@@ -110,11 +105,37 @@ public class Invoice {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public BigDecimal getTotalDiscount() {
+        return installments.stream().map(Installment::getTotalDiscount).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     /**
-     * Retorna o saldo restante.
+     * Retorna o saldo restante da fatura inteira.
      */
     public BigDecimal getRemainingBalance() {
-        return totalAmount.subtract(getTotalPaid());
+        // 🌟 O getTotalPaid() das parcelas já reflete a amortização total.
+        // Removido o ".add(getTotalDiscount())" que duplicava a dedução.
+        return getTotalAmount().subtract(getTotalPaid());
+    }
+    public InvoiceResponseDTO toResponse() {
+        return new InvoiceResponseDTO(
+                this.getId(),
+                this.getOperationType().getId(),
+                new PersonResponseCompactDTO(
+                        this.person.getId(),
+                        this.person.getName()
+                ),
+                this.getIssueDate(),
+                this.getPaymentStatus(),
+                this.getQuantityInstallments(),
+                this.getTotalAmount(),
+                this.getTotalPaid(),
+                this.getTotalDiscount(),
+                this.getRemainingBalance(),
+                getInstallments().stream().map(
+                        Installment::toResponse
+                ).toList()
+        );
     }
 
 }

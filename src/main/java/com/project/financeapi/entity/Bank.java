@@ -1,6 +1,7 @@
 package com.project.financeapi.entity;
 
-import com.project.financeapi.enums.BankStatus;
+import com.project.financeapi.dto.bank.*;
+import com.project.financeapi.enumSystem.StatusEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,32 +29,28 @@ public class Bank {
     @Column(length = 10)
     private String code;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private BankStatus status = BankStatus.ACTIVE;
-
-    @Column(name = "is_global", nullable = false)
-    private Boolean isGlobal = false;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private StatusEntity status = StatusEntity.ACTIVE;
+
     public Bank() {
     }
 
-    public Bank(String name, String code, User createdBy) {
+    public Bank(String name, String code) {
         this.name = name;
         this.code = code;
-        this.createdBy = createdBy;
     }
 
-    public Bank(String name, User createdBy) {
-        this.name = name;
-        this.createdBy = createdBy;
+    public BankResponseDTO toResponse() {
+        return new BankResponseDTO(
+                this.getId(),
+                this.getName(),
+                this.getCode(),
+                this.getStatus()
+        );
     }
 }

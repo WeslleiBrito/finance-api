@@ -1,6 +1,6 @@
 package com.project.financeapi.dto.bank;
 
-import com.project.financeapi.enums.BankStatus;
+import com.project.financeapi.enumSystem.BankStatus;
 
 public record BankUpdateRequestDTO(
         String name,

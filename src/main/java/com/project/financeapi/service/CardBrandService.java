@@ -1,22 +1,24 @@
 package com.project.financeapi.service;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
 import com.project.financeapi.dto.card.cardBrand.CardBrandCreateRequestDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
 import com.project.financeapi.dto.card.cardBrand.CardBrandUpdateRequestDTO;
-import com.project.financeapi.dto.user.UserResponseDTO;
-import com.project.financeapi.dto.util.JwtPayload;
 import com.project.financeapi.entity.CardBrand;
+import com.project.financeapi.entity.DeactivatedCardBrand;
 import com.project.financeapi.entity.User;
+import com.project.financeapi.enumSystem.CardBrandStatus;
 import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.CardBrandRepository;
-import com.project.financeapi.repository.UserRepository;
-import com.project.financeapi.util.JwtUtil;
+import com.project.financeapi.repository.DeactivatedCardBrandRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -24,99 +26,91 @@ import java.util.UUID;
 public class CardBrandService {
 
     private final CardBrandRepository cardBrandRepository;
-    private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
+    private final UserContextService userContextService;
+    private final DeactivatedCardBrandRepository deactivatedRepo;
 
-    public CardBrandResponseDTO create(String token, CardBrandCreateRequestDTO dto){
+    @Transactional
+    public CardBrandResponseDTO create(String token, @NotNull CardBrandCreateRequestDTO dto) {
+        User user = userContextService.getAuthenticatedUser();
 
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+        if(cardBrandRepository.nameExitsByCreatedBy(user, dto.name())){
+            throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma bandeira de cartão com este nome.");
+        }
 
         CardBrand cardBrand = cardBrandRepository.save(new CardBrand(dto.name(), user));
-
-        return new CardBrandResponseDTO(
-                cardBrand.getId(),
-                cardBrand.getName(),
-                cardBrand.getStatus(),
-                cardBrand.isGlobal(),
-                cardBrand.getCreatedAt()
-        );
-
+        return cardBrand.toResponse(CardBrandStatus.ACTIVE);
     }
 
-    public CardBrandResponseDTO update(String token, CardBrandUpdateRequestDTO dto, UUID id){
-
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
-
-        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), id)
-                .orElseThrow(
-                        () -> new BusinessException(HttpStatus.NOT_FOUND, "Bandeira de cartão não encontrada.")
-                );
-
-        if(dto.name() != null){
-            cardBrand.setName(dto.name());
-        }
-
-        if(dto.cardBrandStatus() != null){
-            cardBrand.setStatus(dto.cardBrandStatus());
-        }
-
-        cardBrandRepository.save(cardBrand);
-
-        return new CardBrandResponseDTO(
-                cardBrand.getId(),
-                cardBrand.getName(),
-                cardBrand.getStatus(),
-                cardBrand.isGlobal(),
-                cardBrand.getCreatedAt()
-        );
-    }
-
-
-    public List<CardBrandResponseDTO> getAll(String token){
-
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
-
-        List<CardBrand> cardBrands = cardBrandRepository.findAllByCreatedBy(user.getId());
-
-        System.out.println(cardBrands);
-
-        return cardBrands.stream().map(
-                cardBrand -> new CardBrandResponseDTO(
-                        cardBrand.getId(),
-                        cardBrand.getName(),
-                        cardBrand.getStatus(),
-                        cardBrand.isGlobal(),
-                        cardBrand.getCreatedAt()
-                )
-        ).toList();
-    }
-
-    public CardBrandResponseDTO getById(String token, UUID id) {
-        JwtPayload payload = jwtUtil.extractPayload(token);
-
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
-
-
+    @Transactional
+    public CardBrandResponseDTO update(@NotNull CardBrandUpdateRequestDTO dto, UUID id) {
+        User user = userContextService.getAuthenticatedUser();
         CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bandeira de cartão não encontrada."));
 
+        // 🌟 TRAVA DE SEGURANÇA: Não edita bandeira do sistema
+        if(cardBrand.isGlobal()){
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar uma bandeira global.");
+        }
 
-        return new CardBrandResponseDTO(
-                cardBrand.getId(),
-                cardBrand.getName(),
-                cardBrand.getStatus(),
-                cardBrand.isGlobal(),
-                cardBrand.getCreatedAt()
-        );
+        if(dto.name() != null && !cardBrand.getName().equalsIgnoreCase(dto.name())){
+            if(cardBrandRepository.nameExitsByCreatedBy(user, dto.name())){
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma bandeira de cartão com este nome.");
+            }
+            cardBrand.setName(dto.name());
+        }
+
+        cardBrand = cardBrandRepository.save(cardBrand);
+
+        boolean isDeactivated = deactivatedRepo.findByUserIdAndCardBrandId(user.getId(), id).isPresent();
+        return cardBrand.toResponse(isDeactivated ? CardBrandStatus.INACTIVE : CardBrandStatus.ACTIVE);
+    }
+
+    @Transactional
+    public void updateStatus(UUID id){
+        User user = userContextService.getAuthenticatedUser();
+        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bandeira não encontrada."));
+
+        // 🌟 LÓGICA DE BLACKLIST
+        Optional<DeactivatedCardBrand> deactivated = deactivatedRepo.findByUserIdAndCardBrandId(user.getId(), id);
+        if (deactivated.isPresent()) {
+            deactivatedRepo.delete(deactivated.get());
+        } else {
+            deactivatedRepo.save(new DeactivatedCardBrand(user, cardBrand));
+        }
+    }
+
+    public List<CardBrandResponseDTO> findAll() {
+        User user = userContextService.getAuthenticatedUser();
+        List<CardBrand> cardBrands = cardBrandRepository.findAllByCreatedBy(user.getId());
+        Set<UUID> deactivatedIds = deactivatedRepo.findDeactivatedBrandIdsByUserId(user.getId());
+
+        return cardBrands.stream().map(brand -> {
+            CardBrandStatus status = deactivatedIds.contains(brand.getId()) ? CardBrandStatus.INACTIVE : CardBrandStatus.ACTIVE;
+            return brand.toResponse(status);
+        }).toList();
+    }
+
+    public CardBrandResponseDTO findById(UUID id) {
+        User user = userContextService.getAuthenticatedUser();
+        CardBrand cardBrand = cardBrandRepository.findByCreatedByAndId(user.getId(), id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bandeira de cartão não encontrada."));
+
+        boolean isDeactivated = deactivatedRepo.findByUserIdAndCardBrandId(user.getId(), id).isPresent();
+        return cardBrand.toResponse(isDeactivated ? CardBrandStatus.INACTIVE : CardBrandStatus.ACTIVE);
+    }
+
+    public List<CardBrandResponseDTO> findAllCardBrandStatus(CardBrandStatus cardBrandStatus) {
+        User user = userContextService.getAuthenticatedUser();
+        List<CardBrand> cardBrands = cardBrandRepository.findAllByCreatedBy(user.getId());
+        Set<UUID> deactivatedIds = deactivatedRepo.findDeactivatedBrandIdsByUserId(user.getId());
+
+        return cardBrands.stream()
+                .filter(brand -> {
+                    CardBrandStatus currentStatus = deactivatedIds.contains(brand.getId()) ? CardBrandStatus.INACTIVE : CardBrandStatus.ACTIVE;
+                    return currentStatus == cardBrandStatus;
+                })
+                .map(brand -> brand.toResponse(cardBrandStatus))
+                .toList();
     }
 }

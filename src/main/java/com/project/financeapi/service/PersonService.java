@@ -1,222 +1,229 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.Installment.InstallmentResponseDTO;
-import com.project.financeapi.dto.OperationType.OperationTypeResponseDTO;
-import com.project.financeapi.dto.address.ResponseAddressDTO;
-import com.project.financeapi.dto.invoice.InvoiceResponseDTO;
-import com.project.financeapi.dto.email.ResponseEmailDTO;
-import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
-import com.project.financeapi.dto.person.PersonCreateRequestDTO;
-import com.project.financeapi.dto.person.ResponseFinancialPersonDTO;
-import com.project.financeapi.dto.person.ResponsePersonDTO;
-import com.project.financeapi.dto.phone.ResponsePhoneDTO;
-import com.project.financeapi.dto.transaction.TransactionResponseDTO;
-import com.project.financeapi.dto.util.JwtPayload;
-import com.project.financeapi.entity.LegalEntity;
-import com.project.financeapi.entity.PhysicalPerson;
-import com.project.financeapi.entity.User;
+import com.project.financeapi.dto.address.AddressDTO;
+import com.project.financeapi.dto.email.EmailDTO;
+import com.project.financeapi.dto.person.*;
+import com.project.financeapi.dto.phone.PhoneDTO;
+import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.base.PersonBase;
-import com.project.financeapi.enums.PersonType;
+import com.project.financeapi.enumSystem.PersonType;
 import com.project.financeapi.exception.BusinessException;
+import com.project.financeapi.repository.LegalEntityRepository;
 import com.project.financeapi.repository.PersonRepository;
-import com.project.financeapi.repository.UserRepository;
-import com.project.financeapi.util.CnpjValidator;
-import com.project.financeapi.util.CpfValidator;
-import com.project.financeapi.util.JwtUtil;
+import com.project.financeapi.repository.PhysicalPersonRepository;
+import com.project.financeapi.validation.ValidateCNPJ;
+import com.project.financeapi.validation.ValidateCPF;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class PersonService {
     private final PersonRepository personRepository;
-    private final UserRepository userRepository;
-    private final AddressService addressService;
-    private final PhoneService phoneService;
-    private final EmailService emailService;
-    private final JwtUtil jwtUtil;
+    private final PhysicalPersonRepository physicalPersonRepository;
+    private final LegalEntityRepository legalEntityRepository;
+    private final UserContextService userContextService;
 
 
     @Transactional
-    public PersonBase create(String token, PersonCreateRequestDTO dto){
+    public PersonResponseDTO createPhysicalPerson(@org.jetbrains.annotations.NotNull PersonCreatePhysicalRequestDTO dto){
 
-        JwtPayload payload = jwtUtil.extractPayload(token);
+        User user = userContextService.getAuthenticatedUser();
 
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
-
-        PersonBase person = null;
-
-        if(dto.personType().equals(PersonType.INDIVIDUAL)) {
-
-            if(dto.CPF() == null){
-                throw new BusinessException(HttpStatus.BAD_REQUEST,
-                        "Você informou que pretende criar uma pessoa física, mas não passou o número do CPF.");
+        if (dto.CPF() != null && !dto.CPF().isBlank()) {
+            if(!ValidateCPF.isValidCPF(dto.CPF())){
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "CPF inválido.");
             }
 
-            if(!CpfValidator.isValid(dto.CPF())){
-                throw new BusinessException(HttpStatus.BAD_REQUEST,
-                        "O CPF informado é inválido.");
+            if(physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())){
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CPF");
             }
-
-            PhysicalPerson physicalPerson = new PhysicalPerson();
-
-            physicalPerson.setCreatedBy(user);
-            physicalPerson.setName(dto.name());
-            physicalPerson.setCpf(dto.CPF());
-            physicalPerson.setPersonType(dto.personType());
-
-            if(dto.nickname() == null){
-                physicalPerson.setNickname(dto.name());
-            }else{
-                physicalPerson.setNickname(dto.nickname());
-            }
-
-            person = personRepository.save(physicalPerson);
-
-        } else {
-
-            if(dto.CNPJ() == null){
-                throw new BusinessException(HttpStatus.BAD_REQUEST,
-                        "Você informou que pretende criar uma pessoa jurídica, mas não passou o número do CNPJ.");
-            }
-
-            if(!CnpjValidator.isValid(dto.CNPJ())){
-                throw new BusinessException(HttpStatus.BAD_REQUEST,
-                        "O CNPJ informado é inválido.");
-            }
-
-            LegalEntity legalEntity = new LegalEntity();
-
-            legalEntity.setCreatedBy(user);
-            legalEntity.setCnpj(dto.CNPJ());
-            legalEntity.setName(dto.name());
-            legalEntity.setPersonType(dto.personType());
-            legalEntity.setTradeName(dto.tradeName());
-
-            if(dto.tradeName() != null){
-                legalEntity.setTradeName(dto.tradeName());
-            }else{
-                legalEntity.setTradeName(dto.name());
-            }
-
-            System.out.println(legalEntity);
-            person = personRepository.save(legalEntity);
         }
 
-        if(dto.addressesList() != null){
-            person.setAddresses(addressService.create(token, person.getId(), dto.addressesList()));
+        if(physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())){
+            throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CPF");
         }
 
-        if(dto.emailList() != null){
-            person.setEmails(emailService.create(token, person.getId(), dto.emailList()));
-        }
+        PhysicalPerson person = new PhysicalPerson();
 
-        if(dto.phoneList() != null){
-            person.setPhones(phoneService.create(token, person.getId(), dto.phoneList()));
+        person.setName(dto.name());
+        person.setCreatedBy(user);
+        person.setNickname(dto.nickname() != null ? dto.nickname() : dto.name());
+        person.setCpf(dto.CPF());
+        person.setPersonType(PersonType.INDIVIDUAL);
 
-        }
-
-        PersonBase personFinal = personRepository.findById(person.getId()).orElseThrow(
-                () -> new BusinessException(HttpStatus.NOT_FOUND, "A pessoa informada não existe.")
-        );
-
-
-        return personRepository.findById(person.getId()).orElseThrow(
-                () -> new BusinessException(HttpStatus.NOT_FOUND, "A pessoa informada não existe.")
-        );
+        return personRepository
+                .save(setPerson(user, person, dto.phoneList(), dto.emailList(), dto.addressesList()))
+                .toDTO();
     }
 
-    public List<ResponsePersonDTO> findAll(String token){
+    @Transactional
+    public PersonResponseDTO createLegalPerson(@org.jetbrains.annotations.NotNull PersonCreateLegalRequestDTO dto){
 
-        JwtPayload payload = jwtUtil.extractPayload(token);
+        User user = userContextService.getAuthenticatedUser();
 
-        User user = userRepository.findById(payload.id())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+        if (dto.CNPJ() != null && !dto.CNPJ().isBlank()) {
+            if (!ValidateCNPJ.isValidCNPJ(dto.CNPJ())) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "CNPJ inválido.");
+            }
 
+            if(legalEntityRepository.existsByCreatedBy_IdAndCnpj(user.getId(), dto.CNPJ())){
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CNPJ");
+            }
+        }
+
+
+        LegalEntity legalEntity = new LegalEntity();
+
+        legalEntity.setName(dto.name());
+        legalEntity.setCreatedBy(user);
+        legalEntity.setTradeName(dto.tradeName() != null ? dto.tradeName() : dto.name());
+        legalEntity.setCnpj(dto.CNPJ());
+        legalEntity.setPersonType(PersonType.LEGAL_ENTITY);
+
+        return personRepository
+                .save(setPerson(user, legalEntity, dto.phoneList(), dto.emailList(), dto.addressesList()))
+                .toDTO();
+    }
+
+    @Transactional
+    public PersonResponseDTO updatePhysicalPerson(UUID id, PersonCreatePhysicalRequestDTO dto) {
+        User user = userContextService.getAuthenticatedUser();
+
+        // 1. Busca a pessoa física
+        PhysicalPerson person = physicalPersonRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Pessoa física não encontrada."));
+
+        // Segurança: garante que é o dono
+        if (!person.getCreatedBy().getId().equals(user.getId())) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar este cadastro.");
+        }
+
+        boolean isNewCpf = dto.CPF() != null && !dto.CPF().isBlank() && !dto.CPF().equals(person.getCpf());
+
+        // Validação do novo CPF (se mudou)
+        if (isNewCpf) {
+            if (!ValidateCPF.isValidCPF(dto.CPF())) throw new BusinessException(HttpStatus.BAD_REQUEST, "CPF inválido.");
+            if (physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())) {
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CPF");
+            }
+        }
+
+        // 2. Transforma as listas de DTOs em Entidades (reaproveitando sua lógica atual)
+        List<Phone> mappedPhones = dto.phoneList() != null ? dto.phoneList().stream().map(p -> new Phone(user, person, p.number(), p.type())).toList() : new ArrayList<>();
+        List<Email> mappedEmails = dto.emailList() != null ? dto.emailList().stream().map(e -> new Email(e.email(), user, person)).toList() : new ArrayList<>();
+        List<Address> mappedAddresses = dto.addressesList() != null ? dto.addressesList().stream().map(a -> new Address(user, person, a.street(), a.number(), a.neighborhood(), a.complement(), a.city(), a.state(), a.zipCode())).toList() : new ArrayList<>();
+
+        // 3. A própria entidade faz a atualização
+        person.updateCommonData(dto.name(), dto.role());
+        person.updatePhysicalData(dto.CPF(), dto.nickname());
+        person.updateContactsAndAddresses(mappedPhones, mappedEmails, mappedAddresses);
+
+        return personRepository.save(person).toDTO();
+    }
+
+    @Transactional
+    public PersonResponseDTO updateLegalPerson(UUID id, PersonCreateLegalRequestDTO dto) {
+        User user = userContextService.getAuthenticatedUser();
+
+        // 1. Busca a pessoa jurídica
+        LegalEntity person = legalEntityRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Pessoa jurídica não encontrada."));
+
+        // Segurança: garante que é o dono
+        if (!person.getCreatedBy().getId().equals(user.getId())) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar este cadastro.");
+        }
+
+        boolean isNewCNPJ = dto.CNPJ() != null && !dto.CNPJ().isBlank() && !dto.CNPJ().equals(person.getCnpj());
+
+        // Validação do novo CNPJ (se mudou)
+
+        if (isNewCNPJ) {
+            if (!ValidateCNPJ.isValidCNPJ(dto.CNPJ())) throw new BusinessException(HttpStatus.BAD_REQUEST, "CNPJ inválido.");
+            if (physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CNPJ())) {
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CNPJ");
+            }
+        }
+
+        // 2. Transforma as listas de DTOs em Entidades (reaproveitando sua lógica atual)
+        List<Phone> mappedPhones = dto.phoneList() != null ? dto.phoneList().stream().map(p -> new Phone(user, person, p.number(), p.type())).toList() : new ArrayList<>();
+        List<Email> mappedEmails = dto.emailList() != null ? dto.emailList().stream().map(e -> new Email(e.email(), user, person)).toList() : new ArrayList<>();
+        List<Address> mappedAddresses = dto.addressesList() != null ? dto.addressesList().stream().map(a -> new Address(user, person, a.street(), a.number(), a.neighborhood(), a.complement(), a.city(), a.state(), a.zipCode())).toList() : new ArrayList<>();
+
+        // 3. A própria entidade faz a atualização
+        person.updateCommonData(dto.name(), dto.role());
+        person.updateLegalData(dto.CNPJ(), dto.tradeName());
+        person.updateContactsAndAddresses(mappedPhones, mappedEmails, mappedAddresses);
+
+        return personRepository.save(person).toDTO();
+    }
+
+    public List<PersonResponseDTO> findAll(){
+
+        User user = userContextService.getAuthenticatedUser();
 
         return personRepository.findByCreatedBy(user)
                 .stream()
-                .map(person -> new ResponsePersonDTO(
-                        person.getId(),
-                        person.getName(),
-                        person.getPersonType(),
-                        person instanceof PhysicalPerson ? ((PhysicalPerson) person).getCpf() : null,
-                        person instanceof LegalEntity ? ((LegalEntity) person).getCnpj() : null,
-                        person.getPhones().stream().map(phone -> new ResponsePhoneDTO(
-                                phone.getId(),
-                                phone.getNumber(),
-                                phone.getType()
-                        )).toList(),
-                        person.getEmails().stream().map(email -> new ResponseEmailDTO(
-                                email.getId(),
-                                email.getAddress()
-                        )).toList(),
-                        person.getAddresses().stream().map(address -> new ResponseAddressDTO(
-                                address.getId(),
-                                address.getStreet(),
-                                address.getNumber(),
-                                address.getNeighborhood(),
-                                address.getCity(),
-                                address.getState(),
-                                address.getZipCode(),
-                                address.getComplement()
-                        )).toList(),
-                        new ResponseFinancialPersonDTO(
-                                person.getInvoices().stream().map(invoice -> new InvoiceResponseDTO(
-                                        invoice.getId(),
-                                        invoice.getAccount().getId(),
-                                        invoice.getIssueDate(),
-                                        invoice.getPaymentStatus(),
-                                        invoice.getQuantityInstallments(),
-                                        invoice.getTotalAmount(),
-                                        invoice.getTotalPaid(),
-                                        invoice.getRemainingBalance(),
-                                        new OperationTypeResponseDTO(
-                                                invoice.getOperationType().getId(),
-                                                invoice.getOperationType().getName(),
-                                                invoice.getOperationType().getMovementType(),
-                                                invoice.getOperationType().getOperationStatus(),
-                                                invoice.getOperationType().getIsGlobal(),
-                                                new OperationGroupResponseDTO(
-                                                        invoice.getOperationType().getGroup().getId(),
-                                                        invoice.getOperationType().getGroup().getName(),
-                                                        invoice.getOperationType().getGroup().getIsGlobal(),
-                                                        invoice.getOperationType().getGroup().getOperationStatus()
-                                                )
-                                        ),
-                                        invoice.getInstallments().stream()
-                                                .map(installment -> new InstallmentResponseDTO(
-                                                        installment.getId(),
-                                                        installment.getAmount(),
-                                                        installment.getCreatedAt(),
-                                                        installment.getDueDate(),
-                                                        installment.getMovementType(),
-                                                        installment.isPaid(),
-                                                        installment.getParcelNumber(),
-                                                        installment.getInvoice().getId(),
-                                                        installment.getTransactions().stream().map(transaction -> new TransactionResponseDTO(
-                                                                transaction.getId(),
-                                                                transaction.getInstallment().getId(),
-                                                                transaction.getAccount().getId(),
-                                                                transaction.getAmount(),
-                                                                transaction.getInstallment().getMovementType(),
-                                                                transaction.getIsReversed(),
-                                                                transaction.getPaymentDate(),
-                                                                transaction.getCreatedAt(),
-                                                                transaction.getObservations()
-                                                        )).toList()
+                .map(PersonBase::toDTO).toList();
+    }
 
-                                                )).toList()
-                                )).toList()
-                        )
+    private PersonBase setPerson(
+            @NotNull User user, @NotNull PersonBase person, List<PhoneDTO> phones, List<EmailDTO> emails, List<AddressDTO> addresses
+    ){
+        if(phones != null){
+            phones.forEach(
+                    item -> {
+                        Phone phone = new Phone();
+                        phone.setNumber(item.number());
+                        phone.setType(item.type());
+                        phone.setCreatedBy(user);
+                        phone.setPerson(person);
 
-                )).toList();
+                        person.getPhones().add(phone);
+                    }
+            );
+        }
 
+        if(emails != null){
+            emails.forEach(
+                    item -> {
+                        Email email = new Email();
+                        email.setAddress(item.email());
+                        email.setCreatedBy(user);
+                        email.setPerson(person);
 
+                        person.getEmails().add(email);
+                    }
+            );
+        }
+
+        if(addresses != null){
+            addresses.forEach(
+                    item -> {
+                        Address address = new Address();
+                        address.setStreet(item.street());
+                        address.setNumber(item.number());
+                        address.setNeighborhood(item.neighborhood());
+                        address.setComplement(item.complement());
+                        address.setCity(item.city());
+                        address.setState(item.state());
+                        address.setZipCode(item.zipCode());
+                        address.setPerson(person);
+                        address.setCreatedBy(user);
+
+                        person.getAddresses().add(address);
+                    }
+            );
+        }
+
+        return person;
     }
 }

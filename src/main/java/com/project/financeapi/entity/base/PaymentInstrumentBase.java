@@ -2,21 +2,22 @@ package com.project.financeapi.entity.base;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.project.financeapi.dto.Installment.InstallmentDTO;
+import com.project.financeapi.dto.Installments.InstallmentDTO;
 import com.project.financeapi.dto.payment.PaymentMethodDetailsDTO;
 import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
-import com.project.financeapi.enums.InstrumentNature;
-import com.project.financeapi.enums.InstrumentStatus;
-import com.project.financeapi.enums.PaymentType;
+import com.project.financeapi.enumSystem.CardBrandStatus;
+import com.project.financeapi.enumSystem.InstrumentNature;
+import com.project.financeapi.enumSystem.InstrumentStatus;
+import com.project.financeapi.enumSystem.PaymentType;
 import com.project.financeapi.interfaces.PaymentInstrument;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +39,6 @@ public abstract class PaymentInstrumentBase implements PaymentInstrument {
     @Column(nullable = false, length = 25)
     private String name;
 
-    @Column(nullable = false, name = "is_global")
-    private Boolean isGlobal = false;
-
     @Column(nullable = false, name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -56,10 +54,12 @@ public abstract class PaymentInstrumentBase implements PaymentInstrument {
     @Column(nullable = false)
     private InstrumentStatus status = InstrumentStatus.ACTIVE;
 
+    @Column(name = "is_system", nullable = false)
+    private boolean isSystem = false;
+
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
-    @Setter(AccessLevel.PROTECTED)
     private User createdBy;
 
     /**
@@ -97,5 +97,5 @@ public abstract class PaymentInstrumentBase implements PaymentInstrument {
 
     public abstract PaymentMethodDetailsDTO toDTO();
 
-    public abstract List<InstallmentDTO> process(List<InstallmentDTO> installmentDTOS);
+    public abstract List<InstallmentDTO> process(List<InstallmentDTO> installmentDTOS, LocalDate purchaseDate);
 }

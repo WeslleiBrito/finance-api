@@ -1,7 +1,7 @@
 package com.project.financeapi.repository;
 
 import com.project.financeapi.entity.base.PaymentInstrumentBase;
-import com.project.financeapi.enums.InstrumentNature;
+import com.project.financeapi.enumSystem.InstrumentNature;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,7 +19,7 @@ public interface PaymentInstrumentRepository extends JpaRepository<PaymentInstru
                 WHERE (p.createdBy.id = :userId OR p.createdBy IS NULL)
             """)
     List<PaymentInstrumentBase> findByCreatedAll(
-            @Param("userId") UUID userId
+            @Param("userId") String userId
     );
 
 
@@ -29,14 +29,14 @@ public interface PaymentInstrumentRepository extends JpaRepository<PaymentInstru
                 WHERE p.id = :id
                   AND (p.createdBy.id = :userId or p.createdBy is null)
             """)
-    Optional<PaymentInstrumentBase> findByIdAndCreatedBy(@Param("id") UUID id, @Param("userId") UUID userId);
+    Optional<PaymentInstrumentBase> findByIdAndCreatedBy(@Param("id") UUID id, @Param("userId") String userId);
 
     @Query("""
                 SELECT p
                 FROM PaymentInstrumentBase p
                 WHERE LOWER(p.name) = LOWER(:name) AND (p.createdBy.id = :userId or p.createdBy is null)
             """)
-    Optional<PaymentInstrumentBase> findByName(@Param("userId") UUID userId, @Param("name") String name);
+    Optional<PaymentInstrumentBase> findByName(@Param("userId") String userId, @Param("name") String name);
 
     @Query("""
                 SELECT p
@@ -47,7 +47,7 @@ public interface PaymentInstrumentRepository extends JpaRepository<PaymentInstru
             """)
     Optional<PaymentInstrumentBase> findByIdAndUserAndNature(
             UUID id,
-            UUID userId,
+            String userId,
             InstrumentNature nature
     );
 
@@ -59,6 +59,6 @@ public interface PaymentInstrumentRepository extends JpaRepository<PaymentInstru
             """)
     Optional<PaymentInstrumentBase> findByIdAndUser(
             UUID id,
-            UUID userId
+            String userId
     );
 }

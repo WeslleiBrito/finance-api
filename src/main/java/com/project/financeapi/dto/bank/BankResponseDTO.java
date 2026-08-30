@@ -1,6 +1,6 @@
 package com.project.financeapi.dto.bank;
 
-import com.project.financeapi.enums.BankStatus;
+import com.project.financeapi.enumSystem.StatusEntity;
 
 import java.util.UUID;
 
@@ -8,6 +8,6 @@ public record BankResponseDTO(
         UUID id,
         String name,
         String code,
-        BankStatus bankStatus
+        StatusEntity status
 ) {
 }

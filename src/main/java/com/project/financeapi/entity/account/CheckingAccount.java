@@ -4,9 +4,10 @@ import com.project.financeapi.dto.account.AccountUpdateDTO;
 import com.project.financeapi.dto.account.update.UpdateCheckingAccountRequestDTO;
 import com.project.financeapi.dto.account.response.CreateCheckingAccountResponseDTO;
 import com.project.financeapi.entity.Bank;
+import com.project.financeapi.entity.Transaction;
 import com.project.financeapi.entity.User;
 import com.project.financeapi.entity.base.AccountBase;
-import com.project.financeapi.enums.AccountType;
+import com.project.financeapi.enumSystem.AccountType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -47,8 +48,12 @@ public class CheckingAccount extends AccountBase {
                 this.getName(),
                 this.getType(),
                 this.getBalance(),
+                this.getInitialValue(),
                 this.getStatus(),
-                this.getOverdraftLimit()
+                this.getOverdraftLimit(),
+                this.getTransactions().stream().map(
+                        Transaction::toResponse
+                ).toList()
         );
     }
 

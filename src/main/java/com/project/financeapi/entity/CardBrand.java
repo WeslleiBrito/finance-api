@@ -1,7 +1,7 @@
 package com.project.financeapi.entity;
 
-import com.project.financeapi.enums.CardBrandStatus;
-import com.project.financeapi.enums.CardStatus;
+import com.project.financeapi.dto.card.cardBrand.CardBrandResponseDTO;
+import com.project.financeapi.enumSystem.CardBrandStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,10 +23,6 @@ public class CardBrand {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private CardBrandStatus status = CardBrandStatus.ACTIVE;
-
     @Column(name = "is_global", nullable = false)
     private boolean isGlobal = false;
 
@@ -42,5 +38,16 @@ public class CardBrand {
     public CardBrand(String name, User createdBy) {
         this.name = name;
         this.createdBy = createdBy;
+    }
+
+    public CardBrandResponseDTO toResponse(CardBrandStatus status) {
+
+        return new CardBrandResponseDTO(
+                this.getId(),
+                this.getName(),
+                status,
+                this.isGlobal,
+                this.getCreatedAt()
+        );
     }
 }

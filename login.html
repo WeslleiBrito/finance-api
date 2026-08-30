@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gerador de Token Firebase</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        // 1. COLOQUE SUA WEB API KEY AQUI
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPuIIeKCBmW0hQtN6Sw7pCxtXXvWgsW2Y",
+            authDomain: "finance-api-2a3f5.firebaseapp.com",
+            projectId: "finance-api-2a3f5",
+            storageBucket: "finance-api-2a3f5.firebasestorage.app",
+            messagingSenderId: "360869318933",
+            appId: "1:360869318933:web:0faaea377f942b59be191c",
+            measurementId: "G-6LCENNGGSS"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // 2. COLOQUE SEU E-MAIL E SENHA DO FIREBASE AQUI
+        signInWithEmailAndPassword(auth, "wesllei.wbs@gmail.com", "890mAH3.7v")
+            .then(userCredential => userCredential.user.getIdToken())
+            .then(token => {
+                document.getElementById("token").value = token;
+                document.getElementById("status").innerText = "SUCESSO! Copie o token abaixo:";
+            })
+            .catch(error => {
+                document.getElementById("status").innerText = "ERRO: " + error.message;
+            });
+    </script>
+</head>
+
+<body style="font-family: Arial; padding: 20px;">
+    <h2 id="status">Gerando Token... aguarde.</h2>
+    <textarea id="token" rows="15" cols="100" placeholder="O token aparecerá aqui..."></textarea>
+</body>
+
+</html>
