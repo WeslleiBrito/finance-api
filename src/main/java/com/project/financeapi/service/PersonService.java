@@ -8,6 +8,7 @@ import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.base.PersonBase;
 import com.project.financeapi.enumSystem.PersonType;
 import com.project.financeapi.exception.BusinessException;
+import com.project.financeapi.repository.InvoiceRepository;
 import com.project.financeapi.repository.LegalEntityRepository;
 import com.project.financeapi.repository.PersonRepository;
 import com.project.financeapi.repository.PhysicalPersonRepository;
@@ -19,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,35 +29,29 @@ public class PersonService {
     private final PersonRepository personRepository;
     private final PhysicalPersonRepository physicalPersonRepository;
     private final LegalEntityRepository legalEntityRepository;
+    private final InvoiceRepository invoiceRepository;
     private final UserContextService userContextService;
 
-
     @Transactional
-    public PersonResponseDTO createPhysicalPerson(@org.jetbrains.annotations.NotNull PersonCreatePhysicalRequestDTO dto){
-
+    public PersonResponseDTO createPhysicalPerson(@NotNull PersonCreatePhysicalRequestDTO dto) {
         User user = userContextService.getAuthenticatedUser();
 
         if (dto.CPF() != null && !dto.CPF().isBlank()) {
-            if(!ValidateCPF.isValidCPF(dto.CPF())){
+            if (!ValidateCPF.isValidCPF(dto.CPF())) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "CPF inválido.");
             }
-
-            if(physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())){
+            if (physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())) {
                 throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CPF");
             }
         }
 
-        if(physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())){
-            throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CPF");
-        }
-
         PhysicalPerson person = new PhysicalPerson();
-
         person.setName(dto.name());
         person.setCreatedBy(user);
         person.setNickname(dto.nickname() != null ? dto.nickname() : dto.name());
         person.setCpf(dto.CPF());
         person.setPersonType(PersonType.INDIVIDUAL);
+        person.setRole(dto.role());
 
         return personRepository
                 .save(setPerson(user, person, dto.phoneList(), dto.emailList(), dto.addressesList()))
@@ -65,28 +59,25 @@ public class PersonService {
     }
 
     @Transactional
-    public PersonResponseDTO createLegalPerson(@org.jetbrains.annotations.NotNull PersonCreateLegalRequestDTO dto){
-
+    public PersonResponseDTO createLegalPerson(@NotNull PersonCreateLegalRequestDTO dto) {
         User user = userContextService.getAuthenticatedUser();
 
         if (dto.CNPJ() != null && !dto.CNPJ().isBlank()) {
             if (!ValidateCNPJ.isValidCNPJ(dto.CNPJ())) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "CNPJ inválido.");
             }
-
-            if(legalEntityRepository.existsByCreatedBy_IdAndCnpj(user.getId(), dto.CNPJ())){
+            if (legalEntityRepository.existsByCreatedBy_IdAndCnpj(user.getId(), dto.CNPJ())) {
                 throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CNPJ");
             }
         }
 
-
         LegalEntity legalEntity = new LegalEntity();
-
         legalEntity.setName(dto.name());
         legalEntity.setCreatedBy(user);
         legalEntity.setTradeName(dto.tradeName() != null ? dto.tradeName() : dto.name());
         legalEntity.setCnpj(dto.CNPJ());
         legalEntity.setPersonType(PersonType.LEGAL_ENTITY);
+        legalEntity.setRole(dto.role());
 
         return personRepository
                 .save(setPerson(user, legalEntity, dto.phoneList(), dto.emailList(), dto.addressesList()))
@@ -94,21 +85,24 @@ public class PersonService {
     }
 
     @Transactional
-    public PersonResponseDTO updatePhysicalPerson(UUID id, PersonCreatePhysicalRequestDTO dto) {
+    public PersonResponseDTO updatePhysicalPerson(UUID id, PersonUpdatePhysicalRequestDTO dto) {
         User user = userContextService.getAuthenticatedUser();
 
-        // 1. Busca a pessoa física
-        PhysicalPerson person = physicalPersonRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Pessoa física não encontrada."));
+        PersonBase existingPerson = personRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Pessoa não encontrada."));
 
-        // Segurança: garante que é o dono
-        if (!person.getCreatedBy().getId().equals(user.getId())) {
+        if (!existingPerson.getCreatedBy().getId().equals(user.getId())) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar este cadastro.");
         }
 
+        // Se era Jurídica e o usuário mandou requisição de Física, faz a transposição
+        if (existingPerson instanceof LegalEntity) {
+            return migrateToPhysicalPerson((LegalEntity) existingPerson, dto, user);
+        }
+
+        PhysicalPerson person = (PhysicalPerson) existingPerson;
         boolean isNewCpf = dto.CPF() != null && !dto.CPF().isBlank() && !dto.CPF().equals(person.getCpf());
 
-        // Validação do novo CPF (se mudou)
         if (isNewCpf) {
             if (!ValidateCPF.isValidCPF(dto.CPF())) throw new BusinessException(HttpStatus.BAD_REQUEST, "CPF inválido.");
             if (physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())) {
@@ -116,12 +110,11 @@ public class PersonService {
             }
         }
 
-        // 2. Transforma as listas de DTOs em Entidades (reaproveitando sua lógica atual)
-        List<Phone> mappedPhones = dto.phoneList() != null ? dto.phoneList().stream().map(p -> new Phone(user, person, p.number(), p.type())).toList() : new ArrayList<>();
-        List<Email> mappedEmails = dto.emailList() != null ? dto.emailList().stream().map(e -> new Email(e.email(), user, person)).toList() : new ArrayList<>();
-        List<Address> mappedAddresses = dto.addressesList() != null ? dto.addressesList().stream().map(a -> new Address(user, person, a.street(), a.number(), a.neighborhood(), a.complement(), a.city(), a.state(), a.zipCode())).toList() : new ArrayList<>();
+        // Mapeia listas sem checar nulo (garantido pelo @NotNull do DTO)
+        List<Phone> mappedPhones = dto.phoneList().stream().map(p -> new Phone(user, person, p.number(), p.type())).toList();
+        List<Email> mappedEmails = dto.emailList().stream().map(e -> new Email(e.email(), user, person)).toList();
+        List<Address> mappedAddresses = dto.addressesList().stream().map(a -> new Address(user, person, a.street(), a.number(), a.neighborhood(), a.complement(), a.city(), a.state(), a.zipCode())).toList();
 
-        // 3. A própria entidade faz a atualização
         person.updateCommonData(dto.name(), dto.role());
         person.updatePhysicalData(dto.CPF(), dto.nickname());
         person.updateContactsAndAddresses(mappedPhones, mappedEmails, mappedAddresses);
@@ -130,35 +123,36 @@ public class PersonService {
     }
 
     @Transactional
-    public PersonResponseDTO updateLegalPerson(UUID id, PersonCreateLegalRequestDTO dto) {
+    public PersonResponseDTO updateLegalPerson(UUID id, PersonUpdateLegalRequestDTO dto) {
         User user = userContextService.getAuthenticatedUser();
 
-        // 1. Busca a pessoa jurídica
-        LegalEntity person = legalEntityRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Pessoa jurídica não encontrada."));
+        PersonBase existingPerson = personRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Pessoa não encontrada."));
 
-        // Segurança: garante que é o dono
-        if (!person.getCreatedBy().getId().equals(user.getId())) {
+        if (!existingPerson.getCreatedBy().getId().equals(user.getId())) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar este cadastro.");
         }
 
-        boolean isNewCNPJ = dto.CNPJ() != null && !dto.CNPJ().isBlank() && !dto.CNPJ().equals(person.getCnpj());
+        // Se era Física e o usuário mandou requisição de Jurídica, faz a transposição
+        if (existingPerson instanceof PhysicalPerson) {
+            return migrateToLegalPerson((PhysicalPerson) existingPerson, dto, user);
+        }
 
-        // Validação do novo CNPJ (se mudou)
+        LegalEntity person = (LegalEntity) existingPerson;
+        boolean isNewCNPJ = dto.CNPJ() != null && !dto.CNPJ().isBlank() && !dto.CNPJ().equals(person.getCnpj());
 
         if (isNewCNPJ) {
             if (!ValidateCNPJ.isValidCNPJ(dto.CNPJ())) throw new BusinessException(HttpStatus.BAD_REQUEST, "CNPJ inválido.");
-            if (physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CNPJ())) {
+            if (legalEntityRepository.existsByCreatedBy_IdAndCnpj(user.getId(), dto.CNPJ())) {
                 throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CNPJ");
             }
         }
 
-        // 2. Transforma as listas de DTOs em Entidades (reaproveitando sua lógica atual)
-        List<Phone> mappedPhones = dto.phoneList() != null ? dto.phoneList().stream().map(p -> new Phone(user, person, p.number(), p.type())).toList() : new ArrayList<>();
-        List<Email> mappedEmails = dto.emailList() != null ? dto.emailList().stream().map(e -> new Email(e.email(), user, person)).toList() : new ArrayList<>();
-        List<Address> mappedAddresses = dto.addressesList() != null ? dto.addressesList().stream().map(a -> new Address(user, person, a.street(), a.number(), a.neighborhood(), a.complement(), a.city(), a.state(), a.zipCode())).toList() : new ArrayList<>();
+        // Mapeia listas sem checar nulo (garantido pelo @NotNull do DTO)
+        List<Phone> mappedPhones = dto.phoneList().stream().map(p -> new Phone(user, person, p.number(), p.type())).toList();
+        List<Email> mappedEmails = dto.emailList().stream().map(e -> new Email(e.email(), user, person)).toList();
+        List<Address> mappedAddresses = dto.addressesList().stream().map(a -> new Address(user, person, a.street(), a.number(), a.neighborhood(), a.complement(), a.city(), a.state(), a.zipCode())).toList();
 
-        // 3. A própria entidade faz a atualização
         person.updateCommonData(dto.name(), dto.role());
         person.updateLegalData(dto.CNPJ(), dto.tradeName());
         person.updateContactsAndAddresses(mappedPhones, mappedEmails, mappedAddresses);
@@ -166,10 +160,78 @@ public class PersonService {
         return personRepository.save(person).toDTO();
     }
 
-    public List<PersonResponseDTO> findAll(){
+    // ==============================================================================
+    // LÓGICA DE MIGRAÇÃO (TRANSPOSIÇÃO DE TIPOS)
+    // ==============================================================================
 
+    private PersonResponseDTO migrateToPhysicalPerson(LegalEntity oldEntity, PersonUpdatePhysicalRequestDTO dto, User user) {
+        if (dto.CPF() != null && !dto.CPF().isBlank()) {
+            if (!ValidateCPF.isValidCPF(dto.CPF())) throw new BusinessException(HttpStatus.BAD_REQUEST, "CPF inválido.");
+            if (physicalPersonRepository.existsByCreatedBy_IdAndCpf(user.getId(), dto.CPF())) {
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CPF.");
+            }
+        }
+
+        PhysicalPerson newPerson = new PhysicalPerson();
+        newPerson.setName(dto.name());
+        newPerson.setCreatedBy(user);
+        newPerson.setNickname(dto.nickname() != null ? dto.nickname() : dto.name());
+        newPerson.setCpf(dto.CPF());
+        newPerson.setPersonType(PersonType.INDIVIDUAL);
+        newPerson.setRole(dto.role());
+
+        newPerson = (PhysicalPerson) setPerson(user, newPerson, dto.phoneList(), dto.emailList(), dto.addressesList());
+
+        PhysicalPerson savedPerson = personRepository.save(newPerson);
+
+        // Transfere dependências (Faturas)
+        List<Invoice> invoices = invoiceRepository.findByPersonId(oldEntity.getId());
+        for (Invoice invoice : invoices) {
+            invoice.setPerson(savedPerson);
+        }
+        invoiceRepository.saveAll(invoices);
+
+        // O Hibernate deleta a entidade antiga e, por cascata, limpa todos os contatos velhos
+        personRepository.delete(oldEntity);
+
+        return savedPerson.toDTO();
+    }
+
+    private PersonResponseDTO migrateToLegalPerson(PhysicalPerson oldEntity, PersonUpdateLegalRequestDTO dto, User user) {
+        if (dto.CNPJ() != null && !dto.CNPJ().isBlank()) {
+            if (!ValidateCNPJ.isValidCNPJ(dto.CNPJ())) throw new BusinessException(HttpStatus.BAD_REQUEST, "CNPJ inválido.");
+            if (legalEntityRepository.existsByCreatedBy_IdAndCnpj(user.getId(), dto.CNPJ())) {
+                throw new BusinessException(HttpStatus.CONFLICT, "Já existe uma pessoa com este CNPJ.");
+            }
+        }
+
+        LegalEntity newPerson = new LegalEntity();
+        newPerson.setName(dto.name());
+        newPerson.setCreatedBy(user);
+        newPerson.setTradeName(dto.tradeName() != null ? dto.tradeName() : dto.name());
+        newPerson.setCnpj(dto.CNPJ());
+        newPerson.setPersonType(PersonType.LEGAL_ENTITY);
+        newPerson.setRole(dto.role());
+
+        newPerson = (LegalEntity) setPerson(user, newPerson, dto.phoneList(), dto.emailList(), dto.addressesList());
+
+        LegalEntity savedPerson = personRepository.save(newPerson);
+
+        // Transfere dependências (Faturas)
+        List<Invoice> invoices = invoiceRepository.findByPersonId(oldEntity.getId());
+        for (Invoice invoice : invoices) {
+            invoice.setPerson(savedPerson);
+        }
+        invoiceRepository.saveAll(invoices);
+
+        // O Hibernate deleta a entidade antiga e, por cascata, limpa todos os contatos velhos
+        personRepository.delete(oldEntity);
+
+        return savedPerson.toDTO();
+    }
+
+    public List<PersonResponseDTO> findAll() {
         User user = userContextService.getAuthenticatedUser();
-
         return personRepository.findByCreatedBy(user)
                 .stream()
                 .map(PersonBase::toDTO).toList();
@@ -177,51 +239,42 @@ public class PersonService {
 
     private PersonBase setPerson(
             @NotNull User user, @NotNull PersonBase person, List<PhoneDTO> phones, List<EmailDTO> emails, List<AddressDTO> addresses
-    ){
-        if(phones != null){
-            phones.forEach(
-                    item -> {
-                        Phone phone = new Phone();
-                        phone.setNumber(item.number());
-                        phone.setType(item.type());
-                        phone.setCreatedBy(user);
-                        phone.setPerson(person);
-
-                        person.getPhones().add(phone);
-                    }
-            );
+    ) {
+        if (phones != null) {
+            phones.forEach(item -> {
+                Phone phone = new Phone();
+                phone.setNumber(item.number());
+                phone.setType(item.type());
+                phone.setCreatedBy(user);
+                phone.setPerson(person);
+                person.getPhones().add(phone);
+            });
         }
 
-        if(emails != null){
-            emails.forEach(
-                    item -> {
-                        Email email = new Email();
-                        email.setAddress(item.email());
-                        email.setCreatedBy(user);
-                        email.setPerson(person);
-
-                        person.getEmails().add(email);
-                    }
-            );
+        if (emails != null) {
+            emails.forEach(item -> {
+                Email email = new Email();
+                email.setAddress(item.email());
+                email.setCreatedBy(user);
+                email.setPerson(person);
+                person.getEmails().add(email);
+            });
         }
 
-        if(addresses != null){
-            addresses.forEach(
-                    item -> {
-                        Address address = new Address();
-                        address.setStreet(item.street());
-                        address.setNumber(item.number());
-                        address.setNeighborhood(item.neighborhood());
-                        address.setComplement(item.complement());
-                        address.setCity(item.city());
-                        address.setState(item.state());
-                        address.setZipCode(item.zipCode());
-                        address.setPerson(person);
-                        address.setCreatedBy(user);
-
-                        person.getAddresses().add(address);
-                    }
-            );
+        if (addresses != null) {
+            addresses.forEach(item -> {
+                Address address = new Address();
+                address.setStreet(item.street());
+                address.setNumber(item.number());
+                address.setNeighborhood(item.neighborhood());
+                address.setComplement(item.complement());
+                address.setCity(item.city());
+                address.setState(item.state());
+                address.setZipCode(item.zipCode());
+                address.setPerson(person);
+                address.setCreatedBy(user);
+                person.getAddresses().add(address);
+            });
         }
 
         return person;

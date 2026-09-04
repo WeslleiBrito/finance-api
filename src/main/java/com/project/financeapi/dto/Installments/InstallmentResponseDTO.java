@@ -26,6 +26,9 @@ public record InstallmentResponseDTO(
         PaymentStatus status,
         LocalDate dueDate,
         LocalDate createdAt,
+        String personName,
+        Integer quantityInstallments,
+        String operationName,
         List<TransactionResponseDTO> transactions
 
 ) {

@@ -54,9 +54,8 @@ public class PersonController {
     @PutMapping("/update/physical/{id}")
     public ResponseEntity<PersonResponseDTO> updatePhysical(
             @PathVariable UUID id,
-            @Valid @RequestBody PersonCreatePhysicalRequestDTO dto
+            @Valid @RequestBody PersonUpdatePhysicalRequestDTO dto
     ) {
-        // Chama o método que criamos no PersonService
         PersonResponseDTO person = personService.updatePhysicalPerson(id, dto);
         return ResponseEntity.status(HttpStatus.OK).body(person);
     }
@@ -64,9 +63,8 @@ public class PersonController {
     @PutMapping("/update/legal/{id}")
     public ResponseEntity<PersonResponseDTO> updateLegal(
             @PathVariable UUID id,
-            @Valid @RequestBody PersonCreateLegalRequestDTO dto
+            @Valid @RequestBody PersonUpdateLegalRequestDTO dto
     ) {
-        // Chama o método que criamos no PersonService
         PersonResponseDTO person = personService.updateLegalPerson(id, dto);
         return ResponseEntity.status(HttpStatus.OK).body(person);
     }

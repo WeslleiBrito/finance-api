@@ -2,12 +2,9 @@ package com.project.financeapi.util.mapper;
 
 import com.project.financeapi.dto.card.creditCard.CreditCardUpdateRequestDTO;
 import com.project.financeapi.entity.CreditCard;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface CreditCardMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

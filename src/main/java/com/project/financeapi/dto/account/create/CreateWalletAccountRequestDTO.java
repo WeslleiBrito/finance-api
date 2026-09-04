@@ -1,7 +1,6 @@
 package com.project.financeapi.dto.account.create;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 

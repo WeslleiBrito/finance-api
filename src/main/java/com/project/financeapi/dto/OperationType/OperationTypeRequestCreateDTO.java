@@ -1,6 +1,5 @@
 package com.project.financeapi.dto.OperationType;
 
-import com.project.financeapi.enumSystem.MovementDirection;
 import com.project.financeapi.enumSystem.MovementType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

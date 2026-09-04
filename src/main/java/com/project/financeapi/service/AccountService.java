@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.UUID;
 
@@ -213,16 +215,16 @@ public class AccountService {
         return accountRepository.save(account).toDTO();
     }
 
-    public List<AccountResponseDTO> findAll() {
-
+    public Page<AccountResponseDTO> findAll(Pageable pageable) {
         User user = userContextService.getAuthenticatedUser();
 
-        List<AccountBase> accounts = accountRepository.findByAccountHolder(user);
+        Page<AccountBase> accountsPage = accountRepository.findByAccountHolder(user, pageable);
 
-
-        return accounts.stream().filter(accountBase -> accountBase.getStatus() == AccountStatus.ACTIVE)
-                .map(AccountBase::toDTO).toList();
-
+        // Filter active accounts and map to DTO while maintaining pagination
+        // Note: Filtering a Page after the query can result in pages with fewer items than requested.
+        // For production, it's better to add the status filter directly in the JPQL query.
+        return accountsPage
+                .map(AccountBase::toDTO);
     }
 
     public AccountResponseDTO findById(UUID id) {

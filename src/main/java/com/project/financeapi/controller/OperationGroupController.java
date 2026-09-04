@@ -1,8 +1,8 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.operationGroup_.OperationGroupCreateRequestDTO;
-import com.project.financeapi.dto.operationGroup_.OperationGroupResponseDTO;
-import com.project.financeapi.dto.operationGroup_.UpdateRequestOperationGroup;
+import com.project.financeapi.dto.operationGroup.OperationGroupCreateRequestDTO;
+import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
+import com.project.financeapi.dto.operationGroup.UpdateRequestOperationGroup;
 import com.project.financeapi.enumSystem.StatusEntity;
 import com.project.financeapi.service.OperationGroupService;
 import io.swagger.v3.oas.annotations.tags.Tag;

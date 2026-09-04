@@ -11,9 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "bank", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"created_by", "name"})
-})
+@Table(name = "bank")
 @Getter
 @Setter
 public class Bank {
@@ -23,7 +21,8 @@ public class Bank {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 100)
+    // 🌟 Adicionamos unique = true diretamente na coluna
+    @Column(nullable = false, length = 100, unique = true)
     private String name;
 
     @Column(length = 10)
@@ -33,7 +32,7 @@ public class Bank {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "status")
+    @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'ACTIVE'")
     @Enumerated(EnumType.STRING)
     private StatusEntity status = StatusEntity.ACTIVE;
 

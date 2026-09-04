@@ -12,6 +12,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -147,13 +149,14 @@ public class TransactionService {
                 .toList();
     }
 
-    public List<TransactionResponseDTO> findAllByUser() {
+    public Page<TransactionResponseDTO> findAllByUser(Pageable pageable) {
         User user = userContextService.getAuthenticatedUser();
 
-        return transactionRepository.findAllByUserIdOrderByPaymentDateDesc(user.getId())
-                .stream()
-                .map(Transaction::toResponse)
-                .toList();
+        // Passa o pageable direto pro Repositório
+        Page<Transaction> transactionsPage = transactionRepository.findAllByUserId(user.getId(), pageable);
+
+        // O Spring mapeia cada elemento da página mantendo os dados de paginação (total, página atual, etc)
+        return transactionsPage.map(Transaction::toResponse);
     }
 
     @Transactional
@@ -434,5 +437,21 @@ public class TransactionService {
         if (availableBalance.compareTo(amountToRemove) < 0) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, customErrorMessage);
         }
+    }
+
+    public Page<TransactionResponseDTO> searchTransactions(
+            MovementDirection direction,
+            String searchName,
+            UUID accountId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable) {
+
+        // A camada de serviço cuida da regra de isolamento de usuário
+        String userId = userContextService.getAuthenticatedUser().getId();
+
+        return transactionRepository.searchTransactions(
+                userId, direction, searchName, accountId, startDate, endDate, pageable
+        ).map(Transaction::toResponse); // Converte para DTO aqui
     }
 }

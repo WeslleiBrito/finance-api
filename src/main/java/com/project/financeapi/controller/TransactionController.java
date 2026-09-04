@@ -4,6 +4,7 @@ import com.project.financeapi.dto.transaction.CreateManualAdjustmentTransactionR
 import com.project.financeapi.dto.transaction.CreateTransactionRequestDTO;
 import com.project.financeapi.dto.transaction.ReversalRequestDTO;
 import com.project.financeapi.dto.transaction.TransactionResponseDTO;
+import com.project.financeapi.enumSystem.MovementDirection;
 import com.project.financeapi.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,7 +12,11 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,9 +42,11 @@ public class TransactionController {
 
     // 🌟 ROTA ADICIONADA: Busca o extrato do usuário logado (GET /api/transactions)
     @GetMapping
-    @Operation(summary = "Listar extrato", description = "Busca as transações referentes ao usuário autenticado.")
-    public ResponseEntity<List<TransactionResponseDTO>> findAll() {
-        List<TransactionResponseDTO> transactions = transactionService.findAllByUser();
+    @Operation(summary = "Listar extrato", description = "Busca as transações referentes ao usuário autenticado de forma paginada.")
+    public ResponseEntity<Page<TransactionResponseDTO>> findAll(
+            @PageableDefault(page = 0, size = 20, sort = "paymentDate", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<TransactionResponseDTO> transactions = transactionService.findAllByUser(pageable);
         return ResponseEntity.status(HttpStatus.OK).body(transactions);
     }
 
@@ -70,4 +77,27 @@ public class TransactionController {
         List<TransactionResponseDTO> responses = transactionService.transfer(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<TransactionResponseDTO>> search(
+            @RequestParam(required = false) String direction,
+            @RequestParam(required = false) String searchName,
+            @RequestParam(required = false) UUID accountId,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
+            Pageable pageable) {
+
+        // Tratamento de conversão HTTP -> Tipagem Java
+        MovementDirection dirEnum = (direction != null && !direction.equalsIgnoreCase("ALL"))
+                ? MovementDirection.valueOf(direction.toUpperCase())
+                : null;
+
+        // Delega para o serviço
+        Page<TransactionResponseDTO> result = transactionService.searchTransactions(
+                dirEnum, searchName, accountId, startDate, endDate, pageable
+        );
+
+        return ResponseEntity.ok(result);
+    }
+
 }
