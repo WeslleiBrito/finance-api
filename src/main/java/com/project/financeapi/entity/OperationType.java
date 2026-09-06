@@ -32,14 +32,16 @@ public class OperationType {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "name", nullable = false, unique = true, length = 80)
+    // Removido o unique = true para respeitar os UniqueConstraints compostos
+    @Column(name = "name", nullable = false, length = 80)
     private String name;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "movement_type", nullable = false)
     private MovementType movementType;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    // Removido o optional = false para permitir que categorias do sistema tenham created_by nulo
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
 

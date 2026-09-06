@@ -1,8 +1,8 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.operationGroup_.OperationGroupCreateRequestDTO;
-import com.project.financeapi.dto.operationGroup_.OperationGroupResponseDTO;
-import com.project.financeapi.dto.operationGroup_.UpdateRequestOperationGroup;
+import com.project.financeapi.dto.operationGroup.OperationGroupCreateRequestDTO;
+import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
+import com.project.financeapi.dto.operationGroup.UpdateRequestOperationGroup;
 import com.project.financeapi.entity.DeactivatedOperationGroup;
 import com.project.financeapi.entity.OperationGroup;
 import com.project.financeapi.entity.User;

@@ -5,5 +5,8 @@ public enum MovementType {
     PAYMENT,
     REVERSAL,           // estorno de uma transação existente
     MANUAL_ADJUSTMENT,
-    TRANSFER
+    TRANSFER,
+    INVESTMENT_APPORT,            // Débito do caixa para compra de lote
+    INVESTMENT_REDEEM_PRINCIPAL,  // Retorno de capital inicial resgatado
+    INVESTMENT_REDEEM_PROFIT      // Entrada de rendimento líquido gerado
 }

@@ -202,6 +202,9 @@ public class Installment {
                 this.isPaid(),
                 this.getDueDate(),
                 this.getCreatedAt(),
+                this.getInvoice().getPerson().getName(),
+                this.getInvoice().getQuantityInstallments(),
+                this.getInvoice().getOperationType().getName(),
                 this.getTransactions().stream().map(
                         Transaction::toResponse
                 ).toList()

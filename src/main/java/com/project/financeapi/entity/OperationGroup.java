@@ -1,6 +1,6 @@
 package com.project.financeapi.entity;
 
-import com.project.financeapi.dto.operationGroup_.OperationGroupResponseDTO;
+import com.project.financeapi.dto.operationGroup.OperationGroupResponseDTO;
 import com.project.financeapi.enumSystem.StatusEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -33,7 +33,7 @@ public class OperationGroup {
     @Column(nullable = false, updatable = false)
     private UUID id;
 
-    @Column(nullable = false, length = 80)
+    @Column(name = "name", nullable = false, length = 80)
     private String name;
 
     @Column(name = "is_system", nullable = false)

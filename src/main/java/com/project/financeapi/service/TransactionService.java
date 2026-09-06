@@ -12,6 +12,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -147,13 +149,14 @@ public class TransactionService {
                 .toList();
     }
 
-    public List<TransactionResponseDTO> findAllByUser() {
+    public Page<TransactionResponseDTO> findAllByUser(Pageable pageable) {
         User user = userContextService.getAuthenticatedUser();
 
-        return transactionRepository.findAllByUserIdOrderByPaymentDateDesc(user.getId())
-                .stream()
-                .map(Transaction::toResponse)
-                .toList();
+        // Passa o pageable direto pro Repositório
+        Page<Transaction> transactionsPage = transactionRepository.findAllByUserId(user.getId(), pageable);
+
+        // O Spring mapeia cada elemento da página mantendo os dados de paginação (total, página atual, etc)
+        return transactionsPage.map(Transaction::toResponse);
     }
 
     @Transactional
@@ -405,7 +408,7 @@ public class TransactionService {
                     HttpStatus.BAD_REQUEST,
                     "A natureza de Pagamento [PURCHASE] não pode ser usado para efetivar uma transação."
             );
-        };
+        }
 
         if (account.getType() == AccountType.WALLET) {
             if (instrument.getPaymentType() != PaymentType.CASH) {
@@ -434,5 +437,76 @@ public class TransactionService {
         if (availableBalance.compareTo(amountToRemove) < 0) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, customErrorMessage);
         }
+    }
+
+    public Page<TransactionResponseDTO> searchTransactions(
+            MovementDirection direction,
+            String searchName,
+            UUID accountId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable) {
+
+        // A camada de serviço cuida da regra de isolamento de usuário
+        String userId = userContextService.getAuthenticatedUser().getId();
+
+        return transactionRepository.searchTransactions(
+                userId, direction, searchName, accountId, startDate, endDate, pageable
+        ).map(Transaction::toResponse); // Converte para DTO aqui
+    }
+
+    @Transactional
+    public void createInvestmentTransaction(
+            UUID accountId,
+            BigDecimal amount,
+            MovementDirection direction,
+            LocalDate paymentDate,
+            String observations
+    ) {
+        User user = userContextService.getAuthenticatedUser();
+
+        // 1. Busca com LOCK PESSIMISTA para evitar race conditions no saldo
+        AccountBase account = accountRepository.findByIdForUpdate(accountId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada."));
+
+        if (!account.getAccountHolder().getId().equals(user.getId())) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "A conta não pertence ao usuário.");
+        }
+
+        if (LocalDate.now().isBefore(paymentDate)) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "A data da transação não pode ser futura à data atual.");
+        }
+
+        if (amount.signum() <= 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "O valor da transação deve ser maior que zero.");
+        }
+
+        // 2. Se for saída (Aporte), valida se há saldo suficiente considerando cheque especial
+        if (direction == MovementDirection.OUTFLOW) {
+            validateSufficientFunds(
+                    account,
+                    amount,
+                    "Saldo insuficiente na conta '" + account.getName() + "' para realizar o investimento."
+            );
+        }
+
+        // 3. Cria a transação de conta corrente vinculada ao investimento
+        Transaction transaction = new Transaction(
+                amount,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                direction,
+                MovementType.INVESTMENT_APPORT, // Classificação no enum da conta
+                paymentDate,
+                user,
+                account,
+                null,
+                null,
+                null,
+                observations
+        );
+
+        transactionRepository.save(transaction);
     }
 }

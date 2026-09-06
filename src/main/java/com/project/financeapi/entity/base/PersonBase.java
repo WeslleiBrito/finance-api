@@ -85,7 +85,6 @@ public abstract class PersonBase {
 
     public abstract PersonResponseDTO toDTO();
 
-    // ... seus atributos e construtores existentes ...
 
     public void updateCommonData(String name, PersonRole role) {
         if (name != null) this.setName(name);
@@ -93,25 +92,19 @@ public abstract class PersonBase {
     }
 
     public void updateContactsAndAddresses(List<Phone> newPhones, List<Email> newEmails, List<Address> newAddresses) {
-        // Atualiza Telefones de forma segura para o Hibernate
+        // Limpa tudo que existia para garantir o Full Replacement
         this.phones.clear();
-        if (newPhones != null) {
-            newPhones.forEach(p -> { p.setPerson(this); p.setCreatedBy(this.getCreatedBy()); });
-            this.phones.addAll(newPhones);
-        }
-
-        // Atualiza E-mails
         this.emails.clear();
-        if (newEmails != null) {
-            newEmails.forEach(e -> { e.setPerson(this); e.setCreatedBy(this.getCreatedBy()); });
-            this.emails.addAll(newEmails);
-        }
-
-        // Atualiza Endereços
         this.addresses.clear();
-        if (newAddresses != null) {
-            newAddresses.forEach(a -> { a.setPerson(this); a.setCreatedBy(this.getCreatedBy()); });
-            this.addresses.addAll(newAddresses);
-        }
+
+        // Seta todos os novos contatos vindos do DTO
+        newPhones.forEach(p -> { p.setPerson(this); p.setCreatedBy(this.getCreatedBy()); });
+        this.phones.addAll(newPhones);
+
+        newEmails.forEach(e -> { e.setPerson(this); e.setCreatedBy(this.getCreatedBy()); });
+        this.emails.addAll(newEmails);
+
+        newAddresses.forEach(a -> { a.setPerson(this); a.setCreatedBy(this.getCreatedBy()); });
+        this.addresses.addAll(newAddresses);
     }
 }

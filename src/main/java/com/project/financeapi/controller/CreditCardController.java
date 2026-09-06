@@ -1,5 +1,6 @@
 package com.project.financeapi.controller;
 
+import com.project.financeapi.dto.dashboard.CreditCardSummaryDTO;
 import com.project.financeapi.dto.payment.CreditCardDetailsDTO;
 import com.project.financeapi.service.CreditCardService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,5 +33,10 @@ public class CreditCardController {
             @Valid @PathVariable UUID id
     ) {
         return ResponseEntity.status(HttpStatus.OK).body(creditCardService.getById(id));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<CreditCardSummaryDTO> getSummary() {
+        return ResponseEntity.ok(creditCardService.getSummary());
     }
 }

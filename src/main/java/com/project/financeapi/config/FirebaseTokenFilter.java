@@ -85,8 +85,9 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
             }
 
             System.out.println(">>> 3. SUCESSO: Usuário encontrado e ativado! Liberando acesso ao Controller...");
+            // Armazenamos o decodedToken (FirebaseToken) nas credenciais de segurança
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+                    new UsernamePasswordAuthenticationToken(user, decodedToken, Collections.emptyList());
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (Exception e) {
