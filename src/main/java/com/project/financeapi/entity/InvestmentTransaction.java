@@ -2,10 +2,7 @@ package com.project.financeapi.entity;
 
 import com.project.financeapi.enumSystem.InvestmentTransactionType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,45 +14,41 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class InvestmentTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(length = 36)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "lot_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lot_id", nullable = false, updatable = false)
     private FixedIncomeLot lot;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "transaction_type", nullable = false)
-    private InvestmentTransactionType type;
+    @Column(nullable = false, updatable = false)
+    private InvestmentTransactionType type; // APPORT, DAILY_YIELD, RESCUE, MATURITY_LIQUIDATION
 
-    // O valor líquido que de fato impacta o saldo do lote (positivo para APPORT/YIELD, negativo para RESCUE)
-    @Column(name = "amount", precision = 15, scale = 2, nullable = false)
-    private BigDecimal amount;
+    @Column(nullable = false, updatable = false)
+    private LocalDate referenceDate; // D+1 para os rendimentos
 
-    // O lucro sujo antes dos impostos (Útil para gráficos e declaração de IR)
-    @Column(name = "gross_amount", precision = 15, scale = 2)
-    private BigDecimal grossAmount;
+    @Column(nullable = false, updatable = false, precision = 19, scale = 4)
+    private BigDecimal grossAmount; // Crescimento puro (DAILY_YIELD) ou Valor Total Movimentado
 
-    @Column(name = "ir_tax", precision = 15, scale = 2)
+    @Column(nullable = false, updatable = false, precision = 19, scale = 4)
+    private BigDecimal amount; // Valor líquido final (só é menor que o grossAmount em saídas)
+
+    // Regra 7: Impostos dinâmicos vs materializados
+    // Em DAILY_YIELD, estes campos serão ZERO. Em RESCUE, guardam a mordida real da Receita.
+    @Column(nullable = false, updatable = false, precision = 19, scale = 4)
     private BigDecimal irTax;
 
-    @Column(name = "iof_tax", precision = 15, scale = 2)
+    @Column(nullable = false, updatable = false, precision = 19, scale = 4)
     private BigDecimal iofTax;
 
-    @Column(name = "b3_custody_fee", precision = 15, scale = 2)
-    private BigDecimal b3CustodyFee;
+    @Column(updatable = false, precision = 10, scale = 8)
+    private BigDecimal appliedMarketRate; // A taxa oficial do Bacen do dia, para garantir auditoria
 
-    @Column(name = "reference_date", nullable = false)
-    private LocalDate referenceDate;
-
-    // A nossa "fotografia" de auditoria: salva a taxa exata usada no dia para este cálculo
-    @Column(name = "applied_market_rate", precision = 15, scale = 8)
-    private BigDecimal appliedMarketRate;
-
-    @Column(name = "description", length = 150)
+    @Column(updatable = false)
     private String description;
 }

@@ -1,21 +1,27 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.investment.InvestmentApportDTO;
-import com.project.financeapi.dto.investment.InvestmentRescueDTO;
 import com.project.financeapi.entity.*;
 import com.project.financeapi.entity.base.AccountBase;
-import com.project.financeapi.enumSystem.FixedIncomeStatus;
 import com.project.financeapi.enumSystem.InvestmentTransactionType;
 import com.project.financeapi.enumSystem.MovementDirection;
-import com.project.financeapi.enumSystem.MovementType;
-import com.project.financeapi.repository.*;
-import jakarta.transaction.Transactional;
+import com.project.financeapi.exception.BusinessException;
+import com.project.financeapi.repository.AccountRepository;
+import com.project.financeapi.repository.FixedIncomeLotRepository;
+import com.project.financeapi.repository.FixedIncomeRepository;
+import com.project.financeapi.repository.InvestmentTransactionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.project.financeapi.dto.investment.request.InvestmentRescueDTO;
+import com.project.financeapi.dto.investment.request.InvestmentApportDTO;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,164 +31,124 @@ public class FixedIncomeService {
     private final FixedIncomeLotRepository lotRepository;
     private final InvestmentTransactionRepository investmentTransactionRepository;
     private final AccountRepository accountRepository;
-    private final TransactionRepository transactionRepository; // Repositório da conta-corrente
-    private final UserContextService userContextService;
+    private final TransactionService transactionService;
 
-    /**
-     * 1. FLUXO DE APORTE (Criação de Sacola ou Novo Lote)
-     */
     @Transactional
-    public void createApport(InvestmentApportDTO dto) {
-        User user = userContextService.getAuthenticatedUser();
-        AccountBase account = accountRepository.findById(dto.accountId())
-                .orElseThrow(() -> new IllegalArgumentException("Conta não encontrada."));
+    public UUID createApport(InvestmentApportDTO dto) { // <-- Alterado de void para UUID
+        AccountBase account = accountRepository.findByIdForUpdate(dto.accountId())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Conta não encontrada."));
 
-        // 1. Pega o saldo real da conta
-        BigDecimal availableBalance = account.getBalance() != null ? account.getBalance() : BigDecimal.ZERO;
-
-        // 3. Valida o saldo e exibe no Console os valores exatos em caso de bloqueio
-        if (availableBalance.compareTo(dto.amount()) < 0) {
-            throw new IllegalStateException(String.format(
-                    "Saldo insuficiente. Disponível no DB: R$ %s | Tentativa de Aporte: R$ %s",
-                    availableBalance, dto.amount()
-            ));
-        }
+        transactionService.createInvestmentTransaction(
+                account.getId(), dto.amount(), MovementDirection.OUTFLOW,
+                LocalDate.now(), "Aporte em Investimento: " + dto.name()
+        );
 
         FixedIncome fixedIncome;
-
-        if (dto.fixedIncomeId() != null) {
-            fixedIncome = fixedIncomeRepository.findById(dto.fixedIncomeId())
-                    .orElseThrow(() -> new IllegalArgumentException("Sacola de investimento não encontrada."));
-        } else {
-            fixedIncome = new FixedIncome();
-            fixedIncome.setName(dto.name());
-            fixedIncome.setType(dto.type());
-            fixedIncome.setIndexer(dto.indexer());
-            fixedIncome.setContractedRate(dto.contractedRate());
-            fixedIncome.setMaturityDate(dto.maturityDate());
-            fixedIncome.setAccount(account);
-            fixedIncome.setCreatedBy(user);
-            fixedIncome.setStatus(FixedIncomeStatus.ACTIVE);
+        if (dto.fixedIncomeId() == null) {
+            fixedIncome = FixedIncome.builder()
+                    .account(account)
+                    .name(dto.name())
+                    .indexer(dto.indexer())
+                    .contractedRate(dto.contractedRate())
+                    .type(dto.type())
+                    .maturityDate(dto.maturityDate())
+                    .build();
             fixedIncome = fixedIncomeRepository.save(fixedIncome);
+        } else {
+            fixedIncome = fixedIncomeRepository.findById(dto.fixedIncomeId())
+                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Investimento não encontrado."));
         }
 
-        // 1. Cria o Lote físico
-        FixedIncomeLot lot = new FixedIncomeLot();
-        lot.setFixedIncome(fixedIncome);
-        lot.setInitialPrincipal(dto.amount());
-        lot.setRemainingPrincipal(dto.amount());
-        lot.setPurchaseDate(dto.purchaseDate());
+        FixedIncomeLot lot = FixedIncomeLot.builder()
+                .fixedIncome(fixedIncome)
+                .purchaseDate(dto.purchaseDate() != null ? dto.purchaseDate() : LocalDate.now())
+                .ledgerStartDate(LocalDate.now())
+                .build();
         lot = lotRepository.save(lot);
 
-        // 2. Grava a transação inicial no Livro-Razão da sacola (Custódia)
-        InvestmentTransaction invTx = new InvestmentTransaction();
-        invTx.setLot(lot);
-        invTx.setType(InvestmentTransactionType.APPORT);
-        invTx.setAmount(dto.amount());
-        invTx.setReferenceDate(dto.purchaseDate());
-        invTx.setDescription("Aporte: " + fixedIncome.getName());
-        investmentTransactionRepository.save(invTx);
+        InvestmentTransaction apportTransaction = InvestmentTransaction.builder()
+                .lot(lot)
+                .type(InvestmentTransactionType.APPORT)
+                .referenceDate(LocalDate.now())
+                .grossAmount(dto.amount())
+                .amount(dto.amount())
+                .irTax(BigDecimal.ZERO)
+                .iofTax(BigDecimal.ZERO)
+                .description("Aporte de Capital")
+                .build();
 
-        // 3. Debita a Conta Corrente gerando uma Transaction padrão usando o construtor simplificado
-        Transaction accountTx = new Transaction(
-                dto.amount(),
-                MovementDirection.OUTFLOW,
-                MovementType.INVESTMENT_APPORT, // Utilizando o novo Enum
-                dto.purchaseDate(),
-                user,
-                account,
-                "Aporte em Investimento: " + fixedIncome.getName(),
-                null
-        );
-        transactionRepository.save(accountTx);
+        investmentTransactionRepository.save(apportTransaction);
+
+        return fixedIncome.getId(); // <-- Retorna o ID gerado ou atualizado
     }
 
-    /**
-     * 2. FLUXO DE RESGATE COM REGRA PEPS (Primeiro que Entra, Primeiro que Sai)
-     */
     @Transactional
     public void executeRescue(InvestmentRescueDTO dto) {
-        User user = userContextService.getAuthenticatedUser();
         FixedIncome fixedIncome = fixedIncomeRepository.findById(dto.fixedIncomeId())
-                .orElseThrow(() -> new IllegalArgumentException("Sacola não encontrada."));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Investimento não encontrado."));
 
-        BigDecimal amountToRescue = dto.rescueAmount();
-        BigDecimal totalNetBalance = investmentTransactionRepository.calculateNetBalanceByFixedIncome(fixedIncome.getId());
+        // O valor solicitado pelo usuário é o LÍQUIDO que ele quer ver pingar na conta corrente
+        BigDecimal remainingNetRequested = dto.requestedAmount();
 
-        if (totalNetBalance.compareTo(amountToRescue) < 0) {
-            throw new IllegalStateException("Saldo investido insuficiente para o resgate solicitado.");
-        }
+        List<InvestmentTransaction> transactionsToSave = new ArrayList<>();
+        BigDecimal totalNetAmountToCredit = BigDecimal.ZERO;
+        LocalDate today = LocalDate.now();
 
-        List<FixedIncomeLot> activeLots = lotRepository.findActiveLotsByFixedIncomeOrderByDateAsc(fixedIncome.getId());
-
-        BigDecimal remainingRescue = amountToRescue;
-        BigDecimal totalPrincipalRescued = BigDecimal.ZERO;
-        BigDecimal totalProfitRescued = BigDecimal.ZERO;
+        List<FixedIncomeLot> activeLots = lotRepository.findActiveLotsForRescueOderByOldest(fixedIncome.getId());
 
         for (FixedIncomeLot lot : activeLots) {
-            if (remainingRescue.compareTo(BigDecimal.ZERO) <= 0) break;
+            if (remainingNetRequested.compareTo(BigDecimal.ZERO) <= 0) break;
 
-            BigDecimal lotNetBalance = investmentTransactionRepository.calculateNetBalanceByLot(lot.getId());
+            FixedIncomeLot.LotState state = lot.projectState();
+
+            // O lote provisiona os impostos exatos para o dia de hoje
+            BigDecimal irTaxProvision = lot.getProjectedIrTax(today, state);
+            BigDecimal iofTaxProvision = lot.getProjectedIofTax(today, state);
+            BigDecimal lotNetBalance = lot.getProjectedNetBalance(today, state);
+
             if (lotNetBalance.compareTo(BigDecimal.ZERO) <= 0) continue;
 
-            BigDecimal amountTakenFromLot = remainingRescue.min(lotNetBalance);
-            BigDecimal proportion = amountTakenFromLot.divide(lotNetBalance, 8, RoundingMode.HALF_UP);
+            // A mordida no lote é baseada no saldo LÍQUIDO
+            BigDecimal netAmountToTake = remainingNetRequested.min(lotNetBalance);
+            BigDecimal ratio = netAmountToTake.divide(lotNetBalance, 8, RoundingMode.HALF_UP);
 
-            BigDecimal principalToDeduct = lot.getRemainingPrincipal().multiply(proportion).setScale(2, RoundingMode.HALF_UP);
-            BigDecimal profitRealized = amountTakenFromLot.subtract(principalToDeduct);
+            // Materializamos os impostos proporcionais à fatia que estamos sacando
+            BigDecimal irTaxMaterialized = irTaxProvision.multiply(ratio).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal iofTaxMaterialized = iofTaxProvision.multiply(ratio).setScale(2, RoundingMode.HALF_UP);
 
-            lot.setRemainingPrincipal(lot.getRemainingPrincipal().subtract(principalToDeduct));
-            lotRepository.save(lot);
+            // CÁLCULO POR DENTRO: O valor bruto consumido do lote é a soma do líquido desejado + impostos retidos
+            BigDecimal grossAmountToTake = netAmountToTake.add(irTaxMaterialized).add(iofTaxMaterialized);
 
-            InvestmentTransaction rescueTx = new InvestmentTransaction();
-            rescueTx.setLot(lot);
-            rescueTx.setType(InvestmentTransactionType.RESCUE);
-            rescueTx.setAmount(amountTakenFromLot.negate());
-            rescueTx.setReferenceDate(dto.rescueDate());
-            rescueTx.setDescription("Resgate Parcial");
-            investmentTransactionRepository.save(rescueTx);
+            // GERA O EVENTO DE SAÍDA MATERIALIZANDO OS IMPOSTOS (O fato gerador)
+            InvestmentTransaction rescueTransaction = InvestmentTransaction.builder()
+                    .lot(lot)
+                    .type(InvestmentTransactionType.RESCUE)
+                    .referenceDate(today)
+                    .grossAmount(grossAmountToTake) // O valor que esvazia a base bruta do lote
+                    .amount(netAmountToTake)        // O valor exato que o usuário pediu
+                    .irTax(irTaxMaterialized)
+                    .iofTax(iofTaxMaterialized)
+                    .description("Resgate de Capital (Fatia PEPS)")
+                    .build();
 
-            totalPrincipalRescued = totalPrincipalRescued.add(principalToDeduct);
-            totalProfitRescued = totalProfitRescued.add(profitRealized);
-            remainingRescue = remainingRescue.subtract(amountTakenFromLot);
+            transactionsToSave.add(rescueTransaction);
+            totalNetAmountToCredit = totalNetAmountToCredit.add(netAmountToTake);
+            remainingNetRequested = remainingNetRequested.subtract(netAmountToTake);
         }
 
-        BigDecimal finalNetBalance = investmentTransactionRepository.calculateNetBalanceByFixedIncome(fixedIncome.getId());
-        if (finalNetBalance.compareTo(BigDecimal.ZERO) <= 0) {
-            fixedIncome.setStatus(FixedIncomeStatus.CLOSED);
-            fixedIncomeRepository.save(fixedIncome);
+        if (remainingNetRequested.compareTo(BigDecimal.ZERO) > 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Saldo líquido insuficiente para realizar o resgate solicitado.");
         }
 
-        AccountBase account = fixedIncome.getAccount();
+        investmentTransactionRepository.saveAll(transactionsToSave);
 
-        // 3. Credita o principal devolvido na Conta Corrente
-        if (totalPrincipalRescued.compareTo(BigDecimal.ZERO) > 0) {
-            Transaction principalTx = new Transaction(
-                    totalPrincipalRescued,
-                    MovementDirection.INFLOW,
-                    MovementType.INVESTMENT_REDEEM_PRINCIPAL, // Utilizando o novo Enum
-                    dto.rescueDate(),
-                    user,
-                    account,
-                    "Resgate de Investimento (Principal): " + fixedIncome.getName(),
-                    null
-            );
-            transactionRepository.save(principalTx);
-        }
-
-        // 4. Credita o lucro realizado na Conta Corrente (se houver lucro)
-        if (totalProfitRescued.compareTo(BigDecimal.ZERO) > 0) {
-            Transaction profitTx = new Transaction(
-                    totalProfitRescued,
-                    MovementDirection.INFLOW,
-                    MovementType.INVESTMENT_REDEEM_PROFIT, // Utilizando o novo Enum
-                    dto.rescueDate(),
-                    user,
-                    account,
-                    "Rendimento Resgatado Líquido: " + fixedIncome.getName(),
-                    null
-            );
-            transactionRepository.save(profitTx);
-        }
+        // A transação entra na conta corrente livre de bitributação
+        transactionService.createInvestmentTransaction(
+                fixedIncome.getAccount().getId(),
+                totalNetAmountToCredit,
+                MovementDirection.INFLOW,
+                today,
+                "Resgate de Investimento: " + fixedIncome.getName()
+        );
     }
 }

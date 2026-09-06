@@ -1,6 +1,5 @@
 package com.project.financeapi.repository;
 
-import com.project.financeapi.entity.Invoice;
 import com.project.financeapi.entity.Installment;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -19,14 +18,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface InstallmentRepository extends JpaRepository<Installment, UUID> {
-
-    public List<Installment> findByInvoice(Invoice invoice);
-
-    @Query("""
-    SELECT i FROM Installment i
-    WHERE i.id = :id AND i.createdBy.id = :userId
-    """)
-    Optional<Installment> findCreditCardByCreatedByAndId(UUID userId, UUID id);
 
     // 🌟 NOVO: Busca a parcela e aplica o LOCK PESSIMISTA na linha do banco de dados
     @Lock(LockModeType.PESSIMISTIC_WRITE)

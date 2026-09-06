@@ -6,24 +6,19 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
 @Repository
 public interface FixedIncomeLotRepository extends JpaRepository<FixedIncomeLot, UUID> {
 
-    /**
-     * Retorna os lotes ativos (com principal > 0) de uma sacola,
-     * ordenados do MAIS ANTIGO para o MAIS NOVO (Regra PEPS/FIFO da Receita Federal).
-     */
-    @Query("""
-        SELECT l FROM FixedIncomeLot l 
-        WHERE l.fixedIncome.id = :fixedIncomeId 
-          AND l.remainingPrincipal > 0 
-        ORDER BY l.purchaseDate ASC
-    """)
-    List<FixedIncomeLot> findActiveLotsByFixedIncomeOrderByDateAsc(@Param("fixedIncomeId") UUID fixedIncomeId);
+    @Query("SELECT DISTINCT l FROM FixedIncomeLot l " +
+            "JOIN FETCH l.fixedIncome f " +
+            "WHERE f.account.id = :accountId")
+    List<FixedIncomeLot> findActiveLotsByAccountId(@Param("accountId") UUID accountId);
 
-    List<FixedIncomeLot> findAllByRemainingPrincipalGreaterThan(BigDecimal zero);
+    @Query("SELECT DISTINCT l FROM FixedIncomeLot l " +
+            "WHERE l.fixedIncome.id = :fixedIncomeId " +
+            "ORDER BY l.purchaseDate ASC")
+    List<FixedIncomeLot> findActiveLotsForRescueOderByOldest(@Param("fixedIncomeId") UUID fixedIncomeId);
 }

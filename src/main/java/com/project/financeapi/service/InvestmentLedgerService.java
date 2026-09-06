@@ -1,96 +1,175 @@
 package com.project.financeapi.service;
 
-import com.project.financeapi.dto.investment.FixedIncomeDashboardDTO;
-import com.project.financeapi.dto.investment.InvestmentTransactionDTO;
+import com.project.financeapi.dto.investment.response.FixedIncomeDashboardDTO;
+import com.project.financeapi.dto.investment.response.LotDetailDTO;
+import com.project.financeapi.dto.investment.response.TransactionLedgerDTO;
 import com.project.financeapi.entity.FixedIncome;
+import com.project.financeapi.entity.FixedIncomeLot;
 import com.project.financeapi.entity.InvestmentTransaction;
+import com.project.financeapi.enumSystem.FixedIncomeStatus;
+import com.project.financeapi.exception.BusinessException;
 import com.project.financeapi.repository.FixedIncomeRepository;
-import com.project.financeapi.repository.InvestmentTransactionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class InvestmentLedgerService {
 
     private final FixedIncomeRepository fixedIncomeRepository;
-    private final InvestmentTransactionRepository transactionRepository;
+    private final UserContextService userContextService;
+
+    // Injeção do Motor Reativo que consolida os eventos
+    private final DailyYieldEngineService dailyYieldEngineService;
 
     /**
-     * Retorna a visão detalhada de uma sacola específica, incluindo o extrato completo.
+     * Traz o dashboard consolidado de todos os investimentos da conta.
      */
-    public FixedIncomeDashboardDTO getDashboard(UUID fixedIncomeId) {
-        FixedIncome investment = fixedIncomeRepository.findById(fixedIncomeId)
-                .orElseThrow(() -> new IllegalArgumentException("Sacola não encontrada."));
+    @Transactional
+    public List<FixedIncomeDashboardDTO> getAllActiveDashboardsByAccount(UUID accountId) {
+        String loggedUserId = userContextService.getAuthenticatedUser().getId();
 
-        // 1. Cálculos consolidados via banco de dados (O(1) na aplicação)
-        BigDecimal netBalance = transactionRepository.calculateNetBalanceByFixedIncome(fixedIncomeId);
+        // Gatilho do Motor Reativo (Lazy Evaluation)
+        dailyYieldEngineService.processPendingYieldsForAccount(accountId);
 
-        // O principal total que ainda está rendendo é a soma do 'remainingPrincipal' de todos os lotes ativos
-        BigDecimal totalPrincipal = investment.getLots().stream()
-                .map(lot -> lot.getRemainingPrincipal())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Busca Otimizada (Evita N+1 usando o JOIN FETCH que criamos no repositório)
+        List<FixedIncome> activeIncomes = fixedIncomeRepository.findAllActiveByAccountIdWithLots(accountId);
 
-        // O lucro líquido atual para a interface pintar de verde (Saldo atual - Dinheiro injetado)
-        BigDecimal totalProfit = netBalance.subtract(totalPrincipal).max(BigDecimal.ZERO);
+        // Validação de segurança e isolamento de tenant
+        if (!activeIncomes.isEmpty() && !activeIncomes.getFirst().getAccount().getAccountHolder().getId().equals(loggedUserId)) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Acesso negado aos investimentos desta conta.");
+        }
 
-        // 2. Busca o extrato de transações para desenhar o gráfico
-        List<InvestmentTransaction> history = transactionRepository.findAllByFixedIncomeIdOrderByDateDesc(fixedIncomeId);
-        List<InvestmentTransactionDTO> historyDTOs = history.stream()
-                .map(this::toTransactionDTO)
+        LocalDate today = LocalDate.now();
+
+        // O Mapeamento. A matemática tributária é lida da projeção de estado
+        return activeIncomes.stream()
+                .map(income -> mapToDashboardDTO(income, today))
+                .filter(dto -> dto.status() == FixedIncomeStatus.ACTIVE) // Adicionado! Oculta os contratos esgotados (saldo 0)
                 .toList();
+    }
+
+    /**
+     * Traz o dashboard detalhado de um único papel (CDB específico, por exemplo).
+     */
+    @Transactional
+    public FixedIncomeDashboardDTO getDashboard(UUID fixedIncomeId) {
+        String loggedUserId = userContextService.getAuthenticatedUser().getId();
+
+        dailyYieldEngineService.processPendingYieldsForFixedIncome(fixedIncomeId);
+
+        FixedIncome income = fixedIncomeRepository.findByIdWithLots(fixedIncomeId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Investimento não encontrado."));
+
+        if (!income.getAccount().getAccountHolder().getId().equals(loggedUserId)) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Acesso negado a este investimento.");
+        }
+
+        return mapToDashboardDTO(income, LocalDate.now());
+    }
+
+    // ========================================================================
+    // MÉTODOS DE MAPEAMENTO E AGREGAÇÃO (Event Sourcing Projection)
+    // ========================================================================
+
+    private FixedIncomeDashboardDTO mapToDashboardDTO(FixedIncome income, LocalDate referenceDate) {
+        BigDecimal totalPrincipal = BigDecimal.ZERO;
+        BigDecimal totalProjectedGrossBalance = BigDecimal.ZERO;
+        BigDecimal totalProjectedTaxes = BigDecimal.ZERO;
+        BigDecimal totalProjectedNetBalance = BigDecimal.ZERO;
+
+        List<LotDetailDTO> activeLotsDto = new ArrayList<>();
+
+        for (FixedIncomeLot lot : income.getLots()) {
+            FixedIncomeLot.LotState state = lot.projectState();
+
+            if (state.grossBalance().compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal irTax = lot.getProjectedIrTax(referenceDate, state);
+                BigDecimal iofTax = lot.getProjectedIofTax(referenceDate, state);
+                BigDecimal netBalance = lot.getProjectedNetBalance(referenceDate, state);
+
+                totalPrincipal = totalPrincipal.add(state.remainingPrincipal());
+                totalProjectedGrossBalance = totalProjectedGrossBalance.add(state.grossBalance());
+                totalProjectedTaxes = totalProjectedTaxes.add(irTax).add(iofTax);
+                totalProjectedNetBalance = totalProjectedNetBalance.add(netBalance);
+
+                // Mapeia o extrato isolado DESTE lote específico (Ordenado do mais novo para o mais velho)
+                List<TransactionLedgerDTO> lotTransactions = lot.getTransactions().stream()
+                        .sorted(Comparator.comparing(InvestmentTransaction::getReferenceDate).reversed())
+                        .map(t -> new TransactionLedgerDTO(
+                                t.getId(),
+                                t.getType(),
+                                t.getReferenceDate(),
+                                t.getGrossAmount(),
+                                t.getAmount(),
+                                t.getIrTax(),
+                                t.getIofTax(),
+                                t.getAppliedMarketRate(),
+                                t.getDescription()
+                        ))
+                        .toList();
+
+                activeLotsDto.add(new LotDetailDTO(
+                        lot.getId(),
+                        lot.getPurchaseDate(),
+                        lot.getAgeInDays(referenceDate),
+                        state.remainingPrincipal(),
+                        state.grossBalance(),
+                        irTax,
+                        iofTax,
+                        netBalance,
+                        lotTransactions // Transações injetadas diretamente no Lote
+                ));
+            }
+        }
+
+        activeLotsDto.sort(Comparator.comparing(LotDetailDTO::purchaseDate));
+
+        FixedIncomeStatus status = totalProjectedGrossBalance.compareTo(BigDecimal.ZERO) > 0
+                ? FixedIncomeStatus.ACTIVE
+                : FixedIncomeStatus.CLOSED;
 
         return new FixedIncomeDashboardDTO(
-                investment.getId(),
-                investment.getName(),
-                investment.getType(),
-                investment.getIndexer(),
-                investment.getContractedRate(),
-                investment.getStatus(),
-                investment.getAccount().getId(),
-                investment.getAccount().getName(),
+                income.getId(),
+                income.getName(),
+                income.getType(),
+                income.getIndexer(),
+                income.getContractedRate(),
+                income.getMaturityDate(),
+                status,
                 totalPrincipal,
-                netBalance,
-                totalProfit,
-                investment.getMaturityDate(),
-                historyDTOs
+                totalProjectedGrossBalance,
+                totalProjectedTaxes,
+                totalProjectedNetBalance,
+                activeLotsDto,
+                new ArrayList<>() // Pode remover a propriedade recentTransactions do FixedIncomeDashboardDTO depois se quiser
         );
     }
-
-    /**
-     * Retorna um resumo de todas as sacolas ativas de uma conta.
-     * Útil para a tela principal da conta corrente onde lista todos os investimentos.
-     */
-    public List<FixedIncomeDashboardDTO> getAllActiveDashboardsByAccount(UUID accountId) {
-        List<FixedIncome> activeInvestments = fixedIncomeRepository.findAllByAccountIdAndStatus(
-                accountId,
-                com.project.financeapi.enumSystem.FixedIncomeStatus.ACTIVE
-        );
-
-        // Mapeia cada sacola para o seu respectivo Dashboard
-        return activeInvestments.stream()
-                .map(inv -> getDashboard(inv.getId()))
+    private List<TransactionLedgerDTO> mapRecentTransactions(List<FixedIncomeLot> lots) {
+        return lots.stream()
+                .flatMap(lot -> lot.getTransactions().stream())
+                .sorted(Comparator.comparing(InvestmentTransaction::getReferenceDate).reversed()) // Mais recentes primeiro
+                .limit(10) // Evita payload massivo
+                .map(t -> new TransactionLedgerDTO(
+                        t.getId(),
+                        t.getType(),
+                        t.getReferenceDate(),
+                        t.getGrossAmount(),
+                        t.getAmount(),
+                        t.getIrTax(),
+                        t.getIofTax(),
+                        t.getAppliedMarketRate(),
+                        t.getDescription()
+                ))
                 .toList();
-    }
-
-    private InvestmentTransactionDTO toTransactionDTO(InvestmentTransaction tx) {
-        return new InvestmentTransactionDTO(
-                tx.getId(),
-                tx.getType(),
-                tx.getAmount(),
-                tx.getGrossAmount(),
-                tx.getIrTax(),
-                tx.getIofTax(),
-                tx.getB3CustodyFee(),
-                tx.getReferenceDate(),
-                tx.getAppliedMarketRate(),
-                tx.getDescription()
-        );
     }
 }

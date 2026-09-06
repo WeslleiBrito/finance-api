@@ -1,8 +1,8 @@
 package com.project.financeapi.controller;
 
-import com.project.financeapi.dto.investment.FixedIncomeDashboardDTO;
-import com.project.financeapi.dto.investment.InvestmentApportDTO;
-import com.project.financeapi.dto.investment.InvestmentRescueDTO;
+import com.project.financeapi.dto.investment.request.InvestmentApportDTO;
+import com.project.financeapi.dto.investment.request.InvestmentRescueDTO;
+import com.project.financeapi.dto.investment.response.FixedIncomeDashboardDTO;
 import com.project.financeapi.service.FixedIncomeService;
 import com.project.financeapi.service.InvestmentLedgerService;
 import jakarta.validation.Valid;
@@ -22,27 +22,39 @@ public class FixedIncomeController {
     private final FixedIncomeService fixedIncomeService;
     private final InvestmentLedgerService investmentLedgerService;
 
-    @PostMapping("/apport")
-    public ResponseEntity<Void> createApport(@RequestBody @Valid InvestmentApportDTO dto) {
-        fixedIncomeService.createApport(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    @PostMapping("/rescue")
-    public ResponseEntity<Void> executeRescue(@RequestBody @Valid InvestmentRescueDTO dto) {
-        fixedIncomeService.executeRescue(dto);
-        return ResponseEntity.ok().build();
-    }
+    // ========================================================================
+    // QUERIES (Leitura do Event Sourcing)
+    // ========================================================================
 
     @GetMapping("/account/{accountId}/dashboards")
-    public ResponseEntity<List<FixedIncomeDashboardDTO>> getAllDashboardsByAccount(@PathVariable UUID accountId) {
+    public ResponseEntity<List<FixedIncomeDashboardDTO>> getDashboardsByAccount(@PathVariable UUID accountId) {
         List<FixedIncomeDashboardDTO> dashboards = investmentLedgerService.getAllActiveDashboardsByAccount(accountId);
         return ResponseEntity.ok(dashboards);
     }
 
-    @GetMapping("/{fixedIncomeId}/dashboard")
-    public ResponseEntity<FixedIncomeDashboardDTO> getDashboard(@PathVariable UUID fixedIncomeId) {
+    // ========================================================================
+    // COMMANDS (Geração de Eventos)
+    // ========================================================================
+
+    @PostMapping("/apport")
+    public ResponseEntity<FixedIncomeDashboardDTO> createApport(@RequestBody @Valid InvestmentApportDTO dto) {
+        // 1. Executa a mutação e pega o ID do papel
+        UUID fixedIncomeId = fixedIncomeService.createApport(dto);
+
+        // 2. Lê o estado projetado atualizado
         FixedIncomeDashboardDTO dashboard = investmentLedgerService.getDashboard(fixedIncomeId);
+
+        // 3. Devolve a nova inserção completa para o front-end
+        return ResponseEntity.status(HttpStatus.CREATED).body(dashboard);
+    }
+
+    @PostMapping("/rescue")
+    public ResponseEntity<FixedIncomeDashboardDTO> executeRescue(@RequestBody @Valid InvestmentRescueDTO dto) {
+        // 1. Gera o evento de saída e muta a conta corrente
+        fixedIncomeService.executeRescue(dto);
+
+        // 2. Devolve o dashboard atualizado após o resgate
+        FixedIncomeDashboardDTO dashboard = investmentLedgerService.getDashboard(dto.fixedIncomeId());
         return ResponseEntity.ok(dashboard);
     }
 }

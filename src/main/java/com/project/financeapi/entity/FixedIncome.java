@@ -1,15 +1,10 @@
 package com.project.financeapi.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.project.financeapi.entity.base.AccountBase;
-import com.project.financeapi.enumSystem.FixedIncomeStatus;
 import com.project.financeapi.enumSystem.FixedIncomeType;
 import com.project.financeapi.enumSystem.IndexerType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,46 +18,41 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class FixedIncome {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(length = 36)
     private UUID id;
 
-    @JsonManagedReference
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
-
-    @Column(nullable = false, length = 100)
-    private String name;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "fixed_income_type", nullable = false)
-    private FixedIncomeType type;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "indexer_type", nullable = false)
-    private IndexerType indexer;
-
-    // Ex: 110.00 (para 110% do CDI) ou 10.5 (para 10.5% Pré-fixado)
-    @Column(name = "contracted_rate", precision = 10, scale = 4, nullable = false)
-    private BigDecimal contractedRate;
-
-    @Column(name = "maturity_date", nullable = true) // Ou simplesmente remova o nullable = false
-    private LocalDate maturityDate;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private FixedIncomeStatus status = FixedIncomeStatus.ACTIVE;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
     private AccountBase account;
 
-    // O relacionamento com os lotes (Aportes)
+    @Column(nullable = false)
+    private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private IndexerType indexer;
+
+    @Column(nullable = false, precision = 10, scale = 4)
+    private BigDecimal contractedRate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FixedIncomeType type;
+
+    // Vencimento agora é opcional na base de dados para aceitar CDB de liquidez diária
+    @Column(nullable = true)
+    private LocalDate maturityDate;
+
+    @Builder.Default
     @OneToMany(mappedBy = "fixedIncome", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("purchaseDate ASC")
     private List<FixedIncomeLot> lots = new ArrayList<>();
+
+    @Transient
+    public Boolean getIsTaxExempt() {
+        return this.type.isTaxExempt();
+    }
 }

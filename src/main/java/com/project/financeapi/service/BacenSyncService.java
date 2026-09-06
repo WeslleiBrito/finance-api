@@ -8,9 +8,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
@@ -46,7 +48,7 @@ public class BacenSyncService {
                 .orElse(LocalDate.now().minusDays(5));
 
         LocalDate startDate = lastSavedDate.plusDays(1);
-        LocalDate endDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().minusDays(1);
 
         if (startDate.isAfter(endDate)) {
             log.info("As taxas CDI já estão atualizadas.");
@@ -81,8 +83,16 @@ public class BacenSyncService {
                 log.info("Nenhuma taxa nova retornada pelo Bacen no período.");
             }
 
+        } catch (HttpStatusCodeException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                log.info("As taxas CDI para o período de {} a {} ainda não foram publicadas pelo Bacen.", dataInicialStr, dataFinalStr);
+            } else if (e.getStatusCode() == HttpStatus.BAD_GATEWAY || e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                log.warn("Servidor do Banco Central rejeitou a requisição ({}). Aguardando publicação oficial.", e.getStatusCode());
+            } else {
+                log.error("Erro HTTP ao sincronizar taxas CDI do Banco Central: {}", e.getMessage());
+            }
         } catch (Exception e) {
-            log.error("Erro ao sincronizar taxas CDI do Banco Central: {}", e.getMessage());
+            log.error("Erro inesperado ao sincronizar taxas CDI do Banco Central: {}", e.getMessage());
         }
     }
 }
