@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -70,4 +72,16 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
             @Param("endDate") LocalDate endDate,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT COALESCE(SUM(ABS(t.amount)), 0)
+    FROM Transaction t
+    WHERE t.account.id = :accountId
+      AND t.paymentDate BETWEEN :start AND :end
+      AND t.reversed = false
+    """)
+    BigDecimal sumMovementsBetween(@Param("accountId") UUID accountId,
+                                   @Param("start") LocalDate start,
+                                   @Param("end") LocalDate end);
+
 }

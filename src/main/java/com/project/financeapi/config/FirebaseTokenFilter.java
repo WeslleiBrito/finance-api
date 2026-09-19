@@ -3,7 +3,9 @@ package com.project.financeapi.config;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseToken;
 import com.project.financeapi.entity.User;
+import com.project.financeapi.enumSystem.UserStatus;
 import com.project.financeapi.repository.UserRepository;
+import com.project.financeapi.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,10 +26,9 @@ import java.util.Optional;
 public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     private final UserRepository userRepository;
-
+    private final UserService userService;
     private static final String AUTH_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final String USER_SYNC_ENDPOINT = "/api/users/sync";
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -64,31 +65,20 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
 
             Optional<User> userOptional = userRepository.findById(uid);
 
-            if (userOptional.isEmpty()) {
-                if (request.getRequestURI().equals(USER_SYNC_ENDPOINT)) {
-                    System.out.println(">>> 3. INFO: Usuário novo detectado. Liberando rota de sincronização...");
-                    filterChain.doFilter(request, response);
-                    return;
-                }
+            User user = userOptional.orElseGet(() -> userService.syncUser(token));
 
-                System.out.println(">>> 3. BLOQUEIO: Usuário não existe no banco de dados local (PostgreSQL).");
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Usuário não cadastrado");
-                return;
-            }
 
-            User user = userOptional.get();
-
-            if (!user.getUserStatus().name().equals("ACTIVATED")) {
+            if (user.getUserStatus().equals(UserStatus.ACTIVATED)) {
+                System.out.println(">>> 3. SUCESSO: Usuário encontrado e ativado! Liberando acesso ao Controller...");
+                // Armazenamos o decodedToken (FirebaseToken) nas credenciais de segurança
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(user, decodedToken, Collections.emptyList());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } else {
                 System.out.println(">>> 3. BLOQUEIO: Usuário está inativo no banco de dados local.");
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Usuário inativo");
                 return;
             }
-
-            System.out.println(">>> 3. SUCESSO: Usuário encontrado e ativado! Liberando acesso ao Controller...");
-            // Armazenamos o decodedToken (FirebaseToken) nas credenciais de segurança
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(user, decodedToken, Collections.emptyList());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (Exception e) {
             System.out.println(">>> 2. ERRO FATAL DO FIREBASE: Falha ao validar o token. Motivo: " + e.getMessage());

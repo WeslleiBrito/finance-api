@@ -1,5 +1,6 @@
 package com.project.financeapi.entity;
 
+import com.project.financeapi.enumSystem.FixedIncomeType;
 import com.project.financeapi.enumSystem.InvestmentTransactionType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,28 +14,32 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class FixedIncomeLotTest {
 
     @Mock
-    private FixedIncome mockFixedIncome;
+    private InvestmentProduct mockProduct;
+    @Mock
+    private InvestmentBox mockBox;
 
     private FixedIncomeLot lot;
     private final LocalDate purchaseDate = LocalDate.of(2026, 1, 1);
 
     @BeforeEach
     void setUp() {
-        // 1. Cria o Lote purista (Sem coluna de saldo ou status)
+        // Mocka a cadeia: Lote -> Caixinha -> Produto (Para acessar o Tipo do Investimento)
+        lenient().when(mockBox.getProduct()).thenReturn(mockProduct);
+        lenient().when(mockProduct.getType()).thenReturn(FixedIncomeType.CDB); // Padrão: Não isento
+
         lot = FixedIncomeLot.builder()
-                .fixedIncome(mockFixedIncome)
+                .box(mockBox)
                 .purchaseDate(purchaseDate)
                 .ledgerStartDate(purchaseDate)
-                .transactions(new ArrayList<>()) // Prepara o Livro-Razão interno
+                .transactions(new ArrayList<>())
                 .build();
 
-        // 2. Event Sourcing Real: Criamos o evento de Entrada de Capital (Aporte)
         InvestmentTransaction apport = InvestmentTransaction.builder()
                 .lot(lot)
                 .type(InvestmentTransactionType.APPORT)
@@ -45,7 +50,6 @@ class FixedIncomeLotTest {
                 .iofTax(BigDecimal.ZERO)
                 .build();
 
-        // 3. Event Sourcing Real: Criamos o evento de Rendimento (Lucro)
         InvestmentTransaction yield = InvestmentTransaction.builder()
                 .lot(lot)
                 .type(InvestmentTransactionType.DAILY_YIELD)
@@ -56,8 +60,6 @@ class FixedIncomeLotTest {
                 .iofTax(BigDecimal.ZERO)
                 .build();
 
-        // 4. Acopla os eventos ao lote.
-        // O projectState() vai processar isso resultando num saldo bruto de R$ 1100,00 e lucro de R$ 100,00.
         lot.getTransactions().add(apport);
         lot.getTransactions().add(yield);
     }
@@ -81,11 +83,10 @@ class FixedIncomeLotTest {
     @Test
     @DisplayName("Deve zerar IR e IOF para papéis isentos (ex: LCI) independentemente do lucro")
     void shouldExemptTaxesForLci() {
-        when(mockFixedIncome.getIsTaxExempt()).thenReturn(true);
+        lenient().when(mockProduct.getType()).thenReturn(FixedIncomeType.LCI);
         LocalDate referenceDate = purchaseDate.plusDays(15);
 
         FixedIncomeLot.LotState state = lot.projectState();
-
         BigDecimal irTax = lot.getProjectedIrTax(referenceDate, state);
         BigDecimal iofTax = lot.getProjectedIofTax(referenceDate, state);
 
@@ -96,9 +97,7 @@ class FixedIncomeLotTest {
     @Test
     @DisplayName("Deve cobrar IOF para CDB (Não isento) com menos de 30 dias")
     void shouldApplyIofForCdbUnder30Days() {
-        when(mockFixedIncome.getIsTaxExempt()).thenReturn(false);
         LocalDate referenceDate = purchaseDate.plusDays(15);
-
         FixedIncomeLot.LotState state = lot.projectState();
         BigDecimal iofTax = lot.getProjectedIofTax(referenceDate, state);
 
@@ -108,9 +107,7 @@ class FixedIncomeLotTest {
     @Test
     @DisplayName("Deve zerar IOF para CDB (Não isento) após 30 dias de investimento")
     void shouldZeroIofForCdbAfter30Days() {
-        when(mockFixedIncome.getIsTaxExempt()).thenReturn(false);
         LocalDate referenceDate = purchaseDate.plusDays(30);
-
         FixedIncomeLot.LotState state = lot.projectState();
         BigDecimal iofTax = lot.getProjectedIofTax(referenceDate, state);
 
@@ -120,9 +117,7 @@ class FixedIncomeLotTest {
     @Test
     @DisplayName("Deve garantir que o Saldo Líquido é igual ao Saldo Bruto menos Impostos")
     void shouldCalculateNetBalanceCorrectly() {
-        when(mockFixedIncome.getIsTaxExempt()).thenReturn(false);
         LocalDate referenceDate = purchaseDate.plusDays(15);
-
         FixedIncomeLot.LotState state = lot.projectState();
 
         BigDecimal gross = state.grossBalance();

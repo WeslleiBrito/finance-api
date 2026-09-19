@@ -14,9 +14,11 @@ public record LotDetailDTO(
         LocalDate purchaseDate,
         long ageInDays,
         BigDecimal remainingPrincipal,
+
         BigDecimal projectedGrossBalance,
         BigDecimal currentIrTaxProvision,
         BigDecimal currentIofTaxProvision,
+
         BigDecimal projectedNetBalance,
-        List<TransactionLedgerDTO> transactions // <-- HIERARQUIA RESTAURADA
+        List<TransactionLedgerDTO> transactions
 ) {}

@@ -47,7 +47,18 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("http://localhost:8081", "http://localhost:8080", "http://localhost:5173", "http://localhost:3000"));
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:8081",
+                "http://localhost:8080",
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "http://192.168.56.1:8081",
+                "http://192.168.0.5:8081",
+                "http://172.30.144.1:8081",
+                "http://172.21.32.1:8081",
+                "https://*.trycloudflare.com",
+                "https://nucleus-onshore-ivory.ngrok-free.dev"
+        ));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 

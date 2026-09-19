@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public record InvestmentRescueDTO(
         @NotNull(message = "O ID do investimento é obrigatório.")
-        UUID fixedIncomeId,
+        UUID boxId,
 
         @NotNull(message = "O valor solicitado para resgate é obrigatório.")
         @Positive(message = "O valor do resgate deve ser positivo.")

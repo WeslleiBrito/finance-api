@@ -22,4 +22,5 @@ public interface MarketIndexRateRepository extends JpaRepository<MarketIndexRate
             LocalDate startDate,
             LocalDate endDate
     );
+    Optional<MarketIndexRate> findFirstByIndexerTypeAndReferenceDateLessThanEqualOrderByReferenceDateDesc(IndexerType indexer, LocalDate referenceDate);
 }
